@@ -9,42 +9,65 @@
   --bg: #f8f9fa;
   --card-bg: #ffffff;
   --radius: 16px;
+
+  /* Цвета питомца по умолчанию (neutral) — переопределяются через [data-mood] ниже */
+  --pet-main: #51cf66;
+  --pet-light: #b2f2bb;
+  --pet-accent: #37b24d;
+  --pet-cheek: #ffc9c9;
 }
 
 * { box-sizing: border-box; }
 
-body {
+html, body {
   margin: 0;
+  padding: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
+  -webkit-text-size-adjust: 100%;
 }
 
 .topbar {
   display: flex;
   align-items: baseline;
   gap: 12px;
-  padding: 20px 32px;
+  padding: 18px 20px;
   background: var(--green);
   color: white;
+  flex-wrap: wrap;
 }
-.logo { font-size: 22px; font-weight: 700; }
-.tagline { font-size: 14px; opacity: 0.9; }
+.logo { font-size: 20px; font-weight: 700; }
+.tagline { font-size: 13px; opacity: 0.9; }
 
 .layout {
   display: grid;
   grid-template-columns: 340px 1fr;
-  gap: 24px;
-  padding: 24px 32px;
+  gap: 20px;
+  padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
+  width: 100%;
 }
 
 @media (max-width: 800px) {
-  .layout { grid-template-columns: 1fr; }
+  .layout {
+    grid-template-columns: 1fr;
+    padding: 14px;
+    gap: 14px;
+  }
+  .topbar { padding: 14px 16px; }
+  .logo { font-size: 18px; }
+  .tagline { font-size: 12px; }
 }
 
-/* Питомец */
+/* ---------------- Питомец ---------------- */
+
 .pet-panel {
   background: var(--card-bg);
   border-radius: var(--radius);
@@ -56,18 +79,73 @@ body {
   height: fit-content;
 }
 
-.pet-avatar {
-  font-size: 90px;
-  line-height: 1;
-  margin-bottom: 8px;
-  transition: transform 0.3s ease;
+@media (max-width: 800px) {
+  .pet-panel { padding: 18px; }
 }
-.pet-avatar[data-mood="happy"] { filter: none; }
-.pet-avatar[data-mood="worried"] { filter: saturate(0.7); }
-.pet-avatar[data-mood="sad"] { filter: grayscale(0.4); transform: scale(0.95); }
+
+.pet-avatar {
+  width: 160px;
+  height: 160px;
+  margin-bottom: 8px;
+  animation: pet-idle 3.5s ease-in-out infinite;
+}
+
+@media (max-width: 800px) {
+  .pet-avatar { width: 130px; height: 130px; }
+}
+
+.pet-svg { width: 100%; height: 100%; display: block; }
+
+.pet-body ellipse,
+.pet-ears ellipse {
+  transition: fill 0.5s ease;
+}
+
+/* Цветовые схемы по настроению */
+.pet-avatar[data-mood="happy"] {
+  --pet-main: #51cf66;
+  --pet-light: #d3f9d8;
+  --pet-accent: #2f9e44;
+  --pet-cheek: #ffa8a8;
+}
+.pet-avatar[data-mood="neutral"] {
+  --pet-main: #66d9c8;
+  --pet-light: #c3fae8;
+  --pet-accent: #12b886;
+  --pet-cheek: #ffc9c9;
+}
+.pet-avatar[data-mood="worried"] {
+  --pet-main: #ffd43b;
+  --pet-light: #fff3bf;
+  --pet-accent: #f59f00;
+  --pet-cheek: #ffc078;
+}
+.pet-avatar[data-mood="sad"] {
+  --pet-main: #adb5bd;
+  --pet-light: #dee2e6;
+  --pet-accent: #868e96;
+  --pet-cheek: #ced4da;
+}
+
+/* Лёгкое "дыхание" в состоянии покоя */
+@keyframes pet-idle {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-4px) scale(1.015); }
+}
+
+/* Прыжок-реакция при обновлении состояния */
+.pet-avatar.pet-bounce {
+  animation: pet-bounce-kf 0.5s ease;
+}
+@keyframes pet-bounce-kf {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.12, 0.9); }
+  55% { transform: scale(0.94, 1.08); }
+  100% { transform: scale(1); }
+}
 
 .pet-level { font-weight: 600; margin-top: 4px; }
-.pet-mood-label { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+.pet-mood-label { color: var(--muted); font-size: 13px; margin-bottom: 16px; text-align: center; }
 
 .chat-box {
   width: 100%;
@@ -90,6 +168,7 @@ body {
   font-size: 14px;
   max-width: 90%;
   white-space: pre-line;
+  word-break: break-word;
 }
 .msg.user {
   align-self: flex-end;
@@ -103,27 +182,38 @@ body {
 .chat-form { display: flex; gap: 8px; }
 .chat-form input {
   flex: 1;
-  padding: 10px 12px;
+  min-width: 0;
+  padding: 12px;
   border-radius: 10px;
   border: 1px solid #dee2e6;
+  font-size: 16px; /* 16px+ убирает авто-zoom на iOS при фокусе */
 }
 .chat-form button, .reading-form button {
-  padding: 10px 16px;
+  padding: 12px 16px;
   border: none;
   border-radius: 10px;
   background: var(--green);
   color: white;
   cursor: pointer;
   font-weight: 600;
+  font-size: 15px;
+  white-space: nowrap;
 }
 .chat-form button:hover, .reading-form button:hover { opacity: 0.9; }
+.chat-form button:active, .reading-form button:active { transform: scale(0.97); }
 
-/* Дашборд */
+/* ---------------- Дашборд ---------------- */
+
 .dashboard-panel {
   background: var(--card-bg);
   border-radius: var(--radius);
   padding: 24px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  min-width: 0; /* чтобы grid не растягивал контейнер шире экрана */
+}
+
+@media (max-width: 800px) {
+  .dashboard-panel { padding: 18px; }
 }
 
 .cards {
@@ -134,6 +224,11 @@ body {
 }
 
 @media (max-width: 700px) {
+  .cards { grid-template-columns: 1fr 1fr; }
+  .cards .card.highlight { grid-column: 1 / -1; }
+}
+
+@media (max-width: 420px) {
   .cards { grid-template-columns: 1fr; }
 }
 
@@ -141,10 +236,11 @@ body {
   background: var(--bg);
   border-radius: 12px;
   padding: 16px;
+  min-width: 0;
 }
 .card.highlight { background: var(--green-light); }
 .card-title { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-.card-value { font-size: 22px; font-weight: 700; }
+.card-value { font-size: 22px; font-weight: 700; overflow-wrap: break-word; }
 .card-sub { font-size: 13px; color: var(--muted); }
 .card-trend { font-size: 13px; margin-top: 4px; font-weight: 600; }
 
@@ -167,13 +263,22 @@ body {
 .recommendation-item .rec-title { font-weight: 700; margin-bottom: 4px; }
 .recommendation-item .rec-savings { font-size: 13px; color: var(--green); font-weight: 600; margin-top: 6px; }
 
-.reading-form { display: flex; gap: 10px; }
+.reading-form { display: flex; gap: 10px; flex-wrap: wrap; }
 .reading-form select, .reading-form input {
-  padding: 10px 12px;
+  padding: 12px;
   border-radius: 10px;
   border: 1px solid #dee2e6;
+  font-size: 16px;
 }
-.reading-form input { flex: 1; }
+.reading-form input { flex: 1; min-width: 120px; }
+.reading-form select { flex: 1; min-width: 160px; }
+
+@media (max-width: 480px) {
+  .reading-form { flex-direction: column; }
+  .reading-form select,
+  .reading-form input,
+  .reading-form button { width: 100%; }
+}
 
 .footer {
   text-align: center;

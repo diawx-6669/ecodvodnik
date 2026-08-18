@@ -3,33 +3,171 @@ const config = require('../config/config');
 // ---------------------------------------------------------------------------
 // Rule-based fallback (работает без интернета и без API-ключа — на всякий
 // случай, чтобы демо на хакатоне никогда не сломалось).
+//
+// Важно: ответ должен зависеть и от настроения/данных, И от того, что
+// написал пользователь — иначе питомец превращается в "попугая", который
+// присылает один и тот же текст на любое сообщение.
 // ---------------------------------------------------------------------------
 
-function ruleBasedReply(summary, petState) {
-  const lines = [];
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
-  if (petState.mood === 'sad') {
-    lines.push('Ой... мне не очень хорошо. Кажется, где-то теряются ресурсы.');
-  } else if (petState.mood === 'worried') {
-    lines.push('Хм, расход немного подрос на этой неделе. Присмотримся?');
-  } else if (petState.mood === 'happy') {
-    lines.push('Я расту! Спасибо, что бережёшь ресурсы 🌱');
-  } else {
-    lines.push('Привет! Вот что у нас происходит на этой неделе.');
+function formatTrendLine(label, emoji, value, unit, cost, trend) {
+  const arrow = trend > 0 ? '↑' : trend < 0 ? '↓' : '→';
+  const sign = trend > 0 ? '+' : '';
+  return `${emoji} ${label}: ${value} ${unit} (${cost} ₸), тренд ${arrow} ${sign}${trend}%`;
+}
+
+function summaryLines(summary) {
+  const lines = [
+    formatTrendLine(
+      'Вода',
+      '💧',
+      summary.water.total_liters,
+      'л',
+      summary.water.cost_kzt,
+      summary.water.trend_percent
+    ),
+    formatTrendLine(
+      'Электричество',
+      '⚡',
+      summary.electricity.total_kwh,
+      'кВт·ч',
+      summary.electricity.cost_kzt,
+      summary.electricity.trend_percent
+    ),
+  ];
+  summary.anomalies.forEach((a) => lines.push(`⚠️ ${a.message}`));
+  return lines.join('\n');
+}
+
+const GREETING_INTROS = [
+  'Привет! Рад тебя видеть 🌱',
+  'Хэй! Как дела? Вот что у нас происходит.',
+  'О, привет! Заглянул проверить ресурсы?',
+];
+
+const HOW_ARE_YOU_REPLIES = {
+  happy: [
+    'У меня отлично! Расту и зеленею благодаря тебе 🌳',
+    'Чувствую себя супер — экономия на этой неделе видна невооружённым глазом!',
+  ],
+  neutral: [
+    'Нормально, держусь. Данные стабильные, ничего драматичного.',
+    'Всё спокойно, без сюрпризов на этой неделе.',
+  ],
+  worried: [
+    'Если честно — немного волнуюсь, расход подрос. Давай присмотримся вместе?',
+    'Есть небольшая тревога — потребление растёт быстрее обычного.',
+  ],
+  sad: [
+    'Не очень, если честно... кажется, где-то серьёзно утекают ресурсы 😟',
+    'Мне тяжеловато сейчас — расход сильно вырос, глянь на аномалии ниже.',
+  ],
+};
+
+const WATER_ONLY_INTROS = [
+  'По воде вот что вижу:',
+  'Смотрю на воду —',
+  'Разбираю расход воды:',
+];
+
+const ELECTRICITY_ONLY_INTROS = [
+  'По электричеству картина такая:',
+  'Смотрю на свет —',
+  'Разбираю потребление электроэнергии:',
+];
+
+const THANKS_REPLIES = [
+  'Пожалуйста! Я тут ради тебя 🌱',
+  'Всегда рад помочь — обращайся!',
+  'Не за что, продолжай в том же духе!',
+];
+
+const DEFAULT_OUTROS = [
+  'Спроси меня про воду, свет, или просто как дела — я на связи!',
+  'Если что — я слежу за цифрами и сразу скажу, если что-то не так.',
+  'Загляни попозже, обновлю данные, как только будут новые показания.',
+];
+
+// Примечание: в JS \b (граница слова) не распознаёт кириллицу как "словесный"
+// символ, поэтому вместо regex с \b используем простые проверки includes()/test()
+// без анкоров границ — иначе ключевые слова вроде "привет" не будут матчиться.
+
+function ruleBasedReply(summary, petState, userMessage = '') {
+  const msg = (userMessage || '').toLowerCase().trim();
+
+  // Приветствие
+  if (['привет', 'хай', 'здравствуй', 'hello', 'hi'].some((w) => msg.includes(w))) {
+    return `${pick(GREETING_INTROS)}\n\n${summaryLines(summary)}`;
   }
 
-  lines.push(
-    `Вода: ${summary.water.total_liters} л (${summary.water.cost_kzt} ₸), ` +
-      `тренд ${summary.water.trend_percent > 0 ? '+' : ''}${summary.water.trend_percent}%.`
-  );
-  lines.push(
-    `Электричество: ${summary.electricity.total_kwh} кВт·ч (${summary.electricity.cost_kzt} ₸), ` +
-      `тренд ${summary.electricity.trend_percent > 0 ? '+' : ''}${summary.electricity.trend_percent}%.`
-  );
+  // "Как дела?"
+  if (
+    ['как дела', 'как у нас дела', 'как ты', 'как жизнь', 'что нового'].some((w) =>
+      msg.includes(w)
+    )
+  ) {
+    const feeling = pick(HOW_ARE_YOU_REPLIES[petState.mood] || HOW_ARE_YOU_REPLIES.neutral);
+    return `${feeling}\n\n${summaryLines(summary)}`;
+  }
 
-  summary.anomalies.forEach((a) => lines.push(`⚠️ ${a.message}`));
+  // Вопрос только про воду
+  if (/вод[аыуе]/.test(msg) && !(msg.includes('свет') || msg.includes('электр'))) {
+    return (
+      `${pick(WATER_ONLY_INTROS)}\n` +
+      formatTrendLine(
+        'Вода',
+        '💧',
+        summary.water.total_liters,
+        'л',
+        summary.water.cost_kzt,
+        summary.water.trend_percent
+      ) +
+      (summary.water.trend_percent > 15
+        ? '\n⚠️ Расход заметно выше обычного — возможно, стоит проверить утечки.'
+        : '\nВсё в пределах нормы.')
+    );
+  }
 
-  return lines.join('\n');
+  // Вопрос только про электричество
+  if ((msg.includes('свет') || msg.includes('электр')) && !/вод[аыуе]/.test(msg)) {
+    return (
+      `${pick(ELECTRICITY_ONLY_INTROS)}\n` +
+      formatTrendLine(
+        'Электричество',
+        '⚡',
+        summary.electricity.total_kwh,
+        'кВт·ч',
+        summary.electricity.cost_kzt,
+        summary.electricity.trend_percent
+      ) +
+      (summary.electricity.trend_percent > 15
+        ? '\n⚠️ Потребление выросло — проверь энергоёмкие приборы.'
+        : '\nВсё в пределах нормы.')
+    );
+  }
+
+  // Вопрос про экономию/деньги
+  if (['эконом', 'деньг', 'тенге', '₸', 'сколько'].some((w) => msg.includes(w))) {
+    return `За эту неделю в сумме ушло ${summary.total_cost_kzt} ₸.\n\n${summaryLines(summary)}`;
+  }
+
+  // Благодарность
+  if (['спасибо', 'благодар', 'спс'].some((w) => msg.includes(w))) {
+    return pick(THANKS_REPLIES);
+  }
+
+  // По умолчанию — реагируем на настроение + сводка + разный outro
+  const moodIntro = {
+    happy: pick(['Я расту! Спасибо, что бережёшь ресурсы 🌱', 'Дела идут отлично, посмотри:']),
+    neutral: pick(['Вот что у нас происходит на этой неделе:', 'Собрал свежую сводку для тебя:']),
+    worried: pick(['Хм, расход немного подрос. Присмотримся?', 'Есть на что обратить внимание:']),
+    sad: pick(['Ой... мне не очень хорошо, кажется где-то теряются ресурсы.', 'Тревожные новости:']),
+  }[petState.mood];
+
+  return `${moodIntro}\n\n${summaryLines(summary)}\n\n${pick(DEFAULT_OUTROS)}`;
 }
 
 function ruleBasedRecommendations(summary) {
@@ -73,7 +211,7 @@ function ruleBasedRecommendations(summary) {
 
 async function llmReply(summary, petState, userMessage) {
   if (!config.anthropicApiKey) {
-    return ruleBasedReply(summary, petState);
+    return ruleBasedReply(summary, petState, userMessage);
   }
 
   try {
@@ -113,10 +251,10 @@ async function llmReply(summary, petState, userMessage) {
       .filter(Boolean)
       .join('\n');
 
-    return text || ruleBasedReply(summary, petState);
+    return text || ruleBasedReply(summary, petState, userMessage);
   } catch (err) {
     console.error('AI service error, falling back to rule-based:', err.message);
-    return ruleBasedReply(summary, petState);
+    return ruleBasedReply(summary, petState, userMessage);
   }
 }
 
