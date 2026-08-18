@@ -1,0 +1,98 @@
+const config = require('../config/config');
+
+/**
+ * Считает суммарное потребление по типу за последние N дней.
+ */
+function sumByType(readings, type, days = 7) {
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  return readings
+    .filter((r) => r.type === type && new Date(r.timestamp).getTime() >= cutoff)
+    .reduce((acc, r) => acc + r.value, 0);
+}
+
+/**
+ * Сравнивает текущий период с предыдущим и считает динамику в процентах.
+ */
+function trendPercent(readings, type, days = 7) {
+  const now = Date.now();
+  const currentStart = now - days * 24 * 60 * 60 * 1000;
+  const prevStart = now - 2 * days * 24 * 60 * 60 * 1000;
+
+  const current = readings
+    .filter((r) => r.type === type && new Date(r.timestamp).getTime() >= currentStart)
+    .reduce((acc, r) => acc + r.value, 0);
+
+  const previous = readings
+    .filter(
+      (r) =>
+        r.type === type &&
+        new Date(r.timestamp).getTime() >= prevStart &&
+        new Date(r.timestamp).getTime() < currentStart
+    )
+    .reduce((acc, r) => acc + r.value, 0);
+
+  if (previous === 0) return { current, previous, changePercent: 0 };
+
+  const changePercent = ((current - previous) / previous) * 100;
+  return { current, previous, changePercent: Math.round(changePercent * 10) / 10 };
+}
+
+/**
+ * Переводит потребление в деньги (KZT) по тарифам.
+ */
+function toMoney(type, value) {
+  if (type === 'water') return value * config.tariffs.water_kzt_per_liter;
+  if (type === 'electricity') return value * config.tariffs.electricity_kwh_per_household_per_day
+    ? value * config.tariffs.electricity_kzt_per_kwh
+    : 0;
+  return 0;
+}
+
+/**
+ * Собирает полную сводку для дашборда и питомца.
+ */
+function buildSummary(readings) {
+  const water7d = sumByType(readings, 'water', 7);
+  const electricity7d = sumByType(readings, 'electricity', 7);
+
+  const waterTrend = trendPercent(readings, 'water', 7);
+  const electricityTrend = trendPercent(readings, 'electricity', 7);
+
+  const waterCost = water7d * config.tariffs.water_kzt_per_liter;
+  const electricityCost = electricity7d * config.tariffs.electricity_kzt_per_kwh;
+
+  // Простая эвристика аномалии: рост более чем на 25% к прошлой неделе
+  const anomalies = [];
+  if (waterTrend.changePercent > 25) {
+    anomalies.push({
+      type: 'water',
+      message: 'Резкий рост расхода воды — возможна утечка.',
+      changePercent: waterTrend.changePercent,
+    });
+  }
+  if (electricityTrend.changePercent > 25) {
+    anomalies.push({
+      type: 'electricity',
+      message: 'Резкий рост расхода электроэнергии — проверьте приборы.',
+      changePercent: electricityTrend.changePercent,
+    });
+  }
+
+  return {
+    period_days: 7,
+    water: {
+      total_liters: Math.round(water7d),
+      cost_kzt: Math.round(waterCost),
+      trend_percent: waterTrend.changePercent,
+    },
+    electricity: {
+      total_kwh: Math.round(electricity7d * 10) / 10,
+      cost_kzt: Math.round(electricityCost),
+      trend_percent: electricityTrend.changePercent,
+    },
+    total_cost_kzt: Math.round(waterCost + electricityCost),
+    anomalies,
+  };
+}
+
+module.exports = { sumByType, trendPercent, toMoney, buildSummary };

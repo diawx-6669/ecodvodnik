@@ -1,0 +1,106 @@
+# 🌱 ЭкоДвойник (EcoTwin)
+
+AI-платформа для мониторинга потребления воды и электроэнергии с "живым"
+цифровым питомцем-ассистентом. Проект для трека **EcoFin** хакатона
+**Future Minds Hackathon 2026**.
+
+Питомец реагирует на данные с датчиков (Arduino Uno) или на данные,
+введённые вручную, даёт персональные AI-рекомендации по экономии ресурсов
+и показывает, сколько денег и ресурсов сэкономил пользователь.
+
+---
+
+## 🗂 Структура проекта
+
+```
+ecodvoinik/
+├── arduino/            # Прошивки для Arduino Uno (датчики воды и электричества)
+│   ├── water_sensor/
+│   └── electricity_sensor/
+├── backend/            # Node.js/Express API сервер
+│   ├── config/         # Настройки, тарифы, переменные окружения
+│   ├── routes/         # Маршруты API
+│   ├── controllers/    # Обработчики запросов
+│   ├── services/       # Бизнес-логика (AI, аналитика, состояние питомца)
+│   ├── models/         # Модели данных
+│   └── data/           # Хранилище (JSON "база данных")
+├── frontend/           # Веб-интерфейс (HTML/CSS/JS)
+│   ├── css/
+│   ├── js/
+│   └── assets/pet/     # Изображения/состояния питомца
+├── data/                # Синтетические демо-данные (CSV)
+├── scripts/             # Вспомогательные скрипты (генерация демо-данных)
+└── docs/                 # Документация проекта
+```
+
+## 🚀 Быстрый старт
+
+### 1. Backend
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+Сервер поднимется на `http://localhost:3000` и будет отдавать фронтенд
+и API одновременно.
+
+### 2. Frontend
+
+Отдельно поднимать не нужно — backend раздаёт статику из папки `frontend/`.
+Просто откройте `http://localhost:3000` в браузере после запуска сервера.
+
+### 3. Демо-данные (без реального железа)
+
+```bash
+cd scripts
+pip install -r requirements.txt
+python3 generate_sample_data.py
+```
+
+Скрипт создаст `data/sample_consumption.csv` с синтетической историей
+потребления — можно импортировать через API для демонстрации без Arduino.
+
+### 4. Arduino Uno
+
+В папке `arduino/` — две прошивки:
+- `water_sensor/` — счётчик воды на герконовом/импульсном датчике
+- `electricity_sensor/` — счётчик электричества на токовых клещах (SCT-013)
+
+Arduino Uno не имеет Wi-Fi, поэтому данные идут через USB Serial на
+компьютер, а оттуда — на backend через скрипт-мост `scripts/serial_bridge.py`:
+
+```
+Arduino Uno --USB--> serial_bridge.py --HTTP POST--> Backend
+```
+
+```bash
+cd scripts
+pip install -r requirements.txt
+python3 serial_bridge.py --port COM3   # укажите свой порт
+```
+
+Подробности — в `arduino/README.md`.
+
+## 🔌 Переменные окружения
+
+Создайте `backend/.env` (см. `backend/.env.example`):
+
+```
+PORT=3000
+ANTHROPIC_API_KEY=your_key_here   # опционально, для реальных AI-ответов питомца
+```
+
+Без ключа ассистент работает на встроенной rule-based логике (заглушка),
+чтобы демо работало даже без интернета/ключа API.
+
+## 📄 Документация
+
+- `docs/architecture.md` — архитектура системы
+- `docs/api-reference.md` — описание API-эндпоинтов
+- `docs/pitch-notes.md` — заметки для питч-дека
+
+## 🏆 Хакатон
+
+Future Minds Hackathon 2026 · Трек EcoFin

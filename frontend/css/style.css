@@ -1,0 +1,183 @@
+:root {
+  --green: #2f9e44;
+  --green-light: #ebfbee;
+  --blue: #1c7ed6;
+  --blue-light: #e7f5ff;
+  --warn: #e8590c;
+  --text: #212529;
+  --muted: #868e96;
+  --bg: #f8f9fa;
+  --card-bg: #ffffff;
+  --radius: 16px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.topbar {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 20px 32px;
+  background: var(--green);
+  color: white;
+}
+.logo { font-size: 22px; font-weight: 700; }
+.tagline { font-size: 14px; opacity: 0.9; }
+
+.layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 24px;
+  padding: 24px 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+@media (max-width: 800px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+/* Питомец */
+.pet-panel {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: fit-content;
+}
+
+.pet-avatar {
+  font-size: 90px;
+  line-height: 1;
+  margin-bottom: 8px;
+  transition: transform 0.3s ease;
+}
+.pet-avatar[data-mood="happy"] { filter: none; }
+.pet-avatar[data-mood="worried"] { filter: saturate(0.7); }
+.pet-avatar[data-mood="sad"] { filter: grayscale(0.4); transform: scale(0.95); }
+
+.pet-level { font-weight: 600; margin-top: 4px; }
+.pet-mood-label { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+
+.chat-box {
+  width: 100%;
+  border-top: 1px solid #eee;
+  padding-top: 16px;
+}
+
+.chat-messages {
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.msg {
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  max-width: 90%;
+  white-space: pre-line;
+}
+.msg.user {
+  align-self: flex-end;
+  background: var(--blue-light);
+}
+.msg.pet {
+  align-self: flex-start;
+  background: var(--green-light);
+}
+
+.chat-form { display: flex; gap: 8px; }
+.chat-form input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #dee2e6;
+}
+.chat-form button, .reading-form button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--green);
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+}
+.chat-form button:hover, .reading-form button:hover { opacity: 0.9; }
+
+/* Дашборд */
+.dashboard-panel {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 16px 0 24px;
+}
+
+@media (max-width: 700px) {
+  .cards { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 16px;
+}
+.card.highlight { background: var(--green-light); }
+.card-title { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.card-value { font-size: 22px; font-weight: 700; }
+.card-sub { font-size: 13px; color: var(--muted); }
+.card-trend { font-size: 13px; margin-top: 4px; font-weight: 600; }
+
+.anomalies { margin-bottom: 20px; }
+.anomaly-item {
+  background: #fff3cd;
+  border-left: 4px solid var(--warn);
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.recommendations { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.recommendation-item {
+  background: var(--blue-light);
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+.recommendation-item .rec-title { font-weight: 700; margin-bottom: 4px; }
+.recommendation-item .rec-savings { font-size: 13px; color: var(--green); font-weight: 600; margin-top: 6px; }
+
+.reading-form { display: flex; gap: 10px; }
+.reading-form select, .reading-form input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #dee2e6;
+}
+.reading-form input { flex: 1; }
+
+.footer {
+  text-align: center;
+  padding: 20px;
+  color: var(--muted);
+  font-size: 13px;
+}

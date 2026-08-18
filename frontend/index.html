@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ЭкоДвойник — твой ассистент по ресурсам</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="logo">🌱 ЭкоДвойник</div>
+    <div class="tagline">AI-платформа для экономии ресурсов</div>
+  </header>
+
+  <main class="layout">
+    <!-- Питомец -->
+    <section class="pet-panel">
+      <div id="pet-avatar" class="pet-avatar" data-mood="neutral">🌱</div>
+      <div class="pet-level">Уровень: <span id="pet-level">1</span></div>
+      <div class="pet-mood-label" id="pet-mood-label">Настроение: нейтральное</div>
+
+      <div class="chat-box">
+        <div id="chat-messages" class="chat-messages"></div>
+        <form id="chat-form" class="chat-form">
+          <input
+            type="text"
+            id="chat-input"
+            placeholder="Спроси у питомца, куда уходят ресурсы..."
+            autocomplete="off"
+          />
+          <button type="submit">Отправить</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Дашборд -->
+    <section class="dashboard-panel">
+      <h2>Сводка за неделю</h2>
+      <div class="cards">
+        <div class="card">
+          <div class="card-title">💧 Вода</div>
+          <div class="card-value" id="water-total">— л</div>
+          <div class="card-sub" id="water-cost">— ₸</div>
+          <div class="card-trend" id="water-trend">—</div>
+        </div>
+        <div class="card">
+          <div class="card-title">⚡ Электричество</div>
+          <div class="card-value" id="electricity-total">— кВт·ч</div>
+          <div class="card-sub" id="electricity-cost">— ₸</div>
+          <div class="card-trend" id="electricity-trend">—</div>
+        </div>
+        <div class="card highlight">
+          <div class="card-title">💰 Итого за неделю</div>
+          <div class="card-value" id="total-cost">— ₸</div>
+        </div>
+      </div>
+
+      <div id="anomalies" class="anomalies"></div>
+
+      <h3>Рекомендации</h3>
+      <div id="recommendations" class="recommendations"></div>
+
+      <h3>Добавить показание вручную</h3>
+      <form id="reading-form" class="reading-form">
+        <select id="reading-type">
+          <option value="water">Вода (литры)</option>
+          <option value="electricity">Электричество (кВт·ч)</option>
+        </select>
+        <input type="number" id="reading-value" placeholder="Значение" step="0.01" required />
+        <button type="submit">Добавить</button>
+      </form>
+    </section>
+  </main>
+
+  <footer class="footer">
+    Future Minds Hackathon 2026 · Трек EcoFin · MVP
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/pet.js"></script>
+  <script src="js/chart.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
