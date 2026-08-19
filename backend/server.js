@@ -33,5 +33,5 @@ app.get('*', (req, res) => {
 app.use(errorHandler);
 
 app.listen(config.port, () => {
-  console.log(`🌱 ЭкоДвойник backend запущен на http://localhost:${config.port}`);
+  console.log(`ЭкоДвойник backend запущен на http://localhost:${config.port}`);
 });

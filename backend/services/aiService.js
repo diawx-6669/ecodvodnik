@@ -13,17 +13,16 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function formatTrendLine(label, emoji, value, unit, cost, trend) {
+function formatTrendLine(label, value, unit, cost, trend) {
   const arrow = trend > 0 ? '↑' : trend < 0 ? '↓' : '→';
   const sign = trend > 0 ? '+' : '';
-  return `${emoji} ${label}: ${value} ${unit} (${cost} ₸), тренд ${arrow} ${sign}${trend}%`;
+  return `${label}: ${value} ${unit} (${cost} ₸), тренд ${arrow} ${sign}${trend}%`;
 }
 
 function summaryLines(summary) {
   const lines = [
     formatTrendLine(
       'Вода',
-      '💧',
       summary.water.total_liters,
       'л',
       summary.water.cost_kzt,
@@ -31,26 +30,25 @@ function summaryLines(summary) {
     ),
     formatTrendLine(
       'Электричество',
-      '⚡',
       summary.electricity.total_kwh,
       'кВт·ч',
       summary.electricity.cost_kzt,
       summary.electricity.trend_percent
     ),
   ];
-  summary.anomalies.forEach((a) => lines.push(`⚠️ ${a.message}`));
+  summary.anomalies.forEach((a) => lines.push(a.message));
   return lines.join('\n');
 }
 
 const GREETING_INTROS = [
-  'Привет! Рад тебя видеть 🌱',
+  'Привет! Рад тебя видеть.',
   'Хэй! Как дела? Вот что у нас происходит.',
   'О, привет! Заглянул проверить ресурсы?',
 ];
 
 const HOW_ARE_YOU_REPLIES = {
   happy: [
-    'У меня отлично! Расту и зеленею благодаря тебе 🌳',
+    'У меня отлично! Расту и зеленею благодаря тебе.',
     'Чувствую себя супер — экономия на этой неделе видна невооружённым глазом!',
   ],
   neutral: [
@@ -62,7 +60,7 @@ const HOW_ARE_YOU_REPLIES = {
     'Есть небольшая тревога — потребление растёт быстрее обычного.',
   ],
   sad: [
-    'Не очень, если честно... кажется, где-то серьёзно утекают ресурсы 😟',
+    'Не очень, если честно... кажется, где-то серьёзно утекают ресурсы.',
     'Мне тяжеловато сейчас — расход сильно вырос, глянь на аномалии ниже.',
   ],
 };
@@ -80,7 +78,7 @@ const ELECTRICITY_ONLY_INTROS = [
 ];
 
 const THANKS_REPLIES = [
-  'Пожалуйста! Я тут ради тебя 🌱',
+  'Пожалуйста! Я тут ради тебя.',
   'Всегда рад помочь — обращайся!',
   'Не за что, продолжай в том же духе!',
 ];
@@ -116,7 +114,7 @@ function ruleBasedReply(summary, petState, userMessage = '') {
   // Вопрос "почему" — объясняем через аномалии, если они есть
   if (msg.includes('почему') || msg.includes('из-за чего') || msg.includes('отчего')) {
     if (summary.anomalies.length > 0) {
-      const explanations = summary.anomalies.map((a) => `⚠️ ${a.message}`).join('\n');
+      const explanations = summary.anomalies.map((a) => a.message).join('\n');
       return `Скорее всего вот почему:\n${explanations}\n\nПроверь рекомендации ниже — там конкретные шаги.`;
     }
     return 'Пока не вижу явных причин для беспокойства — цифры в пределах нормы. Загляни в сводку ниже.';
@@ -136,14 +134,13 @@ function ruleBasedReply(summary, petState, userMessage = '') {
       `${pick(WATER_ONLY_INTROS)}\n` +
       formatTrendLine(
         'Вода',
-        '💧',
         summary.water.total_liters,
         'л',
         summary.water.cost_kzt,
         summary.water.trend_percent
       ) +
       (summary.water.trend_percent > 15
-        ? '\n⚠️ Расход заметно выше обычного — возможно, стоит проверить утечки.'
+        ? '\nРасход заметно выше обычного — возможно, стоит проверить утечки.'
         : '\nВсё в пределах нормы.')
     );
   }
@@ -154,14 +151,13 @@ function ruleBasedReply(summary, petState, userMessage = '') {
       `${pick(ELECTRICITY_ONLY_INTROS)}\n` +
       formatTrendLine(
         'Электричество',
-        '⚡',
         summary.electricity.total_kwh,
         'кВт·ч',
         summary.electricity.cost_kzt,
         summary.electricity.trend_percent
       ) +
       (summary.electricity.trend_percent > 15
-        ? '\n⚠️ Потребление выросло — проверь энергоёмкие приборы.'
+        ? '\nПотребление выросло — проверь энергоёмкие приборы.'
         : '\nВсё в пределах нормы.')
     );
   }
@@ -178,7 +174,7 @@ function ruleBasedReply(summary, petState, userMessage = '') {
 
   // По умолчанию — реагируем на настроение + сводка + разный outro
   const moodIntro = {
-    happy: pick(['Я расту! Спасибо, что бережёшь ресурсы 🌱', 'Дела идут отлично, посмотри:']),
+    happy: pick(['Я расту! Спасибо, что бережёшь ресурсы.', 'Дела идут отлично, посмотри:']),
     neutral: pick(['Вот что у нас происходит на этой неделе:', 'Собрал свежую сводку для тебя:']),
     worried: pick(['Хм, расход немного подрос. Присмотримся?', 'Есть на что обратить внимание:']),
     sad: pick(['Ой... мне не очень хорошо, кажется где-то теряются ресурсы.', 'Тревожные новости:']),

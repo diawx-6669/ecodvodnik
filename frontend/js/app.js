@@ -1,4 +1,5 @@
-// Главная логика фронтенда: загрузка данных, обновление дашборда, чат с питомцем.
+// Главная логика фронтенда: загрузка данных, обновление дашборда, чат с питомцем,
+// живой статус подключённого устройства (Arduino) и имя питомца.
 
 async function loadDashboard() {
   try {
@@ -10,43 +11,6 @@ async function loadDashboard() {
     renderRecommendations(recommendations);
   } catch (err) {
     console.error('Не удалось загрузить дашборд:', err);
-  }
-}
-
-function formatSecondsAgo(seconds) {
-  if (seconds < 60) return `${seconds} сек назад`;
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} мин назад`;
-  const hours = Math.floor(minutes / 60);
-  return `${hours} ч назад`;
-}
-
-async function loadDeviceStatus() {
-  const dot = document.getElementById('device-dot');
-  const text = document.getElementById('device-status-text');
-
-  try {
-    const status = await api.getDeviceStatus();
-
-    if (!status.lastReading) {
-      dot.className = 'device-dot device-dot--none';
-      text.textContent = 'Arduino ещё не подключался — используются ручные/демо-данные';
-      return;
-    }
-
-    const typeLabel = status.lastReading.type === 'water' ? 'воды' : 'электричества';
-
-    if (status.connected) {
-      dot.className = 'device-dot device-dot--online';
-      text.textContent = `🟢 Датчик на связи — последнее показание ${typeLabel} ${formatSecondsAgo(status.secondsAgo)} (всего с устройства: ${status.totalReadingsFromDevice})`;
-    } else {
-      dot.className = 'device-dot device-dot--offline';
-      text.textContent = `⚪ Датчик офлайн — последний раз выходил на связь ${formatSecondsAgo(status.secondsAgo)}`;
-    }
-  } catch (err) {
-    dot.className = 'device-dot device-dot--none';
-    text.textContent = 'Не удалось проверить статус устройства';
-    console.error(err);
   }
 }
 
@@ -69,7 +33,7 @@ function renderSummary(summary) {
   summary.anomalies.forEach((a) => {
     const div = document.createElement('div');
     div.className = 'anomaly-item';
-    div.textContent = `⚠️ ${a.message}`;
+    div.textContent = a.message;
     anomaliesEl.appendChild(div);
   });
 }
@@ -98,6 +62,67 @@ async function loadChatHistory() {
   }
 }
 
+// --- Живой статус устройства (Arduino) ---
+
+function formatSecondsAgo(seconds) {
+  if (seconds < 60) return `${seconds} сек назад`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} мин назад`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours} ч назад`;
+}
+
+async function loadDeviceStatus() {
+  const dot = document.getElementById('device-dot');
+  const text = document.getElementById('device-status-text');
+
+  try {
+    const status = await api.getDeviceStatus();
+
+    if (!status.lastReading) {
+      dot.className = 'device-dot device-dot--none';
+      text.textContent = 'Arduino ещё не подключался — используются ручные/демо-данные';
+      return;
+    }
+
+    const typeLabel = status.lastReading.type === 'water' ? 'воды' : 'электричества';
+
+    if (status.connected) {
+      dot.className = 'device-dot device-dot--online';
+      text.textContent = `Датчик на связи — последнее показание ${typeLabel} ${formatSecondsAgo(status.secondsAgo)} (всего с устройства: ${status.totalReadingsFromDevice})`;
+    } else {
+      dot.className = 'device-dot device-dot--offline';
+      text.textContent = `Датчик офлайн — последний раз выходил на связь ${formatSecondsAgo(status.secondsAgo)}`;
+    }
+  } catch (err) {
+    dot.className = 'device-dot device-dot--none';
+    text.textContent = 'Не удалось проверить статус устройства';
+    console.error(err);
+  }
+}
+
+// --- Имя питомца (хранится локально в браузере пользователя) ---
+
+const PET_NAME_KEY = 'ecodvoinik_pet_name';
+
+function loadPetName() {
+  const saved = localStorage.getItem(PET_NAME_KEY);
+  if (saved) {
+    document.getElementById('pet-name-text').textContent = saved;
+  }
+}
+
+document.getElementById('rename-pet-btn').addEventListener('click', () => {
+  const current = localStorage.getItem(PET_NAME_KEY) || 'Эко';
+  const name = prompt('Как назовём питомца?', current);
+  if (name && name.trim()) {
+    const trimmed = name.trim();
+    localStorage.setItem(PET_NAME_KEY, trimmed);
+    document.getElementById('pet-name-text').textContent = trimmed;
+    appendChatMessage('pet', `Теперь меня зовут ${trimmed}. Мне нравится!`);
+  }
+});
+
 // --- Обработчики форм ---
 
 document.getElementById('chat-form').addEventListener('submit', async (e) => {
@@ -114,7 +139,7 @@ document.getElementById('chat-form').addEventListener('submit', async (e) => {
     appendChatMessage('pet', reply);
     renderPetState(pet);
   } catch (err) {
-    appendChatMessage('pet', 'Ой, у меня что-то со связью... попробуй ещё раз.');
+    appendChatMessage('pet', 'У меня что-то со связью... попробуй ещё раз.');
     console.error(err);
   }
 });
@@ -134,28 +159,6 @@ document.getElementById('reading-form').addEventListener('submit', async (e) => 
   }
 });
 
-// --- Имя питомца (хранится локально в браузере пользователя) ---
-
-const PET_NAME_KEY = 'ecodvoinik_pet_name';
-
-function loadPetName() {
-  const saved = localStorage.getItem(PET_NAME_KEY);
-  const displayEl = document.getElementById('pet-name-display');
-  if (saved) {
-    displayEl.textContent = `${saved} ✏️`;
-  }
-}
-
-document.getElementById('rename-pet-btn').addEventListener('click', () => {
-  const current = localStorage.getItem(PET_NAME_KEY) || '';
-  const name = prompt('Как назовём питомца?', current);
-  if (name && name.trim()) {
-    localStorage.setItem(PET_NAME_KEY, name.trim());
-    document.getElementById('pet-name-display').textContent = `${name.trim()} ✏️`;
-    appendChatMessage('pet', `Ура, теперь меня зовут ${name.trim()}! 🎉`);
-  }
-});
-
 // --- Инициализация ---
 loadPetName();
 loadDashboard();
@@ -164,5 +167,5 @@ loadChatHistory();
 
 // Автообновление дашборда раз в 30 секунд (например, чтобы видеть данные с Arduino)
 setInterval(loadDashboard, 30000);
-// Статус устройства обновляем чаще — это "живой" индикатор связи с железом
+// Статус устройства обновляем чаще — это живой индикатор связи с железом
 setInterval(loadDeviceStatus, 10000);
