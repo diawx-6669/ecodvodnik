@@ -113,6 +113,23 @@ function ruleBasedReply(summary, petState, userMessage = '') {
     return `${feeling}\n\n${summaryLines(summary)}`;
   }
 
+  // Вопрос "почему" — объясняем через аномалии, если они есть
+  if (msg.includes('почему') || msg.includes('из-за чего') || msg.includes('отчего')) {
+    if (summary.anomalies.length > 0) {
+      const explanations = summary.anomalies.map((a) => `⚠️ ${a.message}`).join('\n');
+      return `Скорее всего вот почему:\n${explanations}\n\nПроверь рекомендации ниже — там конкретные шаги.`;
+    }
+    return 'Пока не вижу явных причин для беспокойства — цифры в пределах нормы. Загляни в сводку ниже.';
+  }
+
+  // Просьба дать совет/рекомендацию
+  if (
+    ['совет', 'рекоменд', 'как сэконом'].some((w) => msg.includes(w)) ||
+    (msg.includes('что') && msg.includes('делать'))
+  ) {
+    return 'Загляни в раздел "Рекомендации" на дашборде справа — там конкретные советы с расчётом экономии в тенге. Обновляю их каждый раз, когда приходят новые данные.';
+  }
+
   // Вопрос только про воду
   if (/вод[аыуе]/.test(msg) && !(msg.includes('свет') || msg.includes('электр'))) {
     return (

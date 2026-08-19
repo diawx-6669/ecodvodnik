@@ -13,6 +13,43 @@ async function loadDashboard() {
   }
 }
 
+function formatSecondsAgo(seconds) {
+  if (seconds < 60) return `${seconds} сек назад`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} мин назад`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours} ч назад`;
+}
+
+async function loadDeviceStatus() {
+  const dot = document.getElementById('device-dot');
+  const text = document.getElementById('device-status-text');
+
+  try {
+    const status = await api.getDeviceStatus();
+
+    if (!status.lastReading) {
+      dot.className = 'device-dot device-dot--none';
+      text.textContent = 'Arduino ещё не подключался — используются ручные/демо-данные';
+      return;
+    }
+
+    const typeLabel = status.lastReading.type === 'water' ? 'воды' : 'электричества';
+
+    if (status.connected) {
+      dot.className = 'device-dot device-dot--online';
+      text.textContent = `🟢 Датчик на связи — последнее показание ${typeLabel} ${formatSecondsAgo(status.secondsAgo)} (всего с устройства: ${status.totalReadingsFromDevice})`;
+    } else {
+      dot.className = 'device-dot device-dot--offline';
+      text.textContent = `⚪ Датчик офлайн — последний раз выходил на связь ${formatSecondsAgo(status.secondsAgo)}`;
+    }
+  } catch (err) {
+    dot.className = 'device-dot device-dot--none';
+    text.textContent = 'Не удалось проверить статус устройства';
+    console.error(err);
+  }
+}
+
 function renderSummary(summary) {
   document.getElementById('water-total').textContent = `${summary.water.total_liters} л`;
   document.getElementById('water-cost').textContent = `${summary.water.cost_kzt} ₸`;
@@ -97,9 +134,35 @@ document.getElementById('reading-form').addEventListener('submit', async (e) => 
   }
 });
 
+// --- Имя питомца (хранится локально в браузере пользователя) ---
+
+const PET_NAME_KEY = 'ecodvoinik_pet_name';
+
+function loadPetName() {
+  const saved = localStorage.getItem(PET_NAME_KEY);
+  const displayEl = document.getElementById('pet-name-display');
+  if (saved) {
+    displayEl.textContent = `${saved} ✏️`;
+  }
+}
+
+document.getElementById('rename-pet-btn').addEventListener('click', () => {
+  const current = localStorage.getItem(PET_NAME_KEY) || '';
+  const name = prompt('Как назовём питомца?', current);
+  if (name && name.trim()) {
+    localStorage.setItem(PET_NAME_KEY, name.trim());
+    document.getElementById('pet-name-display').textContent = `${name.trim()} ✏️`;
+    appendChatMessage('pet', `Ура, теперь меня зовут ${name.trim()}! 🎉`);
+  }
+});
+
 // --- Инициализация ---
+loadPetName();
 loadDashboard();
+loadDeviceStatus();
 loadChatHistory();
 
 // Автообновление дашборда раз в 30 секунд (например, чтобы видеть данные с Arduino)
 setInterval(loadDashboard, 30000);
+// Статус устройства обновляем чаще — это "живой" индикатор связи с железом
+setInterval(loadDeviceStatus, 10000);

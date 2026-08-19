@@ -20,6 +20,7 @@ async function apiPost(path, body) {
 
 const api = {
   getSummary: () => apiGet('/analytics/summary'),
+  getDeviceStatus: () => apiGet('/analytics/device-status'),
   getRecommendations: () => apiGet('/assistant/recommendations'),
   getHistory: () => apiGet('/assistant/history'),
   sendMessage: (message) => apiPost('/assistant/message', { message }),
