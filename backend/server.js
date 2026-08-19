@@ -34,6 +34,12 @@ app.get('*', (req, res) => {
 
 app.use(errorHandler);
 
-app.listen(config.port, () => {
-  console.log(`ЭкоДвойник backend запущен на http://localhost:${config.port}`);
-});
+// Экспортируем app отдельно от listen(), чтобы тесты (supertest) могли
+// импортировать сервер, не поднимая реальный порт.
+if (require.main === module) {
+  app.listen(config.port, () => {
+    console.log(`ЭкоДвойник backend запущен на http://localhost:${config.port}`);
+  });
+}
+
+module.exports = app;

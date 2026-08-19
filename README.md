@@ -53,6 +53,13 @@ npm run dev
 Сервер поднимется на `http://localhost:3000` и будет отдавать фронтенд
 и API одновременно.
 
+Запустить тесты (Jest + Supertest, 20 тестов — auth, readings, health):
+
+```bash
+cd backend
+npm test
+```
+
 ### 2. Frontend
 
 Отдельно поднимать не нужно — backend раздаёт статику из папки `frontend/`.
