@@ -20,6 +20,9 @@ function addReading(req, res) {
   }
 
   const reading = createReading({ type, value, source, unit, timestamp });
+  // Если человек вошёл в аккаунт — привязываем показание к нему, чтобы
+  // дом/школа/бизнес видели каждый свои данные, а не общий демо-поток.
+  if (req.user) reading.userId = req.user.id;
 
   const db = readDb();
   db.readings.push(reading);
@@ -34,6 +37,12 @@ function listReadings(req, res) {
   const { type, limit } = req.query;
 
   let readings = db.readings;
+  // Показания без владельца (Arduino/демо) видны всем как общая демо-лента.
+  // Показания конкретного аккаунта видит только он сам — гостю чужие
+  // приватные данные (например, показания школы) не показываются.
+  readings = req.user
+    ? readings.filter((r) => !r.userId || r.userId === req.user.id)
+    : readings.filter((r) => !r.userId);
   if (type) readings = readings.filter((r) => r.type === type);
   readings = readings.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   if (limit) readings = readings.slice(0, Number(limit));
@@ -50,7 +59,11 @@ function importReadings(req, res) {
   }
 
   const db = readDb();
-  const created = readings.map((r) => createReading({ ...r, source: 'csv_import' }));
+  const created = readings.map((r) => {
+    const reading = createReading({ ...r, source: 'csv_import' });
+    if (req.user) reading.userId = req.user.id;
+    return reading;
+  });
   db.readings.push(...created);
   writeDb(db);
 

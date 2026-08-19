@@ -1,15 +1,32 @@
-// Заглушка модели пользователя. В MVP хакатона мультипользовательский режим
-// не обязателен, но структура заложена для дальнейшего расширения.
+// Модель пользователя. Аудитория сайта — не только жилые дома, но и школы
+// и малый бизнес, поэтому у аккаунта есть тип (type) и "размер" (unitsCount),
+// который бэкенд использует для персональных нормативов и рекомендаций:
+//   household -> количество человек в семье
+//   school    -> количество учеников
+//   business  -> количество сотрудников
 
-function createUser({ name, householdSize = 1, type = 'household' }) {
-  // type: 'household' | 'school' | 'business'
+const ALLOWED_TYPES = ['household', 'school', 'business'];
+
+function createUser({ name, email, passwordHash, type = 'household', unitsCount = 1, organizationName = '' }) {
   return {
-    id: `user_${Date.now()}`,
+    id: `user_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     name,
-    householdSize,
-    type,
+    email: email.toLowerCase().trim(),
+    passwordHash,
+    type: ALLOWED_TYPES.includes(type) ? type : 'household',
+    // Для дома — число жильцов, для школы — число учеников, для бизнеса — сотрудников
+    unitsCount: Math.max(1, Number(unitsCount) || 1),
+    // Название школы/компании (необязательно, для домов не используется)
+    organizationName: organizationName ? String(organizationName).trim() : '',
     createdAt: new Date().toISOString(),
   };
 }
 
-module.exports = { createUser };
+// Убирает приватные поля (хеш пароля) перед отправкой на фронтенд
+function toPublicUser(user) {
+  if (!user) return null;
+  const { passwordHash, ...publicUser } = user;
+  return publicUser;
+}
+
+module.exports = { createUser, toPublicUser, ALLOWED_TYPES };

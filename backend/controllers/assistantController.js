@@ -9,23 +9,31 @@ async function sendMessage(req, res) {
   const { message } = req.body;
 
   const db = readDb();
-  const summary = analyticsService.buildSummary(db.readings);
+  const readings = req.user
+    ? db.readings.filter((r) => !r.userId || r.userId === req.user.id)
+    : db.readings.filter((r) => !r.userId);
+  const summary = analyticsService.buildSummary(readings, req.user);
   const petState = petStateService.computePetState(summary);
 
-  const reply = await aiService.llmReply(summary, petState, message);
+  const reply = await aiService.llmReply(summary, petState, message, req.user);
 
-  db.messages.push({
+  const userMsg = {
     id: `${Date.now()}`,
     from: 'user',
     text: message || '',
     timestamp: new Date().toISOString(),
-  });
-  db.messages.push({
+  };
+  const petMsg = {
     id: `${Date.now()}_pet`,
     from: 'pet',
     text: reply,
     timestamp: new Date().toISOString(),
-  });
+  };
+  if (req.user) {
+    userMsg.userId = req.user.id;
+    petMsg.userId = req.user.id;
+  }
+  db.messages.push(userMsg, petMsg);
   writeDb(db);
 
   return res.json({ reply, pet: petState, summary });
@@ -34,7 +42,10 @@ async function sendMessage(req, res) {
 // GET /api/assistant/recommendations
 function getRecommendations(req, res) {
   const db = readDb();
-  const summary = analyticsService.buildSummary(db.readings);
+  const readings = req.user
+    ? db.readings.filter((r) => !r.userId || r.userId === req.user.id)
+    : db.readings.filter((r) => !r.userId);
+  const summary = analyticsService.buildSummary(readings, req.user);
   const recommendations = aiService.ruleBasedRecommendations(summary);
 
   return res.json({ recommendations });
@@ -43,7 +54,13 @@ function getRecommendations(req, res) {
 // GET /api/assistant/history
 function getHistory(req, res) {
   const db = readDb();
-  return res.json(db.messages || []);
+  const messages = db.messages || [];
+  // Аккаунту показываем его переписку с питомцем (+ общую демо-историю без
+  // владельца); гостю — только общую демо-историю, без чужих сообщений.
+  const scoped = req.user
+    ? messages.filter((m) => !m.userId || m.userId === req.user.id)
+    : messages.filter((m) => !m.userId);
+  return res.json(scoped);
 }
 
 module.exports = { sendMessage, getRecommendations, getHistory };

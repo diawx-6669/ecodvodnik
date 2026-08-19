@@ -103,21 +103,23 @@ async function loadDeviceStatus() {
 
 // --- Имя питомца (хранится локально в браузере пользователя) ---
 
-const PET_NAME_KEY = 'ecodvoinik_pet_name';
+function petNameKey() {
+  // Разные аккаунты на одном браузере не должны делить имя питомца между собой
+  const user = window.appAuth && window.appAuth.user;
+  return user ? `ecodvoinik_pet_name_${user.id}` : 'ecodvoinik_pet_name_guest';
+}
 
 function loadPetName() {
-  const saved = localStorage.getItem(PET_NAME_KEY);
-  if (saved) {
-    document.getElementById('pet-name-text').textContent = saved;
-  }
+  document.getElementById('pet-name-text').textContent = localStorage.getItem(petNameKey()) || 'Эко';
 }
 
 document.getElementById('rename-pet-btn').addEventListener('click', () => {
-  const current = localStorage.getItem(PET_NAME_KEY) || 'Эко';
+  const key = petNameKey();
+  const current = localStorage.getItem(key) || 'Эко';
   const name = prompt('Как назовём питомца?', current);
   if (name && name.trim()) {
     const trimmed = name.trim();
-    localStorage.setItem(PET_NAME_KEY, trimmed);
+    localStorage.setItem(key, trimmed);
     document.getElementById('pet-name-text').textContent = trimmed;
     appendChatMessage('pet', `Теперь меня зовут ${trimmed}. Мне нравится!`);
   }
@@ -160,12 +162,24 @@ document.getElementById('reading-form').addEventListener('submit', async (e) => 
 });
 
 // --- Инициализация ---
-loadPetName();
-loadDashboard();
-loadDeviceStatus();
-loadChatHistory();
+// Раньше запускалось сразу при загрузке страницы. Теперь дашборд стартует
+// только после того, как человек вошёл в аккаунт (или выбрал гостевой
+// демо-режим) — это делает auth.js, вызывая window.initDashboard().
+let dashboardIntervalsStarted = false;
 
-// Автообновление дашборда раз в 30 секунд (например, чтобы видеть данные с Arduino)
-setInterval(loadDashboard, 30000);
-// Статус устройства обновляем чаще — это живой индикатор связи с железом
-setInterval(loadDeviceStatus, 10000);
+function initDashboard() {
+  loadPetName();
+  loadDashboard();
+  loadDeviceStatus();
+  loadChatHistory();
+
+  if (!dashboardIntervalsStarted) {
+    dashboardIntervalsStarted = true;
+    // Автообновление дашборда раз в 30 секунд (например, чтобы видеть данные с Arduino)
+    setInterval(loadDashboard, 30000);
+    // Статус устройства обновляем чаще — это живой индикатор связи с железом
+    setInterval(loadDeviceStatus, 10000);
+  }
+}
+
+window.initDashboard = initDashboard;

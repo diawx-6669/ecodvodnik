@@ -5,7 +5,13 @@ const petStateService = require('../services/petStateService');
 // GET /api/analytics/summary
 function getSummary(req, res) {
   const db = readDb();
-  const summary = analyticsService.buildSummary(db.readings);
+  // Вошедший пользователь видит свои показания + общие (Arduino/демо без
+  // владельца). Гость — только общие, чужие приватные данные не показываем.
+  const readings = req.user
+    ? db.readings.filter((r) => !r.userId || r.userId === req.user.id)
+    : db.readings.filter((r) => !r.userId);
+
+  const summary = analyticsService.buildSummary(readings, req.user);
   const petState = petStateService.computePetState(summary);
 
   return res.json({ summary, pet: petState });

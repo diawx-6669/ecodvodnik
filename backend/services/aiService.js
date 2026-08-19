@@ -93,12 +93,13 @@ const DEFAULT_OUTROS = [
 // символ, поэтому вместо regex с \b используем простые проверки includes()/test()
 // без анкоров границ — иначе ключевые слова вроде "привет" не будут матчиться.
 
-function ruleBasedReply(summary, petState, userMessage = '') {
+function ruleBasedReply(summary, petState, userMessage = '', user = null) {
   const msg = (userMessage || '').toLowerCase().trim();
 
-  // Приветствие
+  // Приветствие — если человек вошёл в аккаунт, обращаемся по имени
   if (['привет', 'хай', 'здравствуй', 'hello', 'hi'].some((w) => msg.includes(w))) {
-    return `${pick(GREETING_INTROS)}\n\n${summaryLines(summary)}`;
+    const namePart = user && user.name ? ` ${user.name}` : '';
+    return `${pick(GREETING_INTROS)}${namePart}\n\n${summaryLines(summary)}`;
   }
 
   // "Как дела?"
@@ -222,15 +223,24 @@ function ruleBasedRecommendations(summary) {
 // Если ключа нет — используем rule-based заглушку выше.
 // ---------------------------------------------------------------------------
 
-async function llmReply(summary, petState, userMessage) {
+async function llmReply(summary, petState, userMessage, user = null) {
   if (!config.anthropicApiKey) {
-    return ruleBasedReply(summary, petState, userMessage);
+    return ruleBasedReply(summary, petState, userMessage, user);
   }
 
   try {
+    const AUDIENCE_LABELS = { household: 'дом', school: 'школа', business: 'малый бизнес' };
+    const audienceContext = user
+      ? `Пользователя зовут ${user.name}, тип аккаунта — ${AUDIENCE_LABELS[user.type] || 'дом'}` +
+        (user.organizationName ? ` (${user.organizationName})` : '') +
+        `. Обращайся к нему по имени иногда. `
+      : '';
+
     const systemPrompt =
       'Ты — дружелюбный цифровой питомец-ассистент приложения ЭкоДвойник. ' +
-      'Ты живёшь в доме пользователя и "чувствуешь" на себе его потребление ресурсов. ' +
+      'Ты живёшь у пользователя (это может быть жилой дом, школа или малый бизнес) и ' +
+      '"чувствуешь" на себе его потребление ресурсов. ' +
+      audienceContext +
       'Отвечай коротко (2-4 предложения), тепло и с характером, на основе данных ниже. ' +
       'Данные пользователя: ' +
       JSON.stringify(summary) +
@@ -264,10 +274,10 @@ async function llmReply(summary, petState, userMessage) {
       .filter(Boolean)
       .join('\n');
 
-    return text || ruleBasedReply(summary, petState, userMessage);
+    return text || ruleBasedReply(summary, petState, userMessage, user);
   } catch (err) {
     console.error('AI service error, falling back to rule-based:', err.message);
-    return ruleBasedReply(summary, petState, userMessage);
+    return ruleBasedReply(summary, petState, userMessage, user);
   }
 }
 

@@ -5,15 +5,36 @@ module.exports = {
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || null,
   deviceToken: process.env.DEVICE_TOKEN || 'change_me_please',
 
+  // Секрет для подписи JWT-токенов авторизации. В проде — обязательно
+  // задавать свой длинный случайный секрет через переменную окружения.
+  jwtSecret: process.env.JWT_SECRET || 'dev_insecure_secret_change_me',
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '30d',
+
   // Примерные тарифы по Казахстану (KZT). Поменяйте под свой регион/питч.
   tariffs: {
     water_kzt_per_liter: 0.35,      // тенге за литр воды
     electricity_kzt_per_kwh: 25.0,  // тенге за кВт·ч
   },
 
-  // Средние нормативы потребления для сравнения (демо-значения)
+  // Средние нормативы потребления для сравнения — отдельно для каждого типа
+  // аудитории сайта: жилые дома, школы и малый бизнес. "unit" — за что
+  // считается норматив (человек / ученик / сотрудник), чтобы корректно
+  // умножать на размер household/organization пользователя.
   benchmarks: {
-    water_liters_per_person_per_day: 150,
-    electricity_kwh_per_household_per_day: 8,
+    household: {
+      label: 'на человека в семье',
+      water_liters_per_unit_per_day: 150,
+      electricity_kwh_per_unit_per_day: 2.5,
+    },
+    school: {
+      label: 'на ученика',
+      water_liters_per_unit_per_day: 20,
+      electricity_kwh_per_unit_per_day: 0.6,
+    },
+    business: {
+      label: 'на сотрудника',
+      water_liters_per_unit_per_day: 40,
+      electricity_kwh_per_unit_per_day: 3.2,
+    },
   },
 };

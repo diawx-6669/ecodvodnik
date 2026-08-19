@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const readingsController = require('../controllers/readingsController');
+const { optionalAuth } = require('../middleware/auth');
 
-router.post('/', readingsController.addReading);
-router.get('/', readingsController.listReadings);
-router.post('/import-csv', readingsController.importReadings);
+router.post('/', optionalAuth, readingsController.addReading);
+router.get('/', optionalAuth, readingsController.listReadings);
+router.post('/import-csv', optionalAuth, readingsController.importReadings);
 
 module.exports = router;

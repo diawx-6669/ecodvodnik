@@ -4,6 +4,7 @@ const path = require('path');
 const config = require('./config/config');
 const errorHandler = require('./middleware/errorHandler');
 
+const authRoutes = require('./routes/auth');
 const readingsRoutes = require('./routes/readings');
 const analyticsRoutes = require('./routes/analytics');
 const assistantRoutes = require('./routes/assistant');
@@ -14,6 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 // API routes
+app.use('/api/auth', authRoutes);
 app.use('/api/readings', readingsRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/assistant', assistantRoutes);

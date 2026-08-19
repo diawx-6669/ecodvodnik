@@ -9,15 +9,20 @@ const DB_PATH = path.join(__dirname, 'db.json');
 
 function readDb() {
   if (!fs.existsSync(DB_PATH)) {
-    const initial = { readings: [], messages: [] };
+    const initial = { users: [], readings: [], messages: [] };
     fs.writeFileSync(DB_PATH, JSON.stringify(initial, null, 2));
     return initial;
   }
   const raw = fs.readFileSync(DB_PATH, 'utf-8');
   try {
-    return JSON.parse(raw);
+    const data = JSON.parse(raw);
+    // На случай базы, созданной старой версией (до появления аккаунтов)
+    if (!data.users) data.users = [];
+    if (!data.readings) data.readings = [];
+    if (!data.messages) data.messages = [];
+    return data;
   } catch (e) {
-    return { readings: [], messages: [] };
+    return { users: [], readings: [], messages: [] };
   }
 }
 
