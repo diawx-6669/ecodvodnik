@@ -1,0 +1,20 @@
+# Arduino IDE
+.pio/
+.vscode/
+build/
+.DS_Store
+.clang-format
+.travis.yml
+
+# Dependencies
+libraries/
+
+# Build
+*.elf
+*.hex
+*.bin
+*.o
+*.d
+
+# Simulation
+simulation/
