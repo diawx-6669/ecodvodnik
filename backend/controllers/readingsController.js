@@ -13,6 +13,15 @@ function addReading(req, res) {
   if (!['water', 'electricity'].includes(type)) {
     return res.status(400).json({ error: "type должен быть 'water' или 'electricity'" });
   }
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue) || numericValue < 0) {
+    return res.status(400).json({ error: 'value должно быть неотрицательным числом' });
+  }
+  // Защита от опечаток/фрода: одно показание не может быть аномально огромным
+  // (10 000 л воды или 10 000 кВт·ч за раз нереалистично для одного показания).
+  if (numericValue > 10000) {
+    return res.status(400).json({ error: 'value превышает допустимый лимит для одного показания (10000)' });
+  }
 
   // Если запрос пришёл от устройства — простая проверка токена
   if (source === 'arduino' && token !== config.deviceToken) {
@@ -58,8 +67,14 @@ function importReadings(req, res) {
     return res.status(400).json({ error: 'Ожидается массив readings' });
   }
 
+  const valid = readings.filter((r) => {
+    const v = Number(r.value);
+    return ['water', 'electricity'].includes(r.type) && Number.isFinite(v) && v >= 0 && v <= 10000;
+  });
+  const skipped = readings.length - valid.length;
+
   const db = readDb();
-  const created = readings.map((r) => {
+  const created = valid.map((r) => {
     const reading = createReading({ ...r, source: 'csv_import' });
     if (req.user) reading.userId = req.user.id;
     return reading;
@@ -67,7 +82,7 @@ function importReadings(req, res) {
   db.readings.push(...created);
   writeDb(db);
 
-  return res.status(201).json({ imported: created.length });
+  return res.status(201).json({ imported: created.length, skipped });
 }
 
 module.exports = { addReading, listReadings, importReadings };

@@ -6,7 +6,7 @@ const aiService = require('../services/aiService');
 // POST /api/assistant/message
 // Пользователь пишет питомцу, питомец отвечает на основе актуальных данных.
 async function sendMessage(req, res) {
-  const { message } = req.body;
+  const message = typeof req.body.message === 'string' ? req.body.message : '';
 
   const db = readDb();
   const readings = req.user

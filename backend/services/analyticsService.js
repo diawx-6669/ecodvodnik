@@ -42,9 +42,7 @@ function trendPercent(readings, type, days = 7) {
  */
 function toMoney(type, value) {
   if (type === 'water') return value * config.tariffs.water_kzt_per_liter;
-  if (type === 'electricity') return value * config.tariffs.electricity_kwh_per_household_per_day
-    ? value * config.tariffs.electricity_kzt_per_kwh
-    : 0;
+  if (type === 'electricity') return value * config.tariffs.electricity_kzt_per_kwh;
   return 0;
 }
 

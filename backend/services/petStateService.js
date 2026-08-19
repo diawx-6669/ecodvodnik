@@ -17,9 +17,16 @@ function computePetState(summary) {
     mood = 'worried';
   }
 
-  // Простая система уровней: чем больше "хороших" недель, тем выше уровень.
-  // Для MVP считаем на основе экономии — чем больше сэкономлено, тем выше уровень.
-  const level = Math.max(1, Math.min(10, Math.floor(summary.total_cost_kzt / 5000) + 1));
+  // Уровень растёт, когда фактическое потребление НИЖЕ норматива (пользователь
+  // экономит), и падает, когда потребление выше нормы. Раньше здесь по ошибке
+  // использовалась total_cost_kzt (сумма трат), из-за чего уровень питомца
+  // рос вместе с расходами — то есть чем больше тратишь, тем "лучше" питомцу,
+  // что прямо противоречило идее продукта.
+  const benchmark = summary.benchmark || {};
+  const avgVsBenchmarkPercent =
+    ((benchmark.water_vs_benchmark_percent || 0) + (benchmark.electricity_vs_benchmark_percent || 0)) / 2;
+  // avgVsBenchmarkPercent отрицательный => расход ниже нормы => экономия => выше уровень
+  const level = Math.max(1, Math.min(10, Math.round(5 - avgVsBenchmarkPercent / 20)));
 
   return { mood, level, worstTrend };
 }
