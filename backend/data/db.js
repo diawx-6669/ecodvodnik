@@ -9,7 +9,7 @@ const DB_PATH = path.join(__dirname, 'db.json');
 
 function readDb() {
   if (!fs.existsSync(DB_PATH)) {
-    const initial = { users: [], readings: [], messages: [] };
+    const initial = { users: [], readings: [], messages: [], goals: [], alerts: [] };
     fs.writeFileSync(DB_PATH, JSON.stringify(initial, null, 2));
     return initial;
   }
@@ -20,9 +20,11 @@ function readDb() {
     if (!data.users) data.users = [];
     if (!data.readings) data.readings = [];
     if (!data.messages) data.messages = [];
+    if (!data.goals) data.goals = [];
+    if (!data.alerts) data.alerts = [];
     return data;
   } catch (e) {
-    return { users: [], readings: [], messages: [] };
+    return { users: [], readings: [], messages: [], goals: [], alerts: [] };
   }
 }
 

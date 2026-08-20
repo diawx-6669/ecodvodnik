@@ -8,6 +8,9 @@ const authRoutes = require('./routes/auth');
 const readingsRoutes = require('./routes/readings');
 const analyticsRoutes = require('./routes/analytics');
 const assistantRoutes = require('./routes/assistant');
+const goalsRoutes = require('./routes/goals');
+const alertsRoutes = require('./routes/alerts');
+const exportRoutes = require('./routes/export');
 
 const app = express();
 
@@ -19,6 +22,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/readings', readingsRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/assistant', assistantRoutes);
+app.use('/api/goals', goalsRoutes);
+app.use('/api/alerts', alertsRoutes);
+app.use('/api/export', exportRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'ecodvoinik-backend' });
