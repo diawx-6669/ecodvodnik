@@ -134,6 +134,24 @@
                 <stop offset="0%" stop-color="var(--pet-main)" stop-opacity="0.55" />
                 <stop offset="100%" stop-color="var(--pet-main)" stop-opacity="0" />
               </radialGradient>
+              <radialGradient id="eyeSclera" cx="50%" cy="28%" r="72%">
+                <stop offset="0%" stop-color="#ffffff" />
+                <stop offset="62%" stop-color="#f2f8f6" />
+                <stop offset="100%" stop-color="#bcd4cd" />
+              </radialGradient>
+              <radialGradient id="eyeIris" cx="42%" cy="34%" r="70%">
+                <stop offset="0%" stop-color="#5fd7d0" />
+                <stop offset="55%" stop-color="#1f7e86" />
+                <stop offset="100%" stop-color="#0a2b33" />
+              </radialGradient>
+              <radialGradient id="eyeDepth" cx="50%" cy="18%" r="80%">
+                <stop offset="0%" stop-color="#0b211f" stop-opacity="0.5" />
+                <stop offset="55%" stop-color="#0b211f" stop-opacity="0.12" />
+                <stop offset="100%" stop-color="#0b211f" stop-opacity="0" />
+              </radialGradient>
+              <filter id="eyeBlur" x="-60%" y="-60%" width="220%" height="220%">
+                <feGaussianBlur stdDeviation="2.2" />
+              </filter>
               <filter id="petSoft" x="-40%" y="-40%" width="180%" height="180%">
                 <feGaussianBlur stdDeviation="6" />
               </filter>
@@ -163,14 +181,14 @@
             </g>
 
             <!-- щёчки -->
-            <ellipse class="pet-cheek" cx="72" cy="136" rx="11" ry="7.5" fill="var(--pet-cheek)" opacity="0.75" />
-            <ellipse class="pet-cheek" cx="148" cy="136" rx="11" ry="7.5" fill="var(--pet-cheek)" opacity="0.75" />
+            <ellipse class="pet-cheek" cx="72" cy="148" rx="11" ry="7.5" fill="var(--pet-cheek)" opacity="0.75" />
+            <ellipse class="pet-cheek" cx="148" cy="148" rx="11" ry="7.5" fill="var(--pet-cheek)" opacity="0.75" />
 
             <!-- глаза (рендерятся из pet.js) -->
             <g id="pet-eyes" class="pet-eyes"></g>
 
             <!-- рот -->
-            <path id="pet-mouth" d="M 98 142 Q 110 150 122 142" fill="none" stroke="#22312b" stroke-width="3.4" stroke-linecap="round" />
+            <path id="pet-mouth" d="M 98 154 Q 110 162 122 154" fill="none" stroke="#22312b" stroke-width="3.4" stroke-linecap="round" />
 
             <!-- капелька/искра настроения -->
             <g id="pet-emote" class="pet-emote"></g>
