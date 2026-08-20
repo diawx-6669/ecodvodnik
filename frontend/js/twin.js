@@ -1,13 +1,21 @@
 // ===================== 3D-двойник помещения =====================
-// Строит упрощённую 3D-модель дома/школы/малого бизнеса, расставляет
-// в неё типовые энергопотребители, даёт "AI"-рекомендации по замене
-// на энергоэффективные аналоги и сравнивает модель с реальными
-// показаниями пользователя (через /api/analytics/summary).
+// Строит 3D-модель дома/школы/малого бизнеса, расставляет в неё типовые
+// энергопотребители, даёт "AI"-рекомендации по замене на энергоэффективные
+// аналоги и сравнивает модель с реальными показаниями пользователя
+// (через /api/analytics/summary).
 //
-// Это MVP: расстановка приборов и нормативы — эвристика на основе
-// площади/количества людей, а не распознавание чертежа. Оставлено
-// специально простым и читаемым, чтобы было легко расширять
-// (например, подключить загрузку плана и компьютерное зрение).
+// Количество приборов по-прежнему считается эвристикой на основе
+// площади/количества людей (buildTwinGroups) — это отдельная задача от
+// формы помещения и требует данных, которых на чертеже обычно нет
+// (сколько людей, какой тип объекта).
+//
+// А вот ФОРМА помещения и расстановка приборов внутри него больше не
+// хардкодят квадрат: если пользователь загрузил план (см. floorplan.js,
+// window.EcotchiFloorplan), используется настоящий контур помещения и,
+// если распознаны, настоящие границы комнат — приборы распределяются по
+// комнатам пропорционально их площади и расставляются только внутри
+// полигона (point-in-polygon), а не по абстрактной сетке. Без загруженного
+// плана поведение прежнее — квадрат по площади (fallback).
 
 const TWIN_TARIFF_ELECTRICITY = 15; // ₸ за кВт·ч (совпадает с backend/config)
 
@@ -72,12 +80,116 @@ function twinWeeklyKwh(groups) {
   return total;
 }
 
+// ---------- геометрия плана: полигоны, точки внутри, расстановка по комнатам ----------
+// Все точки здесь — {x, z} (горизонтальная плоскость сцены Three.js).
+
+function twinPolyArea(points) {
+  let area = 0;
+  for (let i = 0; i < points.length; i++) {
+    const a = points[i];
+    const b = points[(i + 1) % points.length];
+    area += a.x * b.z - b.x * a.z;
+  }
+  return Math.abs(area / 2);
+}
+
+function twinPolyBounds(points) {
+  const xs = points.map((p) => p.x);
+  const zs = points.map((p) => p.z);
+  return { minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs) };
+}
+
+function twinPointInPolygon(point, poly) {
+  // алгоритм трассировки луча (ray casting)
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i].x, zi = poly[i].z, xj = poly[j].x, zj = poly[j].z;
+    const intersects = ((zi > point.z) !== (zj > point.z)) &&
+      (point.x < ((xj - xi) * (point.z - zi)) / (zj - zi) + xi);
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
+// Расставляет `count` точек внутри контура помещения. Если известны
+// границы отдельных комнат (footprint.rooms) — делит приборы между
+// комнатами пропорционально их площади и раскладывает каждую группу
+// только внутри своей комнаты; иначе раскладывает по всему периметру.
+function twinPlaceInFootprint(count, footprint) {
+  if (count <= 0) return [];
+  const zones = (footprint.rooms && footprint.rooms.length >= 1) ? footprint.rooms : [footprint.outer];
+
+  const areas = zones.map((z) => Math.max(twinPolyArea(z), 0.5));
+  const totalArea = areas.reduce((a, b) => a + b, 0);
+  const counts = areas.map((a) => Math.max(1, Math.round((count * a) / totalArea)));
+
+  // подгоняем сумму счётчиков под точное количество приборов
+  let diff = count - counts.reduce((a, b) => a + b, 0);
+  let guard = 0;
+  while (diff !== 0 && guard < 1000) {
+    const idx = guard % counts.length;
+    if (diff > 0) { counts[idx]++; diff--; }
+    else if (counts[idx] > 0) { counts[idx]--; diff++; }
+    guard++;
+  }
+
+  const placements = [];
+  zones.forEach((zone, zi) => {
+    const need = counts[zi];
+    if (need <= 0) return;
+    const b = twinPolyBounds(zone);
+    const w = Math.max(b.maxX - b.minX, 0.5);
+    const h = Math.max(b.maxZ - b.minZ, 0.5);
+    const step = Math.max(0.35, Math.sqrt((w * h) / need) * 0.75);
+
+    const found = [];
+    for (let z = b.minZ + step / 2; z <= b.maxZ && found.length < need; z += step) {
+      for (let x = b.minX + step / 2; x <= b.maxX && found.length < need; x += step) {
+        if (twinPointInPolygon({ x, z }, zone)) found.push({ x, z });
+      }
+    }
+    // узкая/неправильная форма — сетка не набрала нужное число точек:
+    // добираем возле центроида комнаты, чтобы приборы не пропадали
+    if (found.length < need) {
+      const cx = zone.reduce((s, p) => s + p.x, 0) / zone.length;
+      const cz = zone.reduce((s, p) => s + p.z, 0) / zone.length;
+      while (found.length < need) {
+        found.push({ x: cx + (Math.random() - 0.5) * step, z: cz + (Math.random() - 0.5) * step });
+      }
+    }
+    placements.push(...found.slice(0, need));
+  });
+
+  while (placements.length < count) placements.push(placements[placements.length % Math.max(placements.length, 1)] || { x: 0, z: 0 });
+  return placements.slice(0, count);
+}
+
+// строит "занавес" стен вдоль произвольного многоугольника (замена
+// плоским wallBack/wallLeft, которые работали только для квадрата)
+function twinBuildWallStrip(pts, height, material) {
+  const group = new THREE.Group();
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i];
+    const b = pts[(i + 1) % pts.length];
+    const geo = new THREE.BufferGeometry();
+    const vertices = new Float32Array([
+      a.x, 0, a.z, b.x, 0, b.z, b.x, height, b.z,
+      a.x, 0, a.z, b.x, height, b.z, a.x, height, a.z,
+    ]);
+    geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+    geo.computeVertexNormals();
+    group.add(new THREE.Mesh(geo, material));
+  }
+  return group;
+}
+
 // ---------- состояние модуля ----------
 const twinState = {
   type: 'household',
   area: 60,
   units: 4,
   groups: [],
+  footprint: null, // {outer:[{x,z}], rooms:[[{x,z}]...], area} из floorplan.js, либо null
   scene: null,
   renderer: null,
   camera: null,
@@ -109,9 +221,13 @@ function twinGenerate() {
   const area = Math.max(6, Number(document.getElementById('twin-area').value) || 60);
   const units = Math.max(1, Number(document.getElementById('twin-units').value) || 1);
 
+  const uploaded = window.EcotchiFloorplan;
+  const hasFootprint = uploaded && Array.isArray(uploaded.outer) && uploaded.outer.length >= 3;
+
   twinState.type = type;
   twinState.area = area;
   twinState.units = units;
+  twinState.footprint = hasFootprint ? uploaded : null;
   twinState.groups = buildTwinGroups(type, area, units);
 
   twinRenderScene();
@@ -131,8 +247,21 @@ function twinRenderScene() {
   if (twinState.animId) cancelAnimationFrame(twinState.animId);
   wrap.innerHTML = '';
 
-  const side = Math.max(6, Math.sqrt(twinState.area));
+  const footprint = twinState.footprint;
   const height = 3.2;
+
+  // контур пола: реальная форма из плана, либо квадрат по площади (fallback)
+  let outerPts;
+  let side; // приблизительный "размер" помещения — для камеры и сетки
+  if (footprint) {
+    const b = twinPolyBounds(footprint.outer);
+    outerPts = footprint.outer;
+    side = Math.max(b.maxX - b.minX, b.maxZ - b.minZ, 4);
+  } else {
+    side = Math.max(6, Math.sqrt(twinState.area));
+    const h = side / 2;
+    outerPts = [{ x: -h, z: -h }, { x: h, z: -h }, { x: h, z: h }, { x: -h, z: h }];
+  }
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(45, wrap.clientWidth / wrap.clientHeight, 0.1, 100);
@@ -152,44 +281,58 @@ function twinRenderScene() {
   const rig = new THREE.Group();
   scene.add(rig);
 
-  // пол
+  // пол — по настоящему контуру плана (или квадрат, если плана нет)
+  const shape = new THREE.Shape();
+  outerPts.forEach((p, i) => (i === 0 ? shape.moveTo(p.x, p.z) : shape.lineTo(p.x, p.z)));
+  shape.closePath();
   const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(side, side),
-    new THREE.MeshStandardMaterial({ color: 0x123027, metalness: 0.1, roughness: 0.9 })
+    new THREE.ShapeGeometry(shape),
+    new THREE.MeshStandardMaterial({ color: 0x123027, metalness: 0.1, roughness: 0.9, side: THREE.DoubleSide })
   );
   floor.rotation.x = -Math.PI / 2;
   rig.add(floor);
 
-  // сетка на полу
+  // сетка на полу (ориентир масштаба)
   const grid = new THREE.GridHelper(side, Math.max(4, Math.round(side / 2)), 0x3fd9a4, 0x1b3a32);
   grid.position.y = 0.01;
   rig.add(grid);
 
-  // прозрачные стены (ориентир объёма помещения)
-  const wallMat = new THREE.MeshBasicMaterial({ color: 0x45d9ff, transparent: true, opacity: 0.06, side: THREE.DoubleSide });
-  const wallBack = new THREE.Mesh(new THREE.PlaneGeometry(side, height), wallMat);
-  wallBack.position.set(0, height / 2, -side / 2);
-  rig.add(wallBack);
-  const wallLeft = new THREE.Mesh(new THREE.PlaneGeometry(side, height), wallMat);
-  wallLeft.rotation.y = Math.PI / 2;
-  wallLeft.position.set(-side / 2, height / 2, 0);
-  rig.add(wallLeft);
+  // прозрачные стены по реальному периметру
+  const wallMat = new THREE.MeshBasicMaterial({ color: 0x45d9ff, transparent: true, opacity: 0.08, side: THREE.DoubleSide });
+  rig.add(twinBuildWallStrip(outerPts, height, wallMat));
 
-  // расстановка приборов по сетке
+  // если распознаны отдельные комнаты — отмечаем их границы на полу
+  if (footprint && footprint.rooms && footprint.rooms.length) {
+    footprint.rooms.forEach((room) => {
+      const linePts = room.map((p) => new THREE.Vector3(p.x, 0.015, p.z));
+      linePts.push(linePts[0]);
+      const geo = new THREE.BufferGeometry().setFromPoints(linePts);
+      rig.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x35e08f })));
+    });
+  }
+
+  // расстановка приборов: внутри реального контура (по комнатам, если
+  // они распознаны) или по сетке в квадрате, если плана нет
   const flatDevices = [];
   twinState.groups.forEach((g) => {
     for (let i = 0; i < g.count; i++) flatDevices.push(g.key);
   });
 
-  const cols = Math.max(1, Math.ceil(Math.sqrt(flatDevices.length)));
-  const cellSize = side / (cols + 1);
+  let placements;
+  if (footprint) {
+    placements = twinPlaceInFootprint(flatDevices.length, footprint);
+  } else {
+    const cols = Math.max(1, Math.ceil(Math.sqrt(flatDevices.length)));
+    const cellSize = side / (cols + 1);
+    placements = flatDevices.map((_, i) => ({
+      x: -side / 2 + cellSize * ((i % cols) + 1),
+      z: -side / 2 + cellSize * (Math.floor(i / cols) + 1),
+    }));
+  }
 
   flatDevices.forEach((key, i) => {
     const cat = TWIN_CATALOG[key];
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const x = -side / 2 + cellSize * (col + 1);
-    const z = -side / 2 + cellSize * (row + 1);
+    const { x, z } = placements[i] || { x: 0, z: 0 };
 
     let mesh;
     if (cat.shape === 'lamp') {

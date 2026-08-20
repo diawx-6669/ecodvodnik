@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Sora:wght@600;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/twin.css" />
+  <link rel="stylesheet" href="css/floorplan.css" />
 </head>
 <body>
   <div class="aurora" aria-hidden="true">
@@ -287,6 +288,41 @@
         <span class="pill">AI расставляет приборы и считает экономию</span>
       </div>
 
+      <div class="fp-panel">
+        <div class="fp-head">
+          <h3>План помещения по фото/чертежу <span class="pill pill-sm">бета</span></h3>
+          <p class="fp-hint">Загрузите фото или скан плана — AI распознает контур помещения и границы комнат вместо расчёта по площади «на глаз».</p>
+        </div>
+
+        <div class="fp-controls">
+          <label class="fp-file-btn">
+            Выбрать план (фото/скан)
+            <input type="file" id="fp-file" accept="image/*" hidden />
+          </label>
+          <div class="fp-calib">
+            <span>Длина отмеченного отрезка, м</span>
+            <input type="number" id="fp-calib-dist" min="0.1" step="0.1" placeholder="напр. 4.2" />
+            <button type="button" id="fp-set-scale-btn" class="fp-btn">Задать масштаб</button>
+          </div>
+          <button type="button" id="fp-detect-btn" class="fp-btn">Распознать план</button>
+          <button type="button" id="fp-apply-btn" class="fp-btn fp-btn-primary" disabled>Построить 3D по плану</button>
+          <button type="button" id="fp-clear-btn" class="fp-btn fp-btn-ghost">Сбросить план</button>
+        </div>
+
+        <div class="fp-body">
+          <canvas id="fp-canvas" class="fp-canvas"></canvas>
+          <div class="fp-side">
+            <ol class="fp-steps">
+              <li>Загрузите фото/скан плана.</li>
+              <li>Кликните 2 точки на отрезке с известной длиной (например, стена) и укажите её в метрах → «Задать масштаб».</li>
+              <li>Нажмите «Распознать план» — синим выделится внешний контур, зелёным — найденные комнаты.</li>
+              <li>«Построить 3D по плану» — подставит реальную форму в модель ниже.</li>
+            </ol>
+            <div class="fp-status" id="fp-status">Загрузите изображение плана, чтобы начать.</div>
+          </div>
+        </div>
+      </div>
+
       <div class="twin-setup">
         <div class="twin-field">
           <label for="twin-type">Тип объекта</label>
@@ -363,6 +399,8 @@
   <script src="js/analytics-advanced.js"></script>
   <script src="js/app.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/128/three.min.js"></script>
+  <script async src="https://docs.opencv.org/4.9.0/opencv.js"></script>
+  <script src="js/floorplan.js"></script>
   <script src="js/twin.js"></script>
 </body>
 </html>

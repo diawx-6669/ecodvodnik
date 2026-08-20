@@ -1,0 +1,105 @@
+/* ===================== Загрузка и распознавание плана помещения ===================== */
+
+.fp-panel {
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  padding: 16px;
+  margin: 14px 0 18px;
+}
+
+.fp-head h3 { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+.pill-sm { font-size: 10.5px; padding: 2px 8px; }
+.fp-hint { color: var(--muted); font-size: 12.5px; margin-top: 4px; max-width: 640px; }
+
+.fp-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.fp-file-btn {
+  background: var(--surface-strong);
+  border: 1px solid var(--stroke);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.fp-file-btn:hover { border-color: var(--aqua); color: var(--aqua); }
+
+.fp-calib { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
+.fp-calib input {
+  width: 90px;
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  color: var(--text);
+  border-radius: 9px;
+  padding: 7px 9px;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.fp-btn {
+  background: var(--surface-strong);
+  border: 1px solid var(--stroke);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.fp-btn:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
+.fp-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.fp-btn-primary {
+  background: linear-gradient(120deg, var(--green), var(--aqua));
+  color: #04120c;
+  font-weight: 700;
+  border: none;
+}
+.fp-btn-primary:hover:not(:disabled) { filter: brightness(1.06); color: #04120c; }
+
+.fp-btn-ghost { border-color: transparent; color: var(--muted); }
+.fp-btn-ghost:hover { color: var(--text); border-color: var(--stroke); }
+
+.fp-body {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 16px;
+}
+@media (max-width: 900px) {
+  .fp-body { grid-template-columns: 1fr; }
+}
+
+.fp-canvas {
+  width: 100%;
+  max-height: 360px;
+  display: block;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  background: var(--bg-2);
+  cursor: crosshair;
+}
+
+.fp-steps {
+  margin: 0 0 10px 18px;
+  padding: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.fp-status {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  background: rgba(69, 217, 255, 0.08);
+  border: 1px solid rgba(69, 217, 255, 0.2);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
