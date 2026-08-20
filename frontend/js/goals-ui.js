@@ -18,14 +18,14 @@ async function loadGoalsAndProgress() {
     progress.forEach((goal) => {
       const percentage = Math.min(100, Math.round(goal.percentageUsed));
       const statusClass = goal.isExceeded ? 'exceeded' : 'on-track';
-      const icon = goal.isExceeded ? '⚠️' : '✓';
+      const icon = goal.isExceeded ? '!' : 'OK';
 
       const div = document.createElement('div');
       div.className = `goal-item ${statusClass}`;
       div.innerHTML = `
         <div class="goal-header">
           <span class="goal-icon">${icon}</span>
-          <span class="goal-title">${goal.type === 'water' ? '💧 Вода' : '⚡ Электричество'}</span>
+          <span class="goal-title">${goal.type === 'water' ? 'Вода' : 'Электричество'}</span>
           <span class="goal-status">${goal.currentUsage}/${goal.targetValue} ${goal.unit}</span>
         </div>
         <div class="goal-progress-bar">
@@ -81,12 +81,12 @@ async function loadAlerts() {
       div.className = 'alert-item alert-warning';
       div.innerHTML = `
         <div class="alert-content">
-          <span class="alert-icon">⚠️</span>
+          <span class="alert-icon">!</span>
           <div class="alert-text">
             <p class="alert-message">${alert.message}</p>
             <small class="alert-detail">Текущее: ${alert.currentUsage} vs Лимит: ${alert.goalValue}</small>
           </div>
-          <button class="btn-close" data-alert-id="${alert.id}">✕</button>
+          <button class="btn-close" data-alert-id="${alert.id}">&times;</button>
         </div>
       `;
       container.appendChild(div);
@@ -150,12 +150,12 @@ async function loadConsumptionSummary() {
       <div class="summary-card">
         <h4>Сводка за ${currentMonth}</h4>
         <div class="summary-row">
-          <span>💧 Вода:</span>
+          <span>Вода:</span>
           <strong>${summary.water.total_liters} л</strong>
           <small>(${summary.water.reading_count} измерений)</small>
         </div>
         <div class="summary-row">
-          <span>⚡ Электричество:</span>
+          <span>Электричество:</span>
           <strong>${summary.electricity.total_kwh} кВт·ч</strong>
           <small>(${summary.electricity.reading_count} измерений)</small>
         </div>

@@ -52,9 +52,9 @@ function formatNumber(num, decimals = 2) {
 // Категоризация потребления (низкое, среднее, высокое)
 function categorizeUsage(currentUsage, recommendedUsage) {
   const ratio = currentUsage / recommendedUsage;
-  if (ratio <= 0.7) return { level: 'низкое', emoji: '🟢', color: '#22c55e' };
-  if (ratio <= 1.0) return { level: 'среднее', emoji: '🟡', color: '#eab308' };
-  return { level: 'высокое', emoji: '🔴', color: '#ef4444' };
+  if (ratio <= 0.7) return { level: 'низкое', color: '#22c55e' };
+  if (ratio <= 1.0) return { level: 'среднее', color: '#eab308' };
+  return { level: 'высокое', color: '#ef4444' };
 }
 
 // Рекомендуемые нормы потребления по типу аккаунта (на человека/студента/сотрудника в месяц)
