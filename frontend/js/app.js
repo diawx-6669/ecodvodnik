@@ -172,6 +172,13 @@ function initDashboard() {
   loadDashboard();
   loadDeviceStatus();
   loadChatHistory();
+  
+  // Инициализация новых компонентов целей и уведомлений
+  if (typeof loadGoalsAndProgress === 'function') {
+    loadGoalsAndProgress();
+    loadAlerts();
+    loadConsumptionSummary();
+  }
 
   if (!dashboardIntervalsStarted) {
     dashboardIntervalsStarted = true;
@@ -179,7 +186,48 @@ function initDashboard() {
     setInterval(loadDashboard, 30000);
     // Статус устройства обновляем чаще — это живой индикатор связи с железом
     setInterval(loadDeviceStatus, 10000);
+    // Проверяем уведомления раз в 5 минут
+    if (typeof checkAlertsAndRefresh === 'function') {
+      setInterval(checkAlertsAndRefresh, 5 * 60 * 1000);
+    }
   }
 }
 
 window.initDashboard = initDashboard;
+
+// Обработчики для новых компонентов (цели, уведомления, экспорт)
+document.addEventListener('DOMContentLoaded', () => {
+  // Кнопка "Установить цель"
+  const openGoalFormBtn = document.getElementById('open-goal-form-btn');
+  const goalInputForm = document.getElementById('goal-input-form');
+  const submitGoalBtn = document.getElementById('submit-goal-btn');
+
+  if (openGoalFormBtn) {
+    openGoalFormBtn.addEventListener('click', () => {
+      if (goalInputForm) {
+        goalInputForm.classList.toggle('hidden');
+      }
+    });
+  }
+
+  if (submitGoalBtn) {
+    submitGoalBtn.addEventListener('click', async () => {
+      if (typeof setNewGoal === 'function') {
+        await setNewGoal();
+        if (goalInputForm) {
+          goalInputForm.classList.add('hidden');
+        }
+      }
+    });
+  }
+
+  // Кнопка экспорта CSV
+  const exportCsvBtn = document.getElementById('export-csv-btn');
+  if (exportCsvBtn) {
+    exportCsvBtn.addEventListener('click', async () => {
+      if (typeof exportDataAsCSV === 'function') {
+        await exportDataAsCSV();
+      }
+    });
+  }
+});

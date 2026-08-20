@@ -77,14 +77,27 @@ function getRecommendedUsage(type, unitsCount = 1) {
   return recommendations[type] || recommendations.household;
 }
 
-module.exports = {
-  calculateCost,
-  monthlyToDailyAverage,
-  forecastMonthlyUsage,
-  calculateTrendPercent,
-  getCurrentMonth,
-  getPreviousMonth,
-  formatNumber,
-  categorizeUsage,
-  getRecommendedUsage,
-};
+// Сделаем функции доступными глобально
+window.calculateCost = calculateCost;
+window.monthlyToDailyAverage = monthlyToDailyAverage;
+window.forecastMonthlyUsage = forecastMonthlyUsage;
+window.calculateTrendPercent = calculateTrendPercent;
+window.getCurrentMonth = getCurrentMonth;
+window.getPreviousMonth = getPreviousMonth;
+window.formatNumber = formatNumber;
+window.categorizeUsage = categorizeUsage;
+window.getRecommendedUsage = getRecommendedUsage;
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    calculateCost,
+    monthlyToDailyAverage,
+    forecastMonthlyUsage,
+    calculateTrendPercent,
+    getCurrentMonth,
+    getPreviousMonth,
+    formatNumber,
+    categorizeUsage,
+    getRecommendedUsage,
+  };
+}

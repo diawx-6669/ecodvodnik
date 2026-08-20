@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Sora:wght@600;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/goals.css" />
 </head>
 <body>
   <div class="aurora" aria-hidden="true">
@@ -254,6 +255,53 @@
         <button type="submit">Добавить</button>
       </form>
     </section>
+
+    <!-- Цели потребления -->
+    <section class="panel goals-section" id="goals-section">
+      <div class="goals-header">
+        <h3>🎯 Мои цели потребления</h3>
+        <button class="btn-set-goal" type="button" id="open-goal-form-btn">Установить цель</button>
+      </div>
+      
+      <div class="goal-input-form hidden" id="goal-input-form">
+        <select id="goal-type">
+          <option value="water">Вода (литры)</option>
+          <option value="electricity">Электричество (кВт·ч)</option>
+        </select>
+        <input type="number" id="goal-value" placeholder="Целевое значение" step="1" required />
+        <button type="button" id="submit-goal-btn">Установить</button>
+      </div>
+
+      <div id="goals-container"></div>
+    </section>
+
+    <!-- Уведомления -->
+    <section class="panel alerts-section" id="alerts-section">
+      <div class="alerts-header">
+        <h3>🚨 Уведомления</h3>
+      </div>
+      <div id="alerts-container"></div>
+    </section>
+
+    <!-- Экспорт данных -->
+    <section class="panel export-section" id="export-section">
+      <div class="export-header">
+        <h3>📥 Экспорт данных</h3>
+      </div>
+      
+      <div class="export-controls">
+        <input type="date" id="export-start-date" placeholder="От" />
+        <input type="date" id="export-end-date" placeholder="До" />
+        <select id="export-type">
+          <option value="">Все ресурсы</option>
+          <option value="water">Только вода</option>
+          <option value="electricity">Только электричество</option>
+        </select>
+        <button type="button" id="export-csv-btn">Скачать CSV</button>
+      </div>
+
+      <div id="summary-container"></div>
+    </section>
   </main>
 
   <footer class="footer">Future Minds Hackathon 2026 · Трек EcoFin · MVP</footer>
@@ -263,6 +311,10 @@
   <script src="js/auth.js"></script>
   <script src="js/pet.js"></script>
   <script src="js/chart.js"></script>
+  <script src="js/consumption-utils.js"></script>
+  <script src="js/goals-api.js"></script>
+  <script src="js/goals-ui.js"></script>
+  <script src="js/analytics-advanced.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

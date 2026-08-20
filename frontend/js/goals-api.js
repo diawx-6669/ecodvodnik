@@ -80,7 +80,8 @@ async function getConsumptionSummary(monthYear) {
   return response.json();
 }
 
-module.exports = {
+// Сделаем функции доступными глобально
+window.goalsAPI = {
   setConsumptionGoal,
   getGoalsForMonth,
   getGoalProgress,
@@ -90,3 +91,8 @@ module.exports = {
   exportConsumptionDataAsCSV,
   getConsumptionSummary,
 };
+
+// Также экспортируем для CommonJS если нужно
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = window.goalsAPI;
+}

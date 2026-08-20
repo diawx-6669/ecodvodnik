@@ -181,6 +181,15 @@ function initGoalsAndAlerts() {
   }
 }
 
+// Сделаем функции доступными глобально
+window.loadGoalsAndProgress = loadGoalsAndProgress;
+window.setNewGoal = setNewGoal;
+window.loadAlerts = loadAlerts;
+window.checkAlertsAndRefresh = checkAlertsAndRefresh;
+window.exportDataAsCSV = exportDataAsCSV;
+window.loadConsumptionSummary = loadConsumptionSummary;
+window.initGoalsAndAlerts = initGoalsAndAlerts;
+
 // Экспортируем функции (если используется модульная система)
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {

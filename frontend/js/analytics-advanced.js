@@ -116,10 +116,19 @@ function calculatePotentialSavings(currentUsage, targetUsage, pricePerUnit) {
   }
 }
 
-module.exports = {
-  generateSmartRecommendations,
-  analyzeConsumptionAnomaly,
-  identifyPeakHours,
-  comparePeriods,
-  calculatePotentialSavings,
-};
+// Сделаем функции доступными глобально
+window.generateSmartRecommendations = generateSmartRecommendations;
+window.analyzeConsumptionAnomaly = analyzeConsumptionAnomaly;
+window.identifyPeakHours = identifyPeakHours;
+window.comparePeriods = comparePeriods;
+window.calculatePotentialSavings = calculatePotentialSavings;
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    generateSmartRecommendations,
+    analyzeConsumptionAnomaly,
+    identifyPeakHours,
+    comparePeriods,
+    calculatePotentialSavings,
+  };
+}
