@@ -1,7 +1,7 @@
 {
-  "name": "ecodvoinik-backend",
+  "name": "ecotchi-backend",
   "version": "1.0.0",
-  "description": "Backend API для EcoTwin / ЭкоДвойник — трек EcoFin",
+  "description": "Backend API для Экотчи (Ecotchi) — трек EcoFin",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
