@@ -1,0 +1,132 @@
+/* ===================== 3D-двойник помещения ===================== */
+
+.twin-panel { grid-column: 1 / -1; }
+
+.twin-setup {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 14px 0 18px;
+}
+
+.twin-field { display: flex; flex-direction: column; gap: 6px; }
+.twin-field label { font-size: 12.5px; color: var(--muted); }
+.twin-field select,
+.twin-field input {
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 9px 11px;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.twin-generate-btn {
+  grid-column: 1 / -1;
+  background: linear-gradient(120deg, var(--green), var(--aqua));
+  color: #04120c;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  padding: 11px 16px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.twin-generate-btn:hover { filter: brightness(1.06); }
+
+@media (max-width: 900px) {
+  .twin-setup { grid-template-columns: 1fr 1fr; }
+}
+
+.twin-body {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 18px;
+}
+
+@media (max-width: 900px) {
+  .twin-body { grid-template-columns: 1fr; }
+}
+
+.twin-scene-wrap {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--stroke);
+  background: radial-gradient(120% 100% at 50% 0%, rgba(69, 217, 255, 0.08), transparent 60%), var(--bg-2);
+  min-height: 320px;
+}
+.twin-scene-wrap canvas { display: block; width: 100%; height: 100%; }
+
+.twin-scene-empty {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 13.5px; text-align: center; padding: 20px;
+}
+
+.twin-devices h3, .twin-compare h3, .twin-forecast h3 { margin-bottom: 8px; }
+
+.twin-device-list { display: flex; flex-direction: column; gap: 8px; max-height: 210px; overflow-y: auto; }
+
+.twin-device-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--surface); border: 1px solid var(--stroke);
+  border-radius: 12px; padding: 9px 12px; font-size: 13.5px;
+}
+.twin-device-row .dev-name { display: flex; align-items: center; gap: 8px; }
+.twin-device-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.twin-device-row .dev-power { color: var(--muted); font-size: 12px; }
+
+.twin-swap-btn {
+  background: var(--surface-strong);
+  border: 1px solid var(--stroke);
+  color: var(--text);
+  border-radius: 9px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.twin-swap-btn:hover { border-color: var(--green); color: var(--green); }
+.twin-swap-btn.done { color: var(--green-deep); border-color: var(--green-deep); cursor: default; }
+
+.twin-compare {
+  margin-top: 16px;
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  border-radius: 14px;
+  padding: 14px;
+}
+.twin-compare-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+.twin-compare-label { width: 92px; font-size: 12.5px; color: var(--muted); flex: none; }
+.twin-bar-track { flex: 1; height: 10px; border-radius: 6px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.twin-bar-fill { height: 100%; border-radius: 6px; transition: width .4s ease; }
+.twin-bar-fill.model { background: linear-gradient(90deg, var(--aqua), var(--violet)); }
+.twin-bar-fill.real { background: linear-gradient(90deg, var(--green), var(--green-deep)); }
+.twin-compare-value { width: 92px; text-align: right; font-size: 12.5px; flex: none; }
+.twin-compare-note { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+
+.twin-forecast {
+  margin-top: 16px;
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  border-radius: 14px;
+  padding: 14px;
+}
+.twin-slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.twin-slider-row input[type="range"] { flex: 1; accent-color: var(--green); }
+.twin-slider-value { font-weight: 700; color: var(--green); width: 46px; text-align: right; font-size: 13.5px; }
+
+.twin-chart { width: 100%; height: 130px; display: block; }
+
+.twin-ai-note {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  background: rgba(69, 217, 255, 0.08);
+  border: 1px solid rgba(69, 217, 255, 0.2);
+  border-radius: 12px;
+  padding: 10px 12px;
+}

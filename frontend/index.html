@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Sora:wght@600;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/twin.css" />
 </head>
 <body>
   <div class="aurora" aria-hidden="true">
@@ -24,9 +25,12 @@
       <div class="auth-head">
         <span class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-            <path d="M12 21c-4.5-1.2-8-4.9-8-10.2C4 6.6 7.3 3.4 12 3c4.7.4 8 3.6 8 7.8 0 5.3-3.5 9-8 10.2Z"
-                  fill="currentColor" opacity="0.9" />
-            <path d="M12 21V9" stroke="#04120c" stroke-width="1.6" stroke-linecap="round" />
+            <path d="M8 8c-1.4-2.2-.7-4.7 1.4-5.8 1.1 2.2.7 4.7-1.4 5.8Z" fill="currentColor" opacity="0.9"/>
+            <path d="M16 8c1.4-2.2.7-4.7-1.4-5.8-1.1 2.2-.7 4.7 1.4 5.8Z" fill="currentColor" opacity="0.9"/>
+            <circle cx="12" cy="13" r="7" fill="currentColor" opacity="0.9"/>
+            <circle cx="9.6" cy="12.3" r="1" fill="#04120c"/>
+            <circle cx="14.4" cy="12.3" r="1" fill="#04120c"/>
+            <path d="M9.5 15.3c1 1 4 1 5 0" stroke="#04120c" stroke-width="1" stroke-linecap="round"/>
           </svg>
         </span>
         <span class="auth-title">Эко<b style="color:var(--green)">тчи</b></span>
@@ -88,9 +92,12 @@
     <div class="brand">
       <span class="brand-mark" aria-hidden="true">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-          <path d="M12 21c-4.5-1.2-8-4.9-8-10.2C4 6.6 7.3 3.4 12 3c4.7.4 8 3.6 8 7.8 0 5.3-3.5 9-8 10.2Z"
-                fill="currentColor" opacity="0.9" />
-          <path d="M12 21V9" stroke="#04120c" stroke-width="1.6" stroke-linecap="round" />
+          <path d="M8 8c-1.4-2.2-.7-4.7 1.4-5.8 1.1 2.2.7 4.7-1.4 5.8Z" fill="currentColor" opacity="0.9"/>
+          <path d="M16 8c1.4-2.2.7-4.7-1.4-5.8-1.1 2.2-.7 4.7 1.4 5.8Z" fill="currentColor" opacity="0.9"/>
+          <circle cx="12" cy="13" r="7" fill="currentColor" opacity="0.9"/>
+          <circle cx="9.6" cy="12.3" r="1" fill="#04120c"/>
+          <circle cx="14.4" cy="12.3" r="1" fill="#04120c"/>
+          <path d="M9.5 15.3c1 1 4 1 5 0" stroke="#04120c" stroke-width="1" stroke-linecap="round"/>
         </svg>
       </span>
       <span class="brand-text">Эко<b>тчи</b></span>
@@ -273,6 +280,76 @@
       </form>
     </section>
 
+    <!-- 3D-двойник помещения -->
+    <section class="panel twin-panel">
+      <div class="panel-head">
+        <h2>3D-двойник помещения</h2>
+        <span class="pill">AI расставляет приборы и считает экономию</span>
+      </div>
+
+      <div class="twin-setup">
+        <div class="twin-field">
+          <label for="twin-type">Тип объекта</label>
+          <select id="twin-type">
+            <option value="household">Квартира / дом</option>
+            <option value="school">Школа</option>
+            <option value="business">Малое предприятие</option>
+          </select>
+        </div>
+        <div class="twin-field">
+          <label for="twin-area">Площадь, м²</label>
+          <input type="number" id="twin-area" value="60" min="6" step="1" />
+        </div>
+        <div class="twin-field">
+          <label id="twin-units-label" for="twin-units">Жильцов</label>
+          <input type="number" id="twin-units" value="4" min="1" step="1" />
+        </div>
+        <div class="twin-field twin-field-btn">
+          <label>&nbsp;</label>
+          <button type="button" id="twin-generate-btn" class="twin-generate-btn">Сгенерировать модель</button>
+        </div>
+      </div>
+
+      <div class="twin-body">
+        <div class="twin-scene-wrap" id="twin-scene-wrap">
+          <div class="twin-scene-empty">Нажмите «Сгенерировать модель»</div>
+        </div>
+
+        <div class="twin-side">
+          <div class="twin-devices">
+            <h3>Приборы в модели</h3>
+            <div class="twin-device-list" id="twin-device-list"></div>
+          </div>
+
+          <div class="twin-compare">
+            <h3>Модель vs реальные данные</h3>
+            <div class="twin-compare-row">
+              <span class="twin-compare-label">Модель</span>
+              <div class="twin-bar-track"><span class="twin-bar-fill model" id="twin-bar-model"></span></div>
+              <span class="twin-compare-value" id="twin-value-model">—</span>
+            </div>
+            <div class="twin-compare-row">
+              <span class="twin-compare-label">Реальность</span>
+              <div class="twin-bar-track"><span class="twin-bar-fill real" id="twin-bar-real"></span></div>
+              <span class="twin-compare-value" id="twin-value-real">—</span>
+            </div>
+            <div class="twin-compare-note" id="twin-compare-note"></div>
+          </div>
+
+          <div class="twin-forecast">
+            <h3>Прогноз экономии</h3>
+            <div class="twin-slider-row">
+              <span style="font-size:12.5px;color:var(--muted)">Заменить приборы, %</span>
+              <input type="range" id="twin-slider" min="0" max="100" value="50" />
+              <span class="twin-slider-value" id="twin-slider-value">50%</span>
+            </div>
+            <svg class="twin-chart" id="twin-chart"></svg>
+            <div class="twin-ai-note" id="twin-ai-note"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <footer class="footer">Future Minds Hackathon 2026 · Трек EcoFin · MVP</footer>
@@ -285,5 +362,7 @@
   <script src="js/consumption-utils.js"></script>
   <script src="js/analytics-advanced.js"></script>
   <script src="js/app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/128/three.min.js"></script>
+  <script src="js/twin.js"></script>
 </body>
 </html>
