@@ -1,0 +1,365 @@
+/* Стили для целей потребления */
+
+.goals-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.05), rgba(34, 197, 94, 0.05));
+  border-radius: 12px;
+  border: 1px solid rgba(34, 197, 94, 0.1);
+}
+
+.goals-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.goals-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1f2937;
+}
+
+.btn-set-goal {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #34d399, #22c55e);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-set-goal:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(52, 211, 153, 0.3);
+}
+
+#goals-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.goal-item {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #22c55e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.goal-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.goal-item.exceeded {
+  border-left-color: #ef4444;
+  background: rgba(239, 68, 68, 0.02);
+}
+
+.goal-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.goal-icon {
+  font-size: 1.5rem;
+}
+
+.goal-title {
+  font-weight: 600;
+  color: #1f2937;
+  flex: 1;
+}
+
+.goal-status {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.goal-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.goal-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #34d399, #22c55e);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.goal-item.exceeded .goal-progress-fill {
+  background: linear-gradient(90deg, #fbbf24, #ef4444);
+}
+
+.goal-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.exceeded-warn {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* Стили для целевого инпута */
+.goal-input-form {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.goal-input-form select,
+.goal-input-form input[type='number'] {
+  flex: 1;
+  min-width: 150px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.goal-input-form button {
+  padding: 0.5rem 1rem;
+  background: #22c55e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.goal-input-form button:hover {
+  background: #16a34a;
+}
+
+/* Стили для уведомлений */
+
+.alerts-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(220, 38, 38, 0.05));
+  border-radius: 12px;
+  border: 1px solid rgba(239, 68, 68, 0.1);
+}
+
+.alerts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.alerts-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1f2937;
+}
+
+#alerts-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.alert-item {
+  padding: 1rem;
+  border-radius: 8px;
+  background: #fef2f2;
+  border-left: 4px solid #ef4444;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.alert-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  width: 100%;
+}
+
+.alert-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.alert-text {
+  flex: 1;
+}
+
+.alert-message {
+  margin: 0 0 0.25rem 0;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.alert-detail {
+  color: #7f1d1d;
+  display: block;
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #1f2937;
+}
+
+/* Стили для экспорта */
+
+.export-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(37, 99, 235, 0.05));
+  border-radius: 12px;
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.export-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.export-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1f2937;
+}
+
+.export-controls {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.export-controls input,
+.export-controls select {
+  flex: 1;
+  min-width: 140px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.export-controls button {
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.export-controls button:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+}
+
+#summary-container {
+  margin-top: 1rem;
+}
+
+.summary-card {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.summary-card h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  color: #1f2937;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+}
+
+.summary-row small {
+  color: #9ca3af;
+  margin-left: 0.5rem;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .goals-section,
+  .alerts-section,
+  .export-section {
+    padding: 1rem;
+  }
+
+  #goals-container {
+    grid-template-columns: 1fr;
+  }
+
+  .goal-input-form,
+  .export-controls {
+    flex-direction: column;
+  }
+
+  .goal-input-form select,
+  .goal-input-form input[type='number'],
+  .export-controls input,
+  .export-controls select,
+  .goal-input-form button,
+  .export-controls button {
+    min-width: unset;
+    width: 100%;
+  }
+}
+
+.text-muted {
+  color: #9ca3af;
+  font-style: italic;
+  margin: 0;
+}
