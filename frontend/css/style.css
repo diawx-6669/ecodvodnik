@@ -172,8 +172,21 @@ h2, h3, .brand-text { font-family: 'Sora', 'Manrope', sans-serif; letter-spacing
   75% { transform: scale(1.04, 0.97) translateY(0); }
   100% { transform: scale(1); }
 }
-.pet-eyes .blink { animation: blink 0.22s steps(2, end); }
-@keyframes blink { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.08); } }
+.pet-eyes { transform-origin: 110px 132px; }
+.pet-eyes.blink, .pet-eyes .blink { animation: blink 0.24s ease-in-out; }
+@keyframes blink { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.1); } }
+
+.pet-arms { transform-origin: 110px 140px; animation: arms 3s ease-in-out infinite; }
+@keyframes arms { 0%,100% { transform: rotate(-2.5deg); } 50% { transform: rotate(2.5deg); } }
+.pet-rings ellipse { transform-origin: 110px 197px; animation: ring-pulse 3.6s ease-in-out infinite; }
+.pet-rings ellipse:last-child { animation-delay: 0.9s; }
+@keyframes ring-pulse {
+  0% { transform: scale(0.85); opacity: 0.35; }
+  70%, 100% { transform: scale(1.18); opacity: 0; }
+}
+.pet-feet { animation: feet 4s ease-in-out infinite; }
+@keyframes feet { 0%,100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+
 .pet-emote { animation: emote 3s ease-in-out infinite; transform-origin: center; }
 @keyframes emote { 0%, 70%, 100% { opacity: 0; transform: translateY(0); } 20%, 55% { opacity: 1; transform: translateY(-6px); } }
 

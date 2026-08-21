@@ -9,18 +9,19 @@ const MOOD_LABELS = {
 };
 
 const MOUTH_PATHS = {
-  happy: 'M 92 152 Q 110 176 128 152',
-  neutral: 'M 98 156 Q 110 164 122 156',
-  worried: 'M 98 160 Q 110 153 122 160',
-  sad: 'M 98 164 Q 110 148 122 164',
+  happy: 'M 96 156 Q 110 174 124 156 Q 110 162 96 156',
+  neutral: 'M 100 157 Q 110 165 120 157',
+  worried: 'M 100 162 Q 110 155 120 162',
+  sad: 'M 100 166 Q 110 152 120 166',
 };
 
 const EMOTES = {
   happy: '<circle cx="168" cy="60" r="4" fill="var(--pet-light)"/><circle cx="180" cy="48" r="2.6" fill="var(--pet-light)"/><path d="M 156 44 l 3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3 z" fill="var(--pet-light)"/>',
   neutral: '',
   worried: '<circle cx="166" cy="58" r="3.2" fill="#ffd98a"/><path d="M 170 40 v 12" stroke="#ffd98a" stroke-width="3.4" stroke-linecap="round"/><circle cx="170" cy="58" r="2" fill="#ffd98a"/>',
-  sad: '<path d="M 146 130 q 5 10 0 14 q -5 -4 0 -14 z" fill="#9fd8ff"/>',
+  sad: '<path d="M 141 142 q 5 10 0 14 q -5 -4 0 -14 z" fill="#9fd8ff"/>',
 };
+
 
 let petMood = 'neutral';
 let pupils = [];
@@ -30,41 +31,43 @@ function renderEyes(mood) {
   const eyes = document.getElementById('pet-eyes');
   if (!eyes) return;
 
-  // Глубокий «живой» глаз: впадина, тень от века, радужка с объёмом, блики
-  const eye = (cx, cy, rx = 11.5, ry = 12.5) => `
+  // Большие «живые» глаза: впадина, объёмная радужка, отражённый свет и блики
+  const eye = (cx, cy, rx = 13, ry = 14.5) => `
     <g class="eye">
-      <ellipse cx="${cx}" cy="${cy + 1.5}" rx="${rx + 3.5}" ry="${ry + 3}" fill="#0b211f" opacity="0.16" filter="url(#eyeBlur)" />
+      <ellipse cx="${cx}" cy="${cy + 2}" rx="${rx + 4}" ry="${ry + 3.5}" fill="#0b211f" opacity="0.18" filter="url(#eyeBlur)" />
       <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#eyeSclera)" />
-      <circle class="pupil" cx="${cx}" cy="${cy + 1}" r="${rx * 0.62}" fill="url(#eyeIris)" />
-      <circle class="pupil" cx="${cx}" cy="${cy + 1}" r="${rx * 0.3}" fill="#05100f" />
-      <ellipse class="pupil" cx="${cx}" cy="${cy + 1 + rx * 0.4}" rx="${rx * 0.5}" ry="${rx * 0.22}" fill="#7fe6dd" opacity="0.35" />
-      <circle class="pupil-shine" cx="${cx - rx * 0.32}" cy="${cy - ry * 0.36}" r="${rx * 0.25}" fill="#fff" />
-      <circle class="pupil-shine" cx="${cx + rx * 0.34}" cy="${cy + ry * 0.34}" r="${rx * 0.12}" fill="#fff" opacity="0.65" />
+      <circle class="pupil" cx="${cx}" cy="${cy + 1}" r="${rx * 0.72}" fill="url(#eyeIris)" />
+      <circle class="pupil" cx="${cx}" cy="${cy + 1.5}" r="${rx * 0.34}" fill="#04100f" />
+      <ellipse class="pupil" cx="${cx}" cy="${cy + 1 + rx * 0.45}" rx="${rx * 0.52}" ry="${rx * 0.24}" fill="#8ff0e6" opacity="0.4" />
+      <circle class="pupil-shine" cx="${cx - rx * 0.3}" cy="${cy - ry * 0.34}" r="${rx * 0.28}" fill="#fff" />
+      <circle class="pupil-shine" cx="${cx + rx * 0.36}" cy="${cy + ry * 0.3}" r="${rx * 0.13}" fill="#fff" opacity="0.7" />
       <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#eyeDepth)" />
-      <path d="M ${cx - rx} ${cy - ry * 0.45} Q ${cx} ${cy - ry * 1.2} ${cx + rx} ${cy - ry * 0.45}"
-            fill="none" stroke="#1d3b35" stroke-width="2.4" stroke-linecap="round" opacity="0.5" />
-      <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="#1d3b35" stroke-width="1" opacity="0.28" />
+      <path d="M ${cx - rx} ${cy - ry * 0.5} Q ${cx} ${cy - ry * 1.25} ${cx + rx} ${cy - ry * 0.5}"
+            fill="none" stroke="#1d3b35" stroke-width="2.6" stroke-linecap="round" opacity="0.45" />
+      <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="#1d3b35" stroke-width="1" opacity="0.22" />
     </g>`;
 
   if (mood === 'happy') {
     eyes.innerHTML = `
-      <path d="M 80 128 Q 90 112 100 128" fill="none" stroke="#22312b" stroke-width="4.2" stroke-linecap="round" />
-      <path d="M 120 128 Q 130 112 140 128" fill="none" stroke="#22312b" stroke-width="4.2" stroke-linecap="round" />`;
-    pupils = [];
+      ${eye(88, 132, 13, 12)}
+      ${eye(132, 132, 13, 12)}
+      <path d="M 76 116 Q 88 109 100 115" fill="none" stroke="#1d3b35" stroke-width="3" stroke-linecap="round" opacity="0.6" />
+      <path d="M 120 115 Q 132 109 144 116" fill="none" stroke="#1d3b35" stroke-width="3" stroke-linecap="round" opacity="0.6" />`;
   } else if (mood === 'sad') {
     eyes.innerHTML = `
-      ${eye(90, 130, 9.5, 8)}
-      ${eye(130, 130, 9.5, 8)}
-      <path d="M 80 116 Q 90 111 100 115" fill="none" stroke="#22312b" stroke-width="3" stroke-linecap="round" opacity="0.75" />
-      <path d="M 120 115 Q 130 111 140 116" fill="none" stroke="#22312b" stroke-width="3" stroke-linecap="round" opacity="0.75" />`;
+      ${eye(88, 134, 11, 9.5)}
+      ${eye(132, 134, 11, 9.5)}
+      <path d="M 77 120 Q 88 115 99 119" fill="none" stroke="#1d3b35" stroke-width="3" stroke-linecap="round" opacity="0.75" />
+      <path d="M 121 119 Q 132 115 143 120" fill="none" stroke="#1d3b35" stroke-width="3" stroke-linecap="round" opacity="0.75" />`;
   } else {
     eyes.innerHTML = `
-      ${eye(90, 128)}
-      ${eye(130, 128)}
+      ${eye(88, 132)}
+      ${eye(132, 132)}
       ${mood === 'worried' ? `
-      <path d="M 79 110 Q 90 104 101 110" fill="none" stroke="#22312b" stroke-width="3.2" stroke-linecap="round" />
-      <path d="M 119 110 Q 130 104 141 110" fill="none" stroke="#22312b" stroke-width="3.2" stroke-linecap="round" />` : ''}`;
+      <path d="M 76 114 Q 88 108 100 114" fill="none" stroke="#1d3b35" stroke-width="3.2" stroke-linecap="round" opacity="0.7" />
+      <path d="M 120 114 Q 132 108 144 114" fill="none" stroke="#1d3b35" stroke-width="3.2" stroke-linecap="round" opacity="0.7" />` : ''}`;
   }
+
 
   pupils = Array.from(eyes.querySelectorAll('.pupil, .pupil-shine')).map((el) => ({
     el,

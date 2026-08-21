@@ -129,74 +129,124 @@
         <div id="pet-avatar" class="pet-avatar" data-mood="neutral">
           <svg viewBox="0 0 220 220" class="pet-svg" aria-hidden="true">
             <defs>
-              <radialGradient id="petBodyGradient" cx="34%" cy="26%" r="80%">
-                <stop offset="0%" stop-color="var(--pet-light)" />
-                <stop offset="60%" stop-color="var(--pet-main)" />
+              <radialGradient id="petBodyGradient" cx="36%" cy="22%" r="86%">
+                <stop offset="0%" stop-color="#ffffff" />
+                <stop offset="22%" stop-color="var(--pet-light)" />
+                <stop offset="62%" stop-color="var(--pet-main)" />
                 <stop offset="100%" stop-color="var(--pet-accent)" />
               </radialGradient>
-              <linearGradient id="petLeafGradient" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="petLeafGradient" x1="0" y1="0" x2="0.3" y2="1">
                 <stop offset="0%" stop-color="var(--pet-light)" />
                 <stop offset="100%" stop-color="var(--pet-accent)" />
               </linearGradient>
               <radialGradient id="petGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="var(--pet-main)" stop-opacity="0.55" />
+                <stop offset="0%" stop-color="var(--pet-main)" stop-opacity="0.5" />
                 <stop offset="100%" stop-color="var(--pet-main)" stop-opacity="0" />
               </radialGradient>
-              <radialGradient id="eyeSclera" cx="50%" cy="28%" r="72%">
+              <radialGradient id="petBelly" cx="50%" cy="70%" r="62%">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.75" />
+                <stop offset="70%" stop-color="var(--pet-light)" stop-opacity="0.35" />
+                <stop offset="100%" stop-color="var(--pet-light)" stop-opacity="0" />
+              </radialGradient>
+              <linearGradient id="petRim" x1="0" y1="1" x2="0.2" y2="0">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85" />
+                <stop offset="45%" stop-color="#ffffff" stop-opacity="0.12" />
+                <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+              </linearGradient>
+              <radialGradient id="eyeSclera" cx="50%" cy="26%" r="74%">
                 <stop offset="0%" stop-color="#ffffff" />
-                <stop offset="62%" stop-color="#f2f8f6" />
-                <stop offset="100%" stop-color="#bcd4cd" />
+                <stop offset="60%" stop-color="#eef7f4" />
+                <stop offset="100%" stop-color="#b6cfc9" />
               </radialGradient>
-              <radialGradient id="eyeIris" cx="42%" cy="34%" r="70%">
-                <stop offset="0%" stop-color="#5fd7d0" />
-                <stop offset="55%" stop-color="#1f7e86" />
-                <stop offset="100%" stop-color="#0a2b33" />
+              <radialGradient id="eyeIris" cx="40%" cy="30%" r="76%">
+                <stop offset="0%" stop-color="#7defe6" />
+                <stop offset="42%" stop-color="#22909a" />
+                <stop offset="78%" stop-color="#0d3b45" />
+                <stop offset="100%" stop-color="#061c22" />
               </radialGradient>
-              <radialGradient id="eyeDepth" cx="50%" cy="18%" r="80%">
-                <stop offset="0%" stop-color="#0b211f" stop-opacity="0.5" />
-                <stop offset="55%" stop-color="#0b211f" stop-opacity="0.12" />
-                <stop offset="100%" stop-color="#0b211f" stop-opacity="0" />
+              <radialGradient id="eyeDepth" cx="50%" cy="14%" r="86%">
+                <stop offset="0%" stop-color="#07231f" stop-opacity="0.55" />
+                <stop offset="50%" stop-color="#07231f" stop-opacity="0.1" />
+                <stop offset="100%" stop-color="#07231f" stop-opacity="0" />
               </radialGradient>
               <filter id="eyeBlur" x="-60%" y="-60%" width="220%" height="220%">
-                <feGaussianBlur stdDeviation="2.2" />
+                <feGaussianBlur stdDeviation="2" />
               </filter>
               <filter id="petSoft" x="-40%" y="-40%" width="180%" height="180%">
                 <feGaussianBlur stdDeviation="6" />
               </filter>
+              <filter id="petBloom" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="4" result="b" />
+                <feMerge>
+                  <feMergeNode in="b" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+              <clipPath id="petBodyClip">
+                <ellipse cx="110" cy="124" rx="67" ry="63" />
+              </clipPath>
             </defs>
 
             <circle cx="110" cy="112" r="96" fill="url(#petGlow)" class="pet-halo" />
-            <ellipse cx="110" cy="196" rx="52" ry="9" fill="#000" opacity="0.18" filter="url(#petSoft)" />
+            <ellipse cx="110" cy="197" rx="50" ry="8" fill="#03110d" opacity="0.28" filter="url(#petSoft)" />
+
+            <!-- круги под питомцем -->
+            <g class="pet-rings" fill="none" stroke="var(--pet-light)">
+              <ellipse cx="110" cy="197" rx="44" ry="7" stroke-width="1.6" opacity="0.28" />
+              <ellipse cx="110" cy="197" rx="60" ry="10" stroke-width="1.2" opacity="0.14" />
+            </g>
 
             <!-- хвостик-росток -->
             <g class="pet-tail">
-              <path d="M 158 140 C 186 138 194 116 188 100" fill="none" stroke="var(--pet-accent)" stroke-width="7" stroke-linecap="round" />
-              <ellipse cx="188" cy="94" rx="9" ry="13" fill="url(#petLeafGradient)" />
+              <path d="M 158 142 C 188 140 196 118 190 100" fill="none" stroke="var(--pet-accent)" stroke-width="6.5" stroke-linecap="round" />
+              <path d="M 190 98 C 178 92 176 78 188 72 C 200 78 200 92 190 98 Z" fill="url(#petLeafGradient)" />
+              <path d="M 190 97 L 188 74" stroke="var(--pet-light)" stroke-width="1.4" opacity="0.7" />
             </g>
 
-            <!-- листики на голове -->
+            <!-- росток на голове -->
             <g class="pet-ears">
-              <ellipse cx="86" cy="40" rx="13" ry="24" fill="url(#petLeafGradient)" transform="rotate(-24 86 40)" />
-              <ellipse cx="132" cy="38" rx="11" ry="20" fill="url(#petLeafGradient)" transform="rotate(22 132 38)" />
-              <path d="M 108 62 C 106 52 100 44 92 38" fill="none" stroke="var(--pet-accent)" stroke-width="4" stroke-linecap="round" />
+              <path d="M 110 66 C 108 54 106 44 108 34" fill="none" stroke="var(--pet-accent)" stroke-width="4.6" stroke-linecap="round" />
+              <path d="M 108 44 C 92 42 82 30 88 18 C 104 20 112 32 108 44 Z" fill="url(#petLeafGradient)" />
+              <path d="M 110 40 C 126 36 136 24 130 13 C 115 16 107 28 110 40 Z" fill="url(#petLeafGradient)" opacity="0.95" />
+              <path d="M 107 43 C 98 38 92 30 89 21" stroke="var(--pet-light)" stroke-width="1.3" fill="none" opacity="0.7" />
+              <path d="M 110 39 C 118 34 124 26 128 17" stroke="var(--pet-light)" stroke-width="1.3" fill="none" opacity="0.6" />
+              <circle cx="108" cy="30" r="2.6" fill="#ffffff" opacity="0.9" filter="url(#petBloom)" />
+            </g>
+
+            <!-- ручки -->
+            <g class="pet-arms">
+              <ellipse cx="47" cy="140" rx="12" ry="17" fill="url(#petBodyGradient)" transform="rotate(18 47 140)" opacity="0.95" />
+              <ellipse cx="173" cy="140" rx="12" ry="17" fill="url(#petBodyGradient)" transform="rotate(-18 173 140)" opacity="0.95" />
             </g>
 
             <!-- тело -->
             <g class="pet-body">
-              <ellipse cx="110" cy="122" rx="66" ry="62" fill="url(#petBodyGradient)" />
-              <ellipse cx="110" cy="140" rx="42" ry="36" fill="var(--pet-light)" opacity="0.45" />
-              <ellipse cx="84" cy="92" rx="16" ry="11" fill="#fff" opacity="0.35" transform="rotate(-25 84 92)" />
+              <ellipse cx="110" cy="124" rx="67" ry="63" fill="url(#petBodyGradient)" />
+              <g clip-path="url(#petBodyClip)">
+                <ellipse cx="110" cy="152" rx="46" ry="40" fill="url(#petBelly)" />
+                <ellipse cx="110" cy="188" rx="66" ry="26" fill="url(#petRim)" opacity="0.5" />
+                <ellipse cx="80" cy="88" rx="20" ry="12" fill="#fff" opacity="0.55" transform="rotate(-26 80 88)" />
+                <ellipse cx="96" cy="80" rx="6" ry="4" fill="#fff" opacity="0.7" transform="rotate(-26 96 80)" />
+                <ellipse cx="146" cy="104" rx="7" ry="16" fill="#fff" opacity="0.16" transform="rotate(14 146 104)" />
+              </g>
+              <ellipse cx="110" cy="124" rx="67" ry="63" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.35" />
+            </g>
+
+            <!-- лапки -->
+            <g class="pet-feet">
+              <ellipse cx="90" cy="184" rx="16" ry="9" fill="var(--pet-accent)" opacity="0.55" />
+              <ellipse cx="130" cy="184" rx="16" ry="9" fill="var(--pet-accent)" opacity="0.55" />
             </g>
 
             <!-- щёчки -->
-            <ellipse class="pet-cheek" cx="72" cy="148" rx="11" ry="7.5" fill="var(--pet-cheek)" opacity="0.75" />
-            <ellipse class="pet-cheek" cx="148" cy="148" rx="11" ry="7.5" fill="var(--pet-cheek)" opacity="0.75" />
+            <ellipse class="pet-cheek" cx="74" cy="150" rx="12" ry="8" fill="var(--pet-cheek)" opacity="0.65" filter="url(#petSoft)" />
+            <ellipse class="pet-cheek" cx="146" cy="150" rx="12" ry="8" fill="var(--pet-cheek)" opacity="0.65" filter="url(#petSoft)" />
 
             <!-- глаза (рендерятся из pet.js) -->
             <g id="pet-eyes" class="pet-eyes"></g>
 
             <!-- рот -->
-            <path id="pet-mouth" d="M 98 154 Q 110 162 122 154" fill="none" stroke="#22312b" stroke-width="3.4" stroke-linecap="round" />
+            <path id="pet-mouth" d="M 98 156 Q 110 165 122 156" fill="none" stroke="#1d3b35" stroke-width="3.4" stroke-linecap="round" />
 
             <!-- капелька/искра настроения -->
             <g id="pet-emote" class="pet-emote"></g>
