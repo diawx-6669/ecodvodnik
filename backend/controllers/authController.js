@@ -96,4 +96,45 @@ function updateMe(req, res) {
   return res.json({ user: toPublicUser(user) });
 }
 
-module.exports = { register, login, me, updateMe };
+// POST /api/auth/change-password (требует токен)
+async function changePassword(req, res) {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Укажите текущий и новый пароль' });
+  }
+  if (String(newPassword).length < 6) {
+    return res.status(400).json({ error: 'Новый пароль должен быть не короче 6 символов' });
+  }
+
+  const db = readDb();
+  const user = db.users.find((u) => u.id === req.user.id);
+  if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
+
+  const ok = await bcrypt.compare(String(currentPassword), user.passwordHash);
+  if (!ok) return res.status(401).json({ error: 'Текущий пароль указан неверно' });
+
+  user.passwordHash = await bcrypt.hash(String(newPassword), 10);
+  writeDb(db);
+  return res.json({ ok: true });
+}
+
+// POST /api/auth/admin-code (требует токен) — активация прав администратора
+// по секретному коду. Код проверяется только на сервере.
+function claimAdmin(req, res) {
+  const { code } = req.body;
+  if (!code) return res.status(400).json({ error: 'Введите секретный код' });
+
+  if (String(code).trim() !== config.adminCode) {
+    return res.status(403).json({ error: 'Неверный секретный код' });
+  }
+
+  const db = readDb();
+  const user = db.users.find((u) => u.id === req.user.id);
+  if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
+
+  user.role = 'admin';
+  writeDb(db);
+  return res.json({ user: toPublicUser(user) });
+}
+
+module.exports = { register, login, me, updateMe, changePassword, claimAdmin };

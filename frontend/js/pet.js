@@ -6,13 +6,18 @@ const MOOD_LABELS = {
   neutral: 'Настроение: спокойное',
   worried: 'Настроение: встревоженное',
   sad: 'Настроение: грустное',
+  angry: 'Настроение: злое',
 };
+
+// Питомец, которому плохо, отворачивается от хозяина
+const TURN_AWAY_MOODS = ['sad', 'angry'];
 
 const MOUTH_PATHS = {
   happy: 'M 96 156 Q 110 174 124 156 Q 110 162 96 156',
   neutral: 'M 100 157 Q 110 165 120 157',
   worried: 'M 100 162 Q 110 155 120 162',
   sad: 'M 100 166 Q 110 152 120 166',
+  angry: 'M 98 165 Q 110 150 122 165 Q 110 158 98 165',
 };
 
 const EMOTES = {
@@ -20,10 +25,13 @@ const EMOTES = {
   neutral: '',
   worried: '<circle cx="166" cy="58" r="3.2" fill="#ffd98a"/><path d="M 170 40 v 12" stroke="#ffd98a" stroke-width="3.4" stroke-linecap="round"/><circle cx="170" cy="58" r="2" fill="#ffd98a"/>',
   sad: '<path d="M 141 142 q 5 10 0 14 q -5 -4 0 -14 z" fill="#9fd8ff"/>',
+  angry: '<path d="M 160 46 q 12 -6 20 2 q -12 0 -20 -2 z" fill="#ff8f8f"/><path d="M 164 62 q 12 -6 20 2 q -12 0 -20 -2 z" fill="#ff8f8f" opacity="0.8"/><path d="M 176 26 v 12" stroke="#ff8f8f" stroke-width="3.6" stroke-linecap="round"/><circle cx="176" cy="45" r="2.2" fill="#ff8f8f"/>',
 };
 
 
 let petMood = 'neutral';
+// Настоящее настроение по данным потребления (предпросмотр админа его не меняет)
+let realPetMood = 'neutral';
 let pupils = [];
 let lastPointer = { x: 0, y: 0 };
 
@@ -59,6 +67,12 @@ function renderEyes(mood) {
       ${eye(132, 134, 11, 9.5)}
       <path d="M 77 120 Q 88 115 99 119" fill="none" stroke="#1d3b35" stroke-width="3" stroke-linecap="round" opacity="0.75" />
       <path d="M 121 119 Q 132 115 143 120" fill="none" stroke="#1d3b35" stroke-width="3" stroke-linecap="round" opacity="0.75" />`;
+  } else if (mood === 'angry') {
+    eyes.innerHTML = `
+      ${eye(88, 133, 12, 10)}
+      ${eye(132, 133, 12, 10)}
+      <path d="M 74 116 L 100 124" stroke="#4a1717" stroke-width="4.4" stroke-linecap="round" />
+      <path d="M 146 116 L 120 124" stroke="#4a1717" stroke-width="4.4" stroke-linecap="round" />`;
   } else {
     eyes.innerHTML = `
       ${eye(88, 132)}
@@ -83,8 +97,11 @@ function movePupils(clientX, clientY) {
   if (!avatar || !pupils.length) return;
   const r = avatar.getBoundingClientRect();
   if (!r.width) return;
-  const dx = Math.max(-1, Math.min(1, (clientX - (r.left + r.width / 2)) / (r.width * 0.9)));
-  const dy = Math.max(-1, Math.min(1, (clientY - (r.top + r.height / 2)) / (r.height * 0.9)));
+  let dx = Math.max(-1, Math.min(1, (clientX - (r.left + r.width / 2)) / (r.width * 0.9)));
+  let dy = Math.max(-1, Math.min(1, (clientY - (r.top + r.height / 2)) / (r.height * 0.9)));
+  // Обиженный/злой питомец демонстративно отводит взгляд
+  if (petMood === 'angry') { dx = -1; dy = -0.35; }
+  else if (petMood === 'sad') { dx = Math.min(dx, -0.2); dy = 0.6; }
   pupils.forEach(({ el, cx, cy }) => {
     el.setAttribute('cx', (cx + dx * 3.4).toFixed(2));
     el.setAttribute('cy', (cy + dy * 3).toFixed(2));
@@ -130,27 +147,40 @@ function reactBounce() {
   avatar.classList.add('pet-bounce');
 }
 
-function renderPetState(pet) {
+// Применяет настроение к внешнему виду: цвет тела, глаза, рот, знак настроения
+// и разворот корпуса. Используется и живыми данными, и предпросмотром админа.
+function applyPetMood(mood) {
   const avatar = document.getElementById('pet-avatar');
-  const levelEl = document.getElementById('pet-level');
   const moodLabelEl = document.getElementById('pet-mood-label');
   const mouthEl = document.getElementById('pet-mouth');
   const emoteEl = document.getElementById('pet-emote');
+  if (!avatar) return;
+
+  petMood = MOOD_LABELS[mood] ? mood : 'neutral';
+  avatar.dataset.mood = petMood;
+  avatar.classList.toggle('pet-turned', TURN_AWAY_MOODS.includes(petMood));
+  if (moodLabelEl) moodLabelEl.textContent = MOOD_LABELS[petMood];
+  if (mouthEl) mouthEl.setAttribute('d', MOUTH_PATHS[petMood] || MOUTH_PATHS.neutral);
+  if (emoteEl) emoteEl.innerHTML = EMOTES[petMood] || '';
+  renderEyes(petMood);
+}
+
+function renderPetState(pet) {
+  const avatar = document.getElementById('pet-avatar');
+  const levelEl = document.getElementById('pet-level');
   const barEl = document.getElementById('pet-bar-fill');
   if (!avatar) return;
 
-  petMood = pet.mood || 'neutral';
-  avatar.dataset.mood = petMood;
+  realPetMood = MOOD_LABELS[pet.mood] ? pet.mood : 'neutral';
+  if (!window.petPreviewActive) applyPetMood(realPetMood);
   if (levelEl) levelEl.textContent = pet.level;
-  if (moodLabelEl) moodLabelEl.textContent = MOOD_LABELS[petMood] || '';
-  if (mouthEl) mouthEl.setAttribute('d', MOUTH_PATHS[petMood] || MOUTH_PATHS.neutral);
-  if (emoteEl) emoteEl.innerHTML = EMOTES[petMood] || '';
   if (barEl) {
-    const xp = typeof pet.xp === 'number' ? pet.xp % 100 : { happy: 90, neutral: 60, worried: 38, sad: 18 }[petMood];
+    const xp = typeof pet.xp === 'number'
+      ? pet.xp % 100
+      : { happy: 90, neutral: 60, worried: 38, sad: 18, angry: 8 }[petMood];
     barEl.style.width = `${Math.max(8, xp)}%`;
   }
 
-  renderEyes(petMood);
   reactBounce();
 }
 
@@ -181,3 +211,13 @@ function appendChatMessage(from, text) {
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
 }
+
+// Доступно другим модулям (например, панели администратора)
+window.petMoodApi = {
+  labels: MOOD_LABELS,
+  apply: applyPetMood,
+  current: () => petMood,
+  real: () => realPetMood,
+  restore: () => applyPetMood(realPetMood),
+  bounce: reactBounce,
+};

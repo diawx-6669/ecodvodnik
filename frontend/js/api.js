@@ -66,4 +66,7 @@ const api = {
   login: (email, password) => apiPost('/auth/login', { email, password }, { auth: false }),
   me: () => apiGet('/auth/me'),
   updateMe: (payload) => apiPatch('/auth/me', payload),
+  changePassword: (currentPassword, newPassword) =>
+    apiPost('/auth/change-password', { currentPassword, newPassword }),
+  claimAdmin: (code) => apiPost('/auth/admin-code', { code }),
 };

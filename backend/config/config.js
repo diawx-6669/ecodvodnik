@@ -10,6 +10,10 @@ module.exports = {
   jwtSecret: process.env.JWT_SECRET || 'dev_insecure_secret_change_me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '30d',
 
+  // Секретный код, который пользователь вводит в своём профиле, чтобы
+  // получить права администратора. В проде задайте свой через ADMIN_CODE.
+  adminCode: process.env.ADMIN_CODE || 'DIAWX7',
+
   // Примерные тарифы по Казахстану (KZT). Поменяйте под свой регион/питч.
   tariffs: {
     water_kzt_per_liter: 0.35,      // тенге за литр воды

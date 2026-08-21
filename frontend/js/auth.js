@@ -48,7 +48,8 @@ function renderAccountChip() {
     nameEl.textContent = name;
     const info = AUDIENCE_LABELS[appAuth.user.type] || AUDIENCE_LABELS.household;
     const orgPart = appAuth.user.organizationName ? ` · ${appAuth.user.organizationName}` : '';
-    typeEl.textContent = `${info.typeLabel}${orgPart} · ${appAuth.user.unitsCount}`;
+    const rolePart = appAuth.user.role === 'admin' ? ' · админ' : '';
+    typeEl.textContent = `${info.typeLabel}${orgPart} · ${appAuth.user.unitsCount}${rolePart}`;
   } else {
     avatar.textContent = 'Г';
     nameEl.textContent = 'Гость';
@@ -180,4 +181,5 @@ async function bootstrapAuth() {
 }
 
 window.appAuth = appAuth;
+window.renderAccountChip = renderAccountChip;
 bootstrapAuth();

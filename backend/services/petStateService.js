@@ -1,6 +1,6 @@
 /**
  * Определяет "настроение" и уровень питомца на основе сводки потребления.
- * mood: 'happy' | 'neutral' | 'worried' | 'sad'
+ * mood: 'happy' | 'neutral' | 'worried' | 'sad' | 'angry'
  */
 function computePetState(summary) {
   const worstTrend = Math.max(
@@ -9,7 +9,11 @@ function computePetState(summary) {
   );
 
   let mood = 'neutral';
-  if (summary.anomalies.length > 0) {
+  // Питомец злится, когда ситуация действительно плохая: несколько аномалий
+  // сразу или резкий рост расхода. Тогда он краснеет и отворачивается.
+  if (summary.anomalies.length >= 2 || worstTrend > 40) {
+    mood = 'angry';
+  } else if (summary.anomalies.length > 0) {
     mood = 'sad';
   } else if (worstTrend <= -10) {
     mood = 'happy';

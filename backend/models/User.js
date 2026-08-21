@@ -18,6 +18,8 @@ function createUser({ name, email, passwordHash, type = 'household', unitsCount 
     unitsCount: Math.max(1, Number(unitsCount) || 1),
     // Название школы/компании (необязательно, для домов не используется)
     organizationName: organizationName ? String(organizationName).trim() : '',
+    // 'user' | 'admin'. Админ получает доступ к просмотру всех эмоций питомца.
+    role: 'user',
     createdAt: new Date().toISOString(),
   };
 }
@@ -26,6 +28,8 @@ function createUser({ name, email, passwordHash, type = 'household', unitsCount 
 function toPublicUser(user) {
   if (!user) return null;
   const { passwordHash, ...publicUser } = user;
+  // У аккаунтов, созданных до появления ролей, поля role нет
+  publicUser.role = user.role === 'admin' ? 'admin' : 'user';
   return publicUser;
 }
 
