@@ -82,7 +82,7 @@ function buildBenchmarkComparison(user, waterWeekTotal, electricityWeekTotal) {
  * user (необязательно) — используется для персонального норматива
  * (жилой дом / школа / малый бизнес) и его размера.
  */
-function buildSummary(readings, user = null) {
+function buildSummary(readings, user = null, settings = null) {
   const water7d = sumByType(readings, 'water', 7);
   const electricity7d = sumByType(readings, 'electricity', 7);
 
@@ -94,31 +94,36 @@ function buildSummary(readings, user = null) {
 
   const benchmark = buildBenchmarkComparison(user, water7d, electricity7d);
 
-  // Простая эвристика аномалии: рост более чем на 25% к прошлой неделе,
+  // Пороги аномалий настраиваются администратором (см. controllers/adminController.js
+  // и db.settings), с безопасными значениями по умолчанию.
+  const anomalyThreshold = (settings && settings.anomalyThresholdPercent) || 25;
+  const benchmarkOverThreshold = (settings && settings.benchmarkOverThresholdPercent) || 40;
+
+  // Простая эвристика аномалии: рост более чем на N% к прошлой неделе,
   // либо расход значительно выше норматива для типа аудитории пользователя.
   const anomalies = [];
-  if (waterTrend.changePercent > 25) {
+  if (waterTrend.changePercent > anomalyThreshold) {
     anomalies.push({
       type: 'water',
       message: 'Резкий рост расхода воды — возможна утечка.',
       changePercent: waterTrend.changePercent,
     });
   }
-  if (electricityTrend.changePercent > 25) {
+  if (electricityTrend.changePercent > anomalyThreshold) {
     anomalies.push({
       type: 'electricity',
       message: 'Резкий рост расхода электроэнергии — проверьте приборы.',
       changePercent: electricityTrend.changePercent,
     });
   }
-  if (benchmark.water_vs_benchmark_percent > 40) {
+  if (benchmark.water_vs_benchmark_percent > benchmarkOverThreshold) {
     anomalies.push({
       type: 'water',
       message: `Расход воды выше нормы (${benchmark.audience_label}) на ${benchmark.water_vs_benchmark_percent}%.`,
       changePercent: benchmark.water_vs_benchmark_percent,
     });
   }
-  if (benchmark.electricity_vs_benchmark_percent > 40) {
+  if (benchmark.electricity_vs_benchmark_percent > benchmarkOverThreshold) {
     anomalies.push({
       type: 'electricity',
       message: `Расход электричества выше нормы (${benchmark.audience_label}) на ${benchmark.electricity_vs_benchmark_percent}%.`,

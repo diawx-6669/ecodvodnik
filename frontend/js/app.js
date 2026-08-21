@@ -55,7 +55,7 @@ function renderRecommendations(recommendations) {
 
 async function loadChatHistory() {
   try {
-    const history = await api.getHistory();
+    const history = await api.getChatHistory();
     history.slice(-10).forEach((m) => appendChatMessage(m.from, m.text));
   } catch (err) {
     console.error('Не удалось загрузить историю чата:', err);
@@ -140,6 +140,7 @@ document.getElementById('chat-form').addEventListener('submit', async (e) => {
     const { reply, pet } = await api.sendMessage(message);
     appendChatMessage('pet', reply);
     renderPetState(pet);
+    if (typeof window.checkAndRenderAchievements === 'function') window.checkAndRenderAchievements();
   } catch (err) {
     appendChatMessage('pet', 'У меня что-то со связью... попробуй ещё раз.');
     console.error(err);
@@ -156,6 +157,7 @@ document.getElementById('reading-form').addEventListener('submit', async (e) => 
     await api.addReading(type, value);
     document.getElementById('reading-value').value = '';
     await loadDashboard();
+    if (typeof window.refreshAfterReading === 'function') window.refreshAfterReading();
   } catch (err) {
     console.error('Не удалось добавить показание:', err);
   }
@@ -173,13 +175,39 @@ function initDashboard() {
   loadDeviceStatus();
   loadChatHistory();
 
+  // Новые модули (история/графики, достижения, советы, уведомления) —
+  // каждый регистрирует свою функцию на window, если подключён его файл.
+  if (typeof window.loadHistoryChart === 'function') window.loadHistoryChart();
+  if (typeof window.loadAchievements === 'function') window.loadAchievements();
+  if (typeof window.loadTips === 'function') window.loadTips();
+  if (typeof window.loadNotifications === 'function') window.loadNotifications();
+  if (window.appAuth && window.appAuth.user && typeof window.loadGoalsAndProgress === 'function') {
+    window.loadGoalsAndProgress();
+    window.loadConsumptionSummary();
+  }
+
   if (!dashboardIntervalsStarted) {
     dashboardIntervalsStarted = true;
     // Автообновление дашборда раз в 30 секунд (например, чтобы видеть данные с Arduino)
     setInterval(loadDashboard, 30000);
     // Статус устройства обновляем чаще — это живой индикатор связи с железом
     setInterval(loadDeviceStatus, 10000);
+    // Уведомления проверяем раз в минуту — новые аномалии не требуют мгновенной реакции
+    setInterval(() => { if (typeof window.loadNotifications === 'function') window.loadNotifications(); }, 60000);
   }
 }
+
+// Вызывается после добавления нового показания — обновляет всё, что зависит
+// от свежих данных (достижения могут открыться, уведомления могут появиться).
+window.refreshAfterReading = function refreshAfterReading() {
+  if (typeof window.loadHistoryChart === 'function') window.loadHistoryChart();
+  if (typeof window.loadTips === 'function') window.loadTips();
+  if (typeof window.loadNotifications === 'function') window.loadNotifications();
+  if (typeof window.checkAndRenderAchievements === 'function') window.checkAndRenderAchievements();
+  if (window.appAuth && window.appAuth.user && typeof window.loadGoalsAndProgress === 'function') {
+    window.loadGoalsAndProgress();
+    window.loadConsumptionSummary();
+  }
+};
 
 window.initDashboard = initDashboard;

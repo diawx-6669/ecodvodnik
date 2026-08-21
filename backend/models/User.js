@@ -18,8 +18,18 @@ function createUser({ name, email, passwordHash, type = 'household', unitsCount 
     unitsCount: Math.max(1, Number(unitsCount) || 1),
     // Название школы/компании (необязательно, для домов не используется)
     organizationName: organizationName ? String(organizationName).trim() : '',
-    // 'user' | 'admin'. Админ получает доступ к просмотру всех эмоций питомца.
+    // 'user' | 'admin'. Админ получает доступ к просмотру всех эмоций питомца
+    // и к расширенной админке (см. controllers/adminController.js).
     role: 'user',
+    // Семейный аккаунт: id домохозяйства, к которому привязан пользователь.
+    // null, пока пользователь не создал/не присоединился к домохозяйству.
+    householdId: null,
+    // Оформление интерфейса ('dark' | 'light'), сохраняется и на сервере,
+    // чтобы применяться сразу при входе с нового устройства.
+    theme: 'dark',
+    // Ключ для интеграции с внешними счётчиками/умным домом (см.
+    // routes/integrations.js). Генерируется по запросу пользователя.
+    integrationApiKey: null,
     createdAt: new Date().toISOString(),
   };
 }

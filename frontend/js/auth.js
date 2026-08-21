@@ -154,6 +154,9 @@ document.getElementById('logout-btn').addEventListener('click', () => {
 function onAuthReady() {
   renderAccountChip();
   showApp();
+  if (window.appAuth.user && typeof window.applyUserTheme === 'function') {
+    window.applyUserTheme(window.appAuth.user);
+  }
   if (typeof window.initDashboard === 'function') window.initDashboard();
 }
 

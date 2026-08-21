@@ -53,11 +53,41 @@ async function apiPatch(path, body) {
   return data;
 }
 
+async function apiPut(path, body) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error || `PUT ${path} failed: ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+async function apiDelete(path) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'DELETE',
+    headers: { ...authHeaders() },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error || `DELETE ${path} failed: ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
 const api = {
   getSummary: () => apiGet('/analytics/summary'),
+  getHistory: (period = 'day') => apiGet(`/analytics/history?period=${encodeURIComponent(period)}`),
   getDeviceStatus: () => apiGet('/analytics/device-status'),
   getRecommendations: () => apiGet('/assistant/recommendations'),
-  getHistory: () => apiGet('/assistant/history'),
+  getChatHistory: () => apiGet('/assistant/history'),
   sendMessage: (message) => apiPost('/assistant/message', { message }),
   addReading: (type, value) => apiPost('/readings', { type, value, source: 'manual' }),
 
@@ -69,4 +99,34 @@ const api = {
   changePassword: (currentPassword, newPassword) =>
     apiPost('/auth/change-password', { currentPassword, newPassword }),
   claimAdmin: (code) => apiPost('/auth/admin-code', { code }),
+
+  // --- Уведомления ---
+  getAlerts: () => apiGet('/alerts'),
+  checkAlerts: () => apiPost('/alerts/check', {}),
+  acknowledgeAlert: (alertId) => apiPut(`/alerts/${alertId}/acknowledge`, {}),
+
+  // --- Советы по экономии ---
+  getTips: () => apiGet('/tips'),
+
+  // --- Достижения / геймификация ---
+  getAchievements: () => apiGet('/achievements'),
+  checkAchievements: () => apiPost('/achievements/check', {}),
+
+  // --- Семейный аккаунт ---
+  createHousehold: (name) => apiPost('/household', { name }),
+  joinHousehold: (inviteCode) => apiPost('/household/join', { inviteCode }),
+  getHousehold: () => apiGet('/household'),
+  leaveHousehold: () => apiPost('/household/leave', {}),
+
+  // --- Интеграция с реальными счётчиками / умным домом ---
+  issueIntegrationKey: () => apiPost('/integrations/api-key', {}),
+  getIntegrationStatus: () => apiGet('/integrations'),
+  revokeIntegrationKey: () => apiDelete('/integrations/api-key'),
+
+  // --- Админка ---
+  adminListUsers: () => apiGet('/admin/users'),
+  adminSetUserRole: (userId, role) => apiPut(`/admin/users/${userId}/role`, { role }),
+  adminGlobalStats: () => apiGet('/admin/stats'),
+  adminGetSettings: () => apiGet('/admin/settings'),
+  adminUpdateSettings: (payload) => apiPut('/admin/settings', payload),
 };

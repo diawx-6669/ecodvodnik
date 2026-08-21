@@ -1,20 +1,47 @@
 const { readDb } = require('../data/db');
 const analyticsService = require('../services/analyticsService');
 const petStateService = require('../services/petStateService');
+const historyService = require('../services/historyService');
 
 // GET /api/analytics/summary
 function getSummary(req, res) {
   const db = readDb();
   // Вошедший пользователь видит свои показания + общие (Arduino/демо без
   // владельца). Гость — только общие, чужие приватные данные не показываем.
+  // Пользователь в семейном аккаунте (households) видит также показания
+  // остальных членов семьи — это и есть "общий" семейный расход.
+  let readings;
+  if (req.user) {
+    const household = req.user.householdId
+      ? db.households.find((h) => h.id === req.user.householdId)
+      : null;
+    const memberIds = household ? new Set(household.memberIds) : new Set([req.user.id]);
+    readings = db.readings.filter((r) => !r.userId || memberIds.has(r.userId));
+  } else {
+    readings = db.readings.filter((r) => !r.userId);
+  }
+
+  const summary = analyticsService.buildSummary(readings, req.user, db.settings);
+  const lastReading = readings.slice().sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+  const petState = petStateService.computePetState(summary, {
+    lastReadingTimestamp: lastReading ? lastReading.timestamp : null,
+  });
+
+  return res.json({ summary, pet: petState });
+}
+
+// GET /api/analytics/history?period=day|week|month
+// Данные для графика "История и графики" — расход по дням/неделям/месяцам.
+function getHistory(req, res) {
+  const db = readDb();
+  const period = ['day', 'week', 'month'].includes(req.query.period) ? req.query.period : 'day';
+
   const readings = req.user
     ? db.readings.filter((r) => !r.userId || r.userId === req.user.id)
     : db.readings.filter((r) => !r.userId);
 
-  const summary = analyticsService.buildSummary(readings, req.user);
-  const petState = petStateService.computePetState(summary);
-
-  return res.json({ summary, pet: petState });
+  const history = historyService.buildHistory(readings, period);
+  return res.json(history);
 }
 
 // GET /api/analytics/device-status
@@ -51,4 +78,4 @@ function getDeviceStatus(req, res) {
   });
 }
 
-module.exports = { getSummary, getDeviceStatus };
+module.exports = { getSummary, getHistory, getDeviceStatus };

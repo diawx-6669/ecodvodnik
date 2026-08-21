@@ -1,0 +1,48 @@
+/* Светлая тема — переопределяет переменные из :root в style.css.
+   Всё остальное в приложении построено на var(--...), поэтому этого
+   переопределения достаточно, чтобы перекрасить весь интерфейс. */
+
+html[data-theme="light"] {
+  --bg: #f3f8f6;
+  --bg-2: #e7f2ec;
+  --surface: rgba(8, 30, 24, 0.045);
+  --surface-strong: rgba(8, 30, 24, 0.08);
+  --stroke: rgba(8, 40, 30, 0.12);
+  --text: #0e211c;
+  --muted: #5c7069;
+  --shadow: 0 24px 60px -28px rgba(20, 40, 34, 0.28);
+  --glow-green: 0 0 0 1px rgba(15, 158, 99, 0.22), 0 18px 46px -20px rgba(15, 158, 99, 0.35);
+}
+
+html[data-theme="light"] body {
+  background: radial-gradient(120% 100% at 50% 0%, var(--bg-2) 0%, var(--bg) 60%);
+}
+
+html[data-theme="light"] .aurora { opacity: 0.55; }
+html[data-theme="light"] .grid { opacity: 0.5; }
+
+html[data-theme="light"] .auth-card,
+html[data-theme="light"] .profile-sheet {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(236, 246, 241, 0.98));
+}
+
+/* --- Переключатель темы --- */
+.theme-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--stroke);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  transition: background 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+  flex: 0 0 auto;
+}
+.theme-toggle:hover { background: rgba(53, 224, 143, 0.12); border-color: rgba(53, 224, 143, 0.35); transform: translateY(-1px); }
+.theme-toggle svg { width: 18px; height: 18px; }
+.theme-toggle .icon-sun { display: none; }
+.theme-toggle .icon-moon { display: block; }
+html[data-theme="light"] .theme-toggle .icon-sun { display: block; }
+html[data-theme="light"] .theme-toggle .icon-moon { display: none; }
+
+@media (max-width: 700px) {
+  .theme-toggle { width: 34px; height: 34px; }
+}

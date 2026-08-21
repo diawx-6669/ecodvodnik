@@ -82,7 +82,7 @@ function me(req, res) {
 // PATCH /api/auth/me (требует токен) — обновление профиля,
 // например изменение числа жильцов/учеников/сотрудников
 function updateMe(req, res) {
-  const { name, unitsCount, organizationName } = req.body;
+  const { name, unitsCount, organizationName, theme } = req.body;
 
   const db = readDb();
   const user = db.users.find((u) => u.id === req.user.id);
@@ -91,6 +91,7 @@ function updateMe(req, res) {
   if (name) user.name = name;
   if (unitsCount !== undefined) user.unitsCount = Math.max(1, Number(unitsCount) || 1);
   if (organizationName !== undefined) user.organizationName = String(organizationName).trim();
+  if (theme !== undefined && ['dark', 'light'].includes(theme)) user.theme = theme;
 
   writeDb(db);
   return res.json({ user: toPublicUser(user) });

@@ -57,6 +57,7 @@ async function setNewGoal() {
     await goalsAPI.setConsumptionGoal(type, targetValue, currentMonth);
     alert('Цель установлена!');
     await loadGoalsAndProgress();
+    if (typeof window.checkAndRenderAchievements === 'function') window.checkAndRenderAchievements();
   } catch (err) {
     console.error('Ошибка при установке цели:', err);
     alert('Не удалось установить цель');

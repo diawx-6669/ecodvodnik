@@ -50,4 +50,15 @@ function optionalAuth(req, res, next) {
   return next();
 }
 
-module.exports = { requireAuth, optionalAuth };
+// Требует валидный токен И роль admin. Используется расширенной админкой
+// (управление пользователями, глобальная статистика, пороги аномалий).
+function requireAdmin(req, res, next) {
+  return requireAuth(req, res, () => {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Доступно только администратору' });
+    }
+    return next();
+  });
+}
+
+module.exports = { requireAuth, optionalAuth, requireAdmin };

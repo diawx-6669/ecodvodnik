@@ -84,9 +84,13 @@ function renderProfile() {
   profileEl('password-section').classList.toggle('hidden', guest);
   profileEl('admin-code-section').classList.toggle('hidden', guest || isAdmin());
   profileEl('admin-section').classList.toggle('hidden', !isAdmin());
+  profileEl('admin-extras-section').classList.toggle('hidden', !isAdmin());
   profileEl('admin-locked-note').classList.toggle('hidden', guest || isAdmin());
 
   if (isAdmin()) renderMoodPreview();
+  if (typeof window.loadHousehold === 'function') window.loadHousehold();
+  if (typeof window.loadIntegrationStatus === 'function') window.loadIntegrationStatus();
+  if (typeof window.loadAdminExtras === 'function') window.loadAdminExtras();
 }
 
 function renderMoodPreview() {

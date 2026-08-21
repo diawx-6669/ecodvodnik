@@ -4,28 +4,37 @@
 const MOOD_LABELS = {
   happy: 'Настроение: отличное',
   neutral: 'Настроение: спокойное',
+  surprised: 'Настроение: удивлённое',
   worried: 'Настроение: встревоженное',
+  tired: 'Настроение: уставшее',
   sad: 'Настроение: грустное',
   angry: 'Настроение: злое',
+  sick: 'Настроение: болеет',
 };
 
 // Питомец, которому плохо, отворачивается от хозяина
-const TURN_AWAY_MOODS = ['sad', 'angry'];
+const TURN_AWAY_MOODS = ['sad', 'angry', 'sick'];
 
 const MOUTH_PATHS = {
   happy: 'M 96 156 Q 110 174 124 156 Q 110 162 96 156',
   neutral: 'M 100 157 Q 110 165 120 157',
+  surprised: 'M 110 158 m -6 0 a 6 7 0 1 0 12 0 a 6 7 0 1 0 -12 0',
   worried: 'M 100 162 Q 110 155 120 162',
+  tired: 'M 99 160 Q 110 158 121 160',
   sad: 'M 100 166 Q 110 152 120 166',
   angry: 'M 98 165 Q 110 150 122 165 Q 110 158 98 165',
+  sick: 'M 100 163 Q 105 168 110 163 Q 115 168 120 163',
 };
 
 const EMOTES = {
   happy: '<circle cx="168" cy="60" r="4" fill="var(--pet-light)"/><circle cx="180" cy="48" r="2.6" fill="var(--pet-light)"/><path d="M 156 44 l 3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3 z" fill="var(--pet-light)"/>',
   neutral: '',
+  surprised: '<path d="M 158 38 l 4 8 8 2 -6 6 1 8 -7 -4 -7 4 1 -8 -6 -6 8 -2 z" fill="#ffe08a"/><circle cx="180" cy="66" r="2.4" fill="#ffe08a"/>',
   worried: '<circle cx="166" cy="58" r="3.2" fill="#ffd98a"/><path d="M 170 40 v 12" stroke="#ffd98a" stroke-width="3.4" stroke-linecap="round"/><circle cx="170" cy="58" r="2" fill="#ffd98a"/>',
+  tired: '<path d="M 158 50 q 10 6 20 0" stroke="#9fb3ae" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.85"/><path d="M 162 62 q 8 5 16 0" stroke="#9fb3ae" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.6"/>',
   sad: '<path d="M 141 142 q 5 10 0 14 q -5 -4 0 -14 z" fill="#9fd8ff"/>',
   angry: '<path d="M 160 46 q 12 -6 20 2 q -12 0 -20 -2 z" fill="#ff8f8f"/><path d="M 164 62 q 12 -6 20 2 q -12 0 -20 -2 z" fill="#ff8f8f" opacity="0.8"/><path d="M 176 26 v 12" stroke="#ff8f8f" stroke-width="3.6" stroke-linecap="round"/><circle cx="176" cy="45" r="2.2" fill="#ff8f8f"/>',
+  sick: '<path d="M 154 44 q 8 -10 18 -4 q -8 2 -18 4 z" fill="#8fd98a" opacity="0.85"/><circle cx="184" cy="52" r="3" fill="#8fd98a" opacity="0.7"/><circle cx="190" cy="64" r="2" fill="#8fd98a" opacity="0.5"/>',
 };
 
 
@@ -73,6 +82,22 @@ function renderEyes(mood) {
       ${eye(132, 133, 12, 10)}
       <path d="M 74 116 L 100 124" stroke="#4a1717" stroke-width="4.4" stroke-linecap="round" />
       <path d="M 146 116 L 120 124" stroke="#4a1717" stroke-width="4.4" stroke-linecap="round" />`;
+  } else if (mood === 'surprised') {
+    eyes.innerHTML = `
+      ${eye(88, 130, 15, 16)}
+      ${eye(132, 130, 15, 16)}`;
+  } else if (mood === 'tired') {
+    eyes.innerHTML = `
+      ${eye(88, 136, 12, 6)}
+      ${eye(132, 136, 12, 6)}
+      <path d="M 76 128 L 100 128" stroke="#1d3b35" stroke-width="3" stroke-linecap="round" opacity="0.5" />
+      <path d="M 120 128 L 144 128" stroke="#1d3b35" stroke-width="3" stroke-linecap="round" opacity="0.5" />`;
+  } else if (mood === 'sick') {
+    eyes.innerHTML = `
+      ${eye(88, 134, 11, 10)}
+      ${eye(132, 134, 11, 10)}
+      <path d="M 76 122 Q 88 128 100 122" fill="none" stroke="#8fd98a" stroke-width="2.6" stroke-linecap="round" opacity="0.75" />
+      <path d="M 120 122 Q 132 128 144 122" fill="none" stroke="#8fd98a" stroke-width="2.6" stroke-linecap="round" opacity="0.75" />`;
   } else {
     eyes.innerHTML = `
       ${eye(88, 132)}
@@ -165,6 +190,27 @@ function applyPetMood(mood) {
   renderEyes(petMood);
 }
 
+// Применяет стадию эволюции («семечко» → «росток» → «деревце» → «дерево» →
+// «цветение») — визуально это масштаб/сочность питомца и подпись возле
+// уровня. Стадия считается на бэкенде (services/petStateService.js) от
+// текущего уровня, здесь только отражаем её.
+const STAGE_LABELS = {
+  seed: 'семечко',
+  sprout: 'росток',
+  sapling: 'деревце',
+  tree: 'дерево',
+  bloom: 'цветение',
+};
+
+function applyPetStage(stage) {
+  const avatar = document.getElementById('pet-avatar');
+  const stageLabelEl = document.getElementById('pet-stage-label');
+  if (!avatar) return;
+  const safeStage = STAGE_LABELS[stage] ? stage : 'seed';
+  avatar.dataset.stage = safeStage;
+  if (stageLabelEl) stageLabelEl.textContent = `Стадия: ${STAGE_LABELS[safeStage]}`;
+}
+
 function renderPetState(pet) {
   const avatar = document.getElementById('pet-avatar');
   const levelEl = document.getElementById('pet-level');
@@ -173,11 +219,12 @@ function renderPetState(pet) {
 
   realPetMood = MOOD_LABELS[pet.mood] ? pet.mood : 'neutral';
   if (!window.petPreviewActive) applyPetMood(realPetMood);
+  if (pet.stage) applyPetStage(pet.stage);
   if (levelEl) levelEl.textContent = pet.level;
   if (barEl) {
     const xp = typeof pet.xp === 'number'
       ? pet.xp % 100
-      : { happy: 90, neutral: 60, worried: 38, sad: 18, angry: 8 }[petMood];
+      : { happy: 90, neutral: 60, surprised: 55, worried: 38, tired: 45, sad: 18, angry: 8, sick: 4 }[petMood];
     barEl.style.width = `${Math.max(8, xp)}%`;
   }
 

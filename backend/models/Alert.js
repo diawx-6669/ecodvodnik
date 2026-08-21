@@ -10,7 +10,7 @@ function createAlert({ userId, type, month, currentUsage, goalValue, percentageO
     currentUsage: Number(currentUsage),
     goalValue: Number(goalValue),
     percentageOver: Number(percentageOver), // на сколько % превышено
-    message: `${type === 'water' ? 'Вода' : 'Электричество'}: вы превышили норму на ${percentageOver.toFixed(1)}%`,
+    message: `${type === 'water' ? 'Вода' : 'Электричество'}: вы превышили норму на ${Number(percentageOver).toFixed(1)}%`,
     createdAt: new Date().toISOString(),
     acknowledged: false, // прочитал ли пользователь уведомление
   };

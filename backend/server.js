@@ -11,6 +11,11 @@ const assistantRoutes = require('./routes/assistant');
 const goalsRoutes = require('./routes/goals');
 const alertsRoutes = require('./routes/alerts');
 const exportRoutes = require('./routes/export');
+const achievementsRoutes = require('./routes/achievements');
+const householdRoutes = require('./routes/household');
+const tipsRoutes = require('./routes/tips');
+const integrationsRoutes = require('./routes/integrations');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 
@@ -25,6 +30,11 @@ app.use('/api/assistant', assistantRoutes);
 app.use('/api/goals', goalsRoutes);
 app.use('/api/alerts', alertsRoutes);
 app.use('/api/export', exportRoutes);
+app.use('/api/achievements', achievementsRoutes);
+app.use('/api/household', householdRoutes);
+app.use('/api/tips', tipsRoutes);
+app.use('/api/integrations', integrationsRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'ecodvoinik-backend' });

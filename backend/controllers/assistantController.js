@@ -12,7 +12,7 @@ async function sendMessage(req, res) {
   const readings = req.user
     ? db.readings.filter((r) => !r.userId || r.userId === req.user.id)
     : db.readings.filter((r) => !r.userId);
-  const summary = analyticsService.buildSummary(readings, req.user);
+  const summary = analyticsService.buildSummary(readings, req.user, db.settings);
   const petState = petStateService.computePetState(summary);
 
   const reply = await aiService.llmReply(summary, petState, message, req.user);
@@ -45,7 +45,7 @@ function getRecommendations(req, res) {
   const readings = req.user
     ? db.readings.filter((r) => !r.userId || r.userId === req.user.id)
     : db.readings.filter((r) => !r.userId);
-  const summary = analyticsService.buildSummary(readings, req.user);
+  const summary = analyticsService.buildSummary(readings, req.user, db.settings);
   const recommendations = aiService.ruleBasedRecommendations(summary);
 
   return res.json({ recommendations });

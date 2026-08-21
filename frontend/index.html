@@ -9,9 +9,24 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Sora:wght@600;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/theme.css" />
+  <link rel="stylesheet" href="css/dashboard-extra.css" />
+  <link rel="stylesheet" href="css/goals.css" />
   <link rel="stylesheet" href="css/twin.css" />
   <link rel="stylesheet" href="css/floorplan.css" />
   <link rel="stylesheet" href="css/profile.css" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0b1512" />
+  <script>
+    // Применяем сохранённую тему ДО отрисовки страницы, чтобы не было
+    // мигания светлым/тёмным при загрузке (полная логика — в js/theme.js).
+    (function () {
+      try {
+        var t = localStorage.getItem('ecodvoinik_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <div class="aurora" aria-hidden="true">
@@ -110,6 +125,21 @@
     </div>
     <div class="tagline">AI-платформа экономии воды и электричества</div>
     <div class="live-badge"><i></i> живой питомец онлайн</div>
+    <button type="button" class="theme-toggle" id="theme-toggle-btn" title="Сменить тему">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none"><path d="M20 14.5a8 8 0 1 1-10.5-10.5 7 7 0 0 0 10.5 10.5Z" fill="currentColor"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><path d="M12 2v2.4M12 19.6V22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2 12h2.4M19.6 12H22M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="notif-wrap">
+      <button type="button" class="theme-toggle" id="notif-bell" title="Уведомления">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3a5 5 0 0 0-5 5v3.2c0 .6-.2 1.2-.6 1.7L5 15.5c-.7.9-.1 2.2 1 2.2h12c1.1 0 1.7-1.3 1-2.2l-1.4-2.6a2.7 2.7 0 0 1-.6-1.7V8a5 5 0 0 0-5-5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.5 20a2.6 2.6 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span class="notif-badge hidden" id="notif-badge">0</span>
+      </button>
+      <div class="notif-dropdown" id="notif-dropdown">
+        <div class="notif-dropdown-head">Уведомления</div>
+        <div id="notif-list" class="notif-list"></div>
+        <div class="notif-empty" id="notif-empty">Пока всё спокойно — уведомлений нет.</div>
+      </div>
+    </div>
     <div id="account-chip" class="account-chip hidden" role="button" tabindex="0" title="Открыть профиль">
       <span class="account-avatar" id="account-avatar">Г</span>
       <span class="account-info">
@@ -274,6 +304,7 @@
         <div class="pet-level">LVL <span id="pet-level">1</span></div>
         <div class="pet-bar"><span id="pet-bar-fill"></span></div>
       </div>
+      <div class="pet-stage-chip" id="pet-stage-label">Стадия: семечко</div>
 
       <div class="chat-box">
         <div id="chat-messages" class="chat-messages"></div>
@@ -325,6 +356,9 @@
       <h3>Рекомендации</h3>
       <div id="recommendations" class="recommendations"></div>
 
+      <h3>Советы по экономии</h3>
+      <div id="tips-list" class="tips-list"></div>
+
       <h3>Добавить показание вручную</h3>
       <form id="reading-form" class="reading-form">
         <select id="reading-type">
@@ -334,6 +368,61 @@
         <input type="number" id="reading-value" placeholder="Значение" step="0.01" required />
         <button type="submit">Добавить</button>
       </form>
+
+      <div class="goals-section">
+        <div class="goals-header">
+          <h3>Цели по расходу (месяц)</h3>
+        </div>
+        <form class="goal-input-form" onsubmit="event.preventDefault(); setNewGoal();">
+          <select id="goal-type">
+            <option value="water">Вода (л/мес)</option>
+            <option value="electricity">Электричество (кВт·ч/мес)</option>
+          </select>
+          <input type="number" id="goal-value" placeholder="Целевое значение" min="1" step="1" required />
+          <button type="submit" class="btn-set-goal">Установить цель</button>
+        </form>
+        <div id="goals-container"></div>
+      </div>
+
+      <div class="export-section">
+        <div class="export-header">
+          <h3>Экспорт данных</h3>
+        </div>
+        <div class="export-controls">
+          <input type="date" id="export-start-date" />
+          <input type="date" id="export-end-date" />
+          <select id="export-type">
+            <option value="">Вода и электричество</option>
+            <option value="water">Только вода</option>
+            <option value="electricity">Только электричество</option>
+          </select>
+          <button type="button" onclick="exportDataAsCSV()">Скачать CSV</button>
+        </div>
+        <div id="summary-container"></div>
+      </div>
+    </section>
+
+    <!-- История и графики -->
+    <section class="panel history-panel" id="history-panel">
+      <div class="panel-head">
+        <h2>История и графики</h2>
+        <div class="history-tabs">
+          <button type="button" class="history-tab active" data-period="day">Дни</button>
+          <button type="button" class="history-tab" data-period="week">Недели</button>
+          <button type="button" class="history-tab" data-period="month">Месяцы</button>
+        </div>
+      </div>
+      <canvas id="history-canvas" class="history-canvas"></canvas>
+      <div id="history-totals" class="history-legend"></div>
+    </section>
+
+    <!-- Достижения -->
+    <section class="panel achievements-panel hidden" id="achievements-panel">
+      <div class="panel-head">
+        <h2>Достижения</h2>
+        <span class="pill" id="achievements-progress">0 из 0</span>
+      </div>
+      <div class="achievements-grid" id="achievements-grid"></div>
     </section>
 
     <!-- 3D-двойник помещения -->
@@ -513,17 +602,115 @@
         Функции администратора закрыты: просмотр всех эмоций питомца доступен
         только по секретному коду.
       </div>
+
+      <!-- Семейный аккаунт -->
+      <div class="profile-block hidden" id="household-section">
+        <h3>Семейный аккаунт</h3>
+        <p class="profile-block-hint">Объедините показания нескольких людей в одном
+          домохозяйстве — сводка и питомец станут общими.</p>
+
+        <div id="household-none">
+          <form class="profile-form" id="household-create-form">
+            <input type="text" id="household-name-input" placeholder="Название (например, «Наша семья»)" />
+            <button type="submit" class="profile-btn">Создать домохозяйство</button>
+          </form>
+          <form class="profile-form" id="household-join-form" style="margin-top:10px;">
+            <input type="text" id="household-code-input" placeholder="Код приглашения" required />
+            <button type="submit" class="profile-btn ghost">Присоединиться по коду</button>
+          </form>
+        </div>
+
+        <div id="household-active" class="hidden">
+          <div class="profile-row">
+            <span class="profile-row-label">Название</span>
+            <span class="profile-row-value" id="household-name"></span>
+          </div>
+          <div class="profile-row">
+            <span class="profile-row-label">Код приглашения</span>
+            <span class="profile-row-value" id="household-code"></span>
+          </div>
+          <div id="household-members"></div>
+          <button type="button" class="profile-btn ghost" id="household-leave-btn" style="margin-top:10px;">Покинуть домохозяйство</button>
+        </div>
+        <div class="profile-msg" id="household-msg"></div>
+      </div>
+
+      <!-- Интеграция с реальными счётчиками / умным домом -->
+      <div class="profile-block hidden" id="integrations-section">
+        <h3>Интеграция с реальными счётчиками</h3>
+        <p class="profile-block-hint">Честно: прямых интеграций с облаками конкретных
+          производителей счётчиков нет — это отдельная задача под каждый бренд.
+          Вместо этого — универсальный webhook: любой шлюз умного дома или
+          самописный скрипт может присылать сюда показания по одному протоколу.</p>
+
+        <div id="integration-not-connected">
+          <button type="button" class="profile-btn" id="integration-issue-btn">Создать API-ключ</button>
+        </div>
+
+        <div id="integration-key-block" class="hidden">
+          <div class="profile-row">
+            <span class="profile-row-label">API-ключ</span>
+            <span class="profile-row-value" id="integration-api-key" style="word-break:break-all;"></span>
+          </div>
+          <div class="profile-row">
+            <span class="profile-row-label">Webhook URL</span>
+            <span class="profile-row-value" id="integration-webhook-url" style="word-break:break-all;"></span>
+          </div>
+        </div>
+
+        <div id="integration-connected" class="hidden">
+          <div class="profile-row">
+            <span class="profile-row-label">Показаний от устройства</span>
+            <span class="profile-row-value" id="integration-readings-count">0</span>
+          </div>
+          <div class="profile-row">
+            <span class="profile-row-label">Последнее показание</span>
+            <span class="profile-row-value" id="integration-last-reading">—</span>
+          </div>
+          <button type="button" class="profile-btn ghost" id="integration-revoke-btn" style="margin-top:10px;">Отозвать ключ</button>
+        </div>
+      </div>
+
+      <!-- Расширенная админка -->
+      <div class="profile-block hidden" id="admin-extras-section">
+        <h3>Глобальная статистика</h3>
+        <div class="admin-stat-grid" id="admin-stats-grid"></div>
+
+        <h3 style="margin-top:18px;">Пользователи</h3>
+        <div id="admin-users-list" class="admin-users-list"></div>
+
+        <h3 style="margin-top:18px;">Пороги аномалий</h3>
+        <form class="profile-form" id="admin-settings-form">
+          <label class="field-label">Рост расхода за неделю, % (аномалия)</label>
+          <input type="number" id="admin-anomaly-threshold" min="1" step="1" required />
+          <label class="field-label">Превышение норматива, % (аномалия)</label>
+          <input type="number" id="admin-benchmark-threshold" min="1" step="1" required />
+          <button type="submit" class="profile-btn">Сохранить настройки</button>
+          <div class="profile-msg" id="admin-settings-msg"></div>
+        </form>
+      </div>
     </div>
   </div>
 
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/theme.js"></script>
   <script src="js/pet.js"></script>
   <script src="js/chart.js"></script>
   <script src="js/consumption-utils.js"></script>
   <script src="js/analytics-advanced.js"></script>
+  <script src="js/history-chart.js"></script>
+  <script src="js/achievements.js"></script>
+  <script src="js/tips.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/household.js"></script>
+  <script src="js/integrations.js"></script>
+  <script src="js/goals-api.js"></script>
+  <script src="js/goals-ui.js"></script>
   <script src="js/app.js"></script>
   <script src="js/profile.js"></script>
+  <script src="js/admin-panel.js"></script>
+  <script src="js/pwa.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/128/three.min.js"></script>
   <script async src="https://docs.opencv.org/4.9.0/opencv.js"></script>
   <script src="js/floorplan.js"></script>
