@@ -1,6 +1,6 @@
 /* ===================== Свет по солнцу ===================== */
 
-.sun-panel { grid-column: 1 / -1; }
+.sun-panel { /* grid-area задан в style.css */ }
 
 .sun-top {
   display: flex;

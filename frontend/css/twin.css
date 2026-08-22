@@ -1,6 +1,6 @@
 /* ===================== 3D-двойник помещения ===================== */
 
-.twin-panel { grid-column: 1 / -1; }
+.twin-panel { /* grid-area задан в style.css */ }
 
 .twin-setup {
   display: grid;
