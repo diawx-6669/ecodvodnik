@@ -4,7 +4,7 @@ async function setConsumptionGoal(type, targetValue, monthYear) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      'Authorization': `Bearer ${getToken()}`,
     },
     body: JSON.stringify({ type, targetValue, monthYear }),
   });
@@ -14,7 +14,7 @@ async function setConsumptionGoal(type, targetValue, monthYear) {
 
 async function getGoalsForMonth(monthYear) {
   const response = await fetch(`/api/goals?monthYear=${monthYear}`, {
-    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+    headers: { 'Authorization': `Bearer ${getToken()}` },
   });
   if (!response.ok) throw new Error(await response.text());
   return response.json();
@@ -22,7 +22,7 @@ async function getGoalsForMonth(monthYear) {
 
 async function getGoalProgress(monthYear) {
   const response = await fetch(`/api/goals/progress?monthYear=${monthYear}`, {
-    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+    headers: { 'Authorization': `Bearer ${getToken()}` },
   });
   if (!response.ok) throw new Error(await response.text());
   return response.json();
@@ -31,7 +31,7 @@ async function getGoalProgress(monthYear) {
 // API методы для работы с уведомлениями
 async function getUserAlerts() {
   const response = await fetch('/api/alerts', {
-    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+    headers: { 'Authorization': `Bearer ${getToken()}` },
   });
   if (!response.ok) throw new Error(await response.text());
   return response.json();
@@ -40,7 +40,7 @@ async function getUserAlerts() {
 async function checkAndCreateAlerts() {
   const response = await fetch('/api/alerts/check', {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+    headers: { 'Authorization': `Bearer ${getToken()}` },
   });
   if (!response.ok) throw new Error(await response.text());
   return response.json();
@@ -49,7 +49,7 @@ async function checkAndCreateAlerts() {
 async function acknowledgeAlert(alertId) {
   const response = await fetch(`/api/alerts/${alertId}/acknowledge`, {
     method: 'PUT',
-    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+    headers: { 'Authorization': `Bearer ${getToken()}` },
   });
   if (!response.ok) throw new Error(await response.text());
   return response.json();
@@ -63,7 +63,7 @@ async function exportConsumptionDataAsCSV(startDate, endDate, type) {
   if (type) params.append('type', type);
 
   const response = await fetch(`/api/export/csv?${params}`, {
-    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+    headers: { 'Authorization': `Bearer ${getToken()}` },
   });
   if (!response.ok) throw new Error(await response.text());
   return response.blob();
@@ -73,7 +73,7 @@ async function getConsumptionSummary(monthYear) {
   const response = await fetch(
     `/api/export/summary${monthYear ? `?monthYear=${monthYear}` : ''}`,
     {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+      headers: { 'Authorization': `Bearer ${getToken()}` },
     }
   );
   if (!response.ok) throw new Error(await response.text());

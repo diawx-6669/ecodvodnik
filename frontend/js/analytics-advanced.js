@@ -8,7 +8,7 @@ async function generateSmartRecommendations(userType, currentUsage, targetUsage)
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${getToken()}`,
       },
       body: JSON.stringify({
         message: `Пользователь (${userType}) потребил ${currentUsage} ресурса, лимит ${targetUsage}. 
