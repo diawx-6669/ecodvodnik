@@ -23,7 +23,7 @@
     // мигания светлым/тёмным при загрузке (полная логика — в js/theme.js).
     (function () {
       try {
-        var t = localStorage.getItem('ecodvoinik_theme') || 'dark';
+        var t = localStorage.getItem('ecodvoinik_theme') || 'light';
         document.documentElement.setAttribute('data-theme', t);
       } catch (e) {}
     })();

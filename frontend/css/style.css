@@ -737,6 +737,92 @@ body::before {
 }
 
 /* ============================================================
+   Редизайн «Eco Atelier» — спокойный природный интерфейс
+   Только визуальный слой: существующие id, классы и поведение сохранены.
+   ============================================================ */
+:root {
+  --bg: #f4f7f3;
+  --bg-2: #e8f1e8;
+  --surface: rgba(255, 255, 255, 0.86);
+  --surface-strong: #ffffff;
+  --stroke: #dce7dc;
+  --text: #19332b;
+  --muted: #6b7d73;
+  --green: #2d9b68;
+  --green-deep: #19734d;
+  --aqua: #4b9f9a;
+  --violet: #7c8bb0;
+  --warn: #c88732;
+  --danger: #c95656;
+  --radius: 20px;
+  --shadow: 0 18px 50px -30px rgba(31, 67, 48, 0.38);
+  --glow-green: 0 0 0 1px rgba(45, 155, 104, 0.18), 0 12px 28px -18px rgba(45, 155, 104, 0.45);
+}
+
+html, body { background: var(--bg); color: var(--text); }
+body { background: linear-gradient(145deg, #f6faf5 0%, #edf5ed 52%, #e4f0eb 100%); }
+body::before { background: radial-gradient(60% 55% at 8% 0%, rgba(87, 170, 112, .13), transparent 70%), radial-gradient(50% 45% at 92% 12%, rgba(75, 159, 154, .11), transparent 72%); animation: none; }
+.aurora { opacity: .22; }
+.aurora .blob, .aurora .beam, .aurora .veil, .aurora .waves { display: none; }
+.grid { opacity: .26; background-image: linear-gradient(rgba(25, 70, 45, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(25, 70, 45, .05) 1px, transparent 1px); }
+
+.app-header { background: rgba(246, 250, 245, .88); backdrop-filter: blur(18px); box-shadow: 0 10px 32px -26px rgba(31, 67, 48, .65); }
+.topbar { max-width: 1280px; margin: 0 auto; padding: 15px 28px; background: transparent; border-bottom: 0; }
+.brand-mark { background: var(--green); color: #fff; box-shadow: 0 8px 20px -12px var(--green-deep); }
+.brand-text b { color: var(--green-deep); }
+.tagline { color: var(--muted); }
+.live-badge { color: var(--green-deep); background: #e4f3e7; border-color: #bfe0c9; }
+.live-badge i { background: var(--green); }
+.site-nav { background: rgba(246, 250, 245, .94); border-top: 1px solid rgba(220, 231, 220, .8); border-bottom-color: var(--stroke); }
+.site-nav-inner { padding: 9px 28px 11px; }
+.site-nav-link { color: var(--muted); background: transparent; }
+.site-nav-link:hover, .site-nav-link:focus-visible { color: var(--green-deep); background: #eaf4eb; border-color: #d2e5d4; }
+.site-nav-link.is-active { color: #fff; background: var(--green-deep); box-shadow: 0 8px 18px -12px var(--green-deep); }
+
+.layout { gap: 22px; padding: 28px; }
+.panel { background: rgba(255,255,255,.84); border-color: var(--stroke); box-shadow: var(--shadow); backdrop-filter: blur(10px); }
+.panel::after { background: linear-gradient(140deg, rgba(255,255,255,.65), transparent 38%); opacity: .65; }
+.panel:hover { border-color: #c5ddca; box-shadow: 0 22px 55px -32px rgba(31, 67, 48, .48); }
+.pet-panel { background: linear-gradient(155deg, #ffffff 0%, #eef8ee 100%); overflow: visible; }
+.pet-stage { min-height: 290px; padding: 12px 0 0; align-items: end; }
+.pet-stage::after { content: ''; position: absolute; bottom: 1px; width: 240px; height: 42px; border-radius: 50%; background: radial-gradient(ellipse, rgba(45,155,104,.22), rgba(45,155,104,0) 70%); box-shadow: 0 13px 0 -7px rgba(45,155,104,.13); }
+.pet-aura { background: radial-gradient(circle, rgba(118, 204, 148, .3), transparent 68%); }
+.pet-avatar { z-index: 1; }
+.pet-name { color: var(--text); }
+.pet-chip { color: var(--green-deep); background: #e3f3e6; border-color: #bfe0c9; }
+.pet-bar { background: #dfece1; }
+.pet-bar span { background: linear-gradient(90deg, var(--green-deep), var(--green), #8bca9a); box-shadow: none; }
+.chat-box { border-top-color: var(--stroke); }
+.msg { border-color: var(--stroke); }
+.msg.user { background: #e5f0f8; }
+.msg.pet { background: #e5f4e8; }
+.chat-form input, .reading-form select, .reading-form input, .auth-form input { background: #fbfdfb; border-color: var(--stroke); color: var(--text); }
+.chat-form input:focus, .reading-form select:focus, .reading-form input:focus, .auth-form input:focus { border-color: #76b88b; box-shadow: 0 0 0 4px rgba(45,155,104,.12); background: #fff; }
+.chat-form button, .reading-form button, .auth-submit { background: var(--green-deep); color: #fff; box-shadow: 0 10px 24px -15px var(--green-deep); }
+.card, .recommendation-item, .anomaly-item { background: #fbfdfb; border-color: var(--stroke); }
+.card.water { background: #edf7fa; }
+.card.energy { background: #fbf5e8; }
+.card.highlight { background: #e7f5e9; border-color: #c0dfc6; }
+.card-title, .card-sub { color: var(--muted); }
+.anomaly-item { background: #fff7e9; border-color: #efd9ad; border-left-color: var(--warn); }
+.recommendation-item { background: #f3f9f3; }
+.recommendation-item .rec-savings { color: var(--green-deep); }
+.device-status, .pill, .audience-option, .auth-tabs { background: #f5faf5; border-color: var(--stroke); }
+.device-dot--none { background: #b9c9bc; }
+.account-chip, .theme-toggle, .account-logout, .rename-icon-btn { background: #f2f8f2; border-color: var(--stroke); color: var(--text); }
+.account-avatar { background: var(--green); color: #fff; }
+.auth-screen { background: linear-gradient(145deg, #edf6ed, #f8fbf7); }
+.auth-card { background: rgba(255,255,255,.94); border-color: var(--stroke); box-shadow: 0 24px 70px -35px rgba(31,67,48,.45); }
+.auth-tab.active, .audience-option.active { background: #e2f2e5; color: var(--green-deep); border-color: #b9dcbf; }
+.auth-guest button { color: var(--green-deep); }
+
+html[data-theme="dark"] { --bg: #eef5ef; --bg-2: #e4efe6; --surface: rgba(255,255,255,.86); --surface-strong: #fff; --stroke: #d5e3d7; --text: #19332b; --muted: #6b7d73; --green: #2d9b68; --green-deep: #19734d; --aqua: #4b9f9a; }
+html[data-theme="dark"] body { background: linear-gradient(145deg, #f6faf5, #e7f1e8); }
+
+@media (max-width: 900px) { .topbar { padding: 13px 16px; } .layout { padding: 16px; } }
+@media (max-width: 600px) { .tagline { display: none; } .topbar { gap: 9px; } .pet-stage { min-height: 250px; } }
+
+/* ============================================================
    Полировка интерфейса: стекло, свет, аккуратные ховеры
    ============================================================ */
 .panel {

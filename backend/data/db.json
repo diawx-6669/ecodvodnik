@@ -1,0 +1,13 @@
+{
+  "users": [],
+  "readings": [],
+  "messages": [],
+  "goals": [],
+  "alerts": [],
+  "households": [],
+  "achievements": [],
+  "settings": {
+    "anomalyThresholdPercent": 25,
+    "benchmarkOverThresholdPercent": 40
+  }
+}
