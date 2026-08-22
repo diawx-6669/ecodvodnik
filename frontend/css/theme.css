@@ -21,6 +21,14 @@ html[data-theme="light"] body {
 html[data-theme="light"] .aurora { opacity: 0.55; }
 html[data-theme="light"] .grid { opacity: 0.5; }
 
+html[data-theme="light"] .site-nav {
+  background: linear-gradient(180deg, rgba(243, 248, 246, 0.96), rgba(236, 246, 241, 0.92));
+}
+
+html[data-theme="light"] .site-nav-link.is-active {
+  color: #04180f;
+}
+
 html[data-theme="light"] .auth-card,
 html[data-theme="light"] .profile-sheet {
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(236, 246, 241, 0.98));
