@@ -16,14 +16,15 @@
   <link rel="stylesheet" href="css/floorplan.css" />
   <link rel="stylesheet" href="css/sun-schedule.css" />
   <link rel="stylesheet" href="css/profile.css" />
+  <link rel="stylesheet" href="css/refined.css" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#0b1512" />
+  <meta name="theme-color" content="#f2f6f4" />
   <script>
     // Применяем сохранённую тему ДО отрисовки страницы, чтобы не было
     // мигания светлым/тёмным при загрузке (полная логика — в js/theme.js).
     (function () {
       try {
-        var t = localStorage.getItem('ecodvoinik_theme') || 'dark';
+        var t = localStorage.getItem('ecodvoinik_theme') || 'light';
         document.documentElement.setAttribute('data-theme', t);
       } catch (e) {}
     })();
@@ -43,7 +44,19 @@
 
   <!-- ===================== Экран входа / регистрации ===================== -->
   <div id="auth-screen" class="auth-screen">
+    <aside class="auth-aside" aria-hidden="true">
+      <span class="auth-aside-badge">Экономия ресурсов · Казахстан</span>
+      <h1 class="auth-aside-title">Ваш дом, школа или бизнес —<br />под присмотром живого AI-питомца</h1>
+      <p class="auth-aside-text">Экотчи показывает, куда уходят вода и электричество,
+        считает деньги по тарифам и подсказывает, где сэкономить.</p>
+      <ul class="auth-aside-list">
+        <li>Сводка расхода и счёта в реальном времени</li>
+        <li>Цели, достижения и советы по экономии</li>
+        <li>3D-двойник помещения и график света по солнцу</li>
+      </ul>
+    </aside>
     <div class="auth-card">
+
       <div class="auth-head">
         <span class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
@@ -110,6 +123,7 @@
 
   <!-- ===================== Основное приложение ===================== -->
   <div id="app-root" class="hidden">
+  <div class="app-header">
   <header class="topbar">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true">
@@ -156,17 +170,23 @@
     </div>
   </header>
 
-  <nav class="quick-nav" id="quick-nav" aria-label="Быстрая навигация по разделам">
-    <a href="#recommendations-section" class="quick-nav-link">Рекомендации</a>
-    <a href="#tips-section" class="quick-nav-link">Советы по экономии</a>
-    <a href="#twin-panel" class="quick-nav-link">3D-модель</a>
-    <a href="#history-panel" class="quick-nav-link">История и графики</a>
-    <a href="#sun-panel" class="quick-nav-link">Свет по солнцу</a>
+  <nav class="site-nav" id="site-nav" aria-label="Разделы сайта">
+    <div class="site-nav-inner">
+      <a href="#pet-panel" class="site-nav-link" data-nav-target="pet-panel">Питомец</a>
+      <a href="#dashboard-panel" class="site-nav-link" data-nav-target="dashboard-panel">Сводка</a>
+      <a href="#recommendations-section" class="site-nav-link" data-nav-target="recommendations-section">Рекомендации</a>
+      <a href="#tips-section" class="site-nav-link" data-nav-target="tips-section">Советы</a>
+      <a href="#history-panel" class="site-nav-link" data-nav-target="history-panel">История и графики</a>
+      <a href="#achievements-panel" class="site-nav-link" data-nav-target="achievements-panel">Достижения</a>
+      <a href="#twin-panel" class="site-nav-link" data-nav-target="twin-panel">3D-двойник</a>
+      <a href="#sun-panel" class="site-nav-link" data-nav-target="sun-panel">Свет по солнцу</a>
+    </div>
   </nav>
+  </div>
 
   <main class="layout">
     <!-- Питомец -->
-    <section class="panel pet-panel">
+    <section class="panel pet-panel" id="pet-panel">
       <div class="pet-stage">
         <div class="pet-aura" aria-hidden="true"></div>
         <div class="pet-particles" id="pet-particles" aria-hidden="true"></div>
@@ -329,7 +349,7 @@
     </section>
 
     <!-- Дашборд -->
-    <section class="panel dashboard-panel">
+    <section class="panel dashboard-panel" id="dashboard-panel">
       <div class="panel-head">
         <h2>Сводка за неделю</h2>
         <span class="pill">обновляется в реальном времени</span>
@@ -729,6 +749,7 @@
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/theme.js"></script>
+  <script src="js/nav.js"></script>
   <script src="js/pet.js"></script>
   <script src="js/chart.js"></script>
   <script src="js/consumption-utils.js"></script>

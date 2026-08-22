@@ -25,8 +25,12 @@ function renderSummary(summary) {
 
   const waterTrend = formatTrend(summary.water.trend_percent);
   const elecTrend = formatTrend(summary.electricity.trend_percent);
-  document.getElementById('water-trend').textContent = waterTrend.text;
-  document.getElementById('electricity-trend').textContent = elecTrend.text;
+  const waterTrendEl = document.getElementById('water-trend');
+  const elecTrendEl = document.getElementById('electricity-trend');
+  waterTrendEl.textContent = waterTrend.text;
+  waterTrendEl.className = `card-trend ${waterTrend.cls}`.trim();
+  elecTrendEl.textContent = elecTrend.text;
+  elecTrendEl.className = `card-trend ${elecTrend.cls}`.trim();
 
   const anomaliesEl = document.getElementById('anomalies');
   anomaliesEl.innerHTML = '';

@@ -1,6 +1,6 @@
 /* ===================== 3D-двойник помещения ===================== */
 
-.twin-panel { grid-column: 1 / -1; }
+.twin-panel { /* grid-area задан в style.css */ }
 
 .twin-setup {
   display: grid;
@@ -100,7 +100,7 @@
 }
 .twin-compare-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
 .twin-compare-label { width: 92px; font-size: 12.5px; color: var(--muted); flex: none; }
-.twin-bar-track { flex: 1; height: 10px; border-radius: 6px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.twin-bar-track { flex: 1; height: 10px; border-radius: 6px; background: var(--tint-80); overflow: hidden; }
 .twin-bar-fill { height: 100%; border-radius: 6px; transition: width .4s ease; }
 .twin-bar-fill.model { background: linear-gradient(90deg, var(--aqua), var(--violet)); }
 .twin-bar-fill.real { background: linear-gradient(90deg, var(--green), var(--green-deep)); }

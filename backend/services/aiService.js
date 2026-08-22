@@ -192,7 +192,7 @@ function ruleBasedReply(summary, petState, userMessage = '', user = null) {
           ? '\nЭто много! Проверь: кран капает? Туалет пускает? Обычно это главные утечки.'
           : trend > 15
           ? '\nНе критично, но выше нормы. Можно оптимизировать.'
-          : '\n✓ Отличный результат, продолжай так же!'),
+          : '\nОтличный результат, продолжай так же!'),
     ];
     return pick(waterResponses)(summary.water.trend_percent);
   }

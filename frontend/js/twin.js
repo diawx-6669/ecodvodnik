@@ -160,7 +160,7 @@ function twinRenderDeviceList() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'twin-swap-btn' + (dev.efficient ? ' done' : '');
-    btn.textContent = dev.efficient ? 'Заменено ✓' : 'Заменить на эко';
+    btn.textContent = dev.efficient ? 'Заменено' : 'Заменить на эко';
     btn.disabled = dev.efficient;
     btn.addEventListener('click', () => {
       dev.efficient = true;
