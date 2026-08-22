@@ -110,6 +110,7 @@
 
   <!-- ===================== Основное приложение ===================== -->
   <div id="app-root" class="hidden">
+  <div class="app-header">
   <header class="topbar">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true">
@@ -156,17 +157,23 @@
     </div>
   </header>
 
-  <nav class="quick-nav" id="quick-nav" aria-label="Быстрая навигация по разделам">
-    <a href="#recommendations-section" class="quick-nav-link">Рекомендации</a>
-    <a href="#tips-section" class="quick-nav-link">Советы по экономии</a>
-    <a href="#twin-panel" class="quick-nav-link">3D-модель</a>
-    <a href="#history-panel" class="quick-nav-link">История и графики</a>
-    <a href="#sun-panel" class="quick-nav-link">Свет по солнцу</a>
+  <nav class="site-nav" id="site-nav" aria-label="Разделы сайта">
+    <div class="site-nav-inner">
+      <a href="#pet-panel" class="site-nav-link" data-nav-target="pet-panel">Питомец</a>
+      <a href="#dashboard-panel" class="site-nav-link" data-nav-target="dashboard-panel">Сводка</a>
+      <a href="#recommendations-section" class="site-nav-link" data-nav-target="recommendations-section">Рекомендации</a>
+      <a href="#tips-section" class="site-nav-link" data-nav-target="tips-section">Советы</a>
+      <a href="#history-panel" class="site-nav-link" data-nav-target="history-panel">История и графики</a>
+      <a href="#achievements-panel" class="site-nav-link" data-nav-target="achievements-panel">Достижения</a>
+      <a href="#twin-panel" class="site-nav-link" data-nav-target="twin-panel">3D-двойник</a>
+      <a href="#sun-panel" class="site-nav-link" data-nav-target="sun-panel">Свет по солнцу</a>
+    </div>
   </nav>
+  </div>
 
   <main class="layout">
     <!-- Питомец -->
-    <section class="panel pet-panel">
+    <section class="panel pet-panel" id="pet-panel">
       <div class="pet-stage">
         <div class="pet-aura" aria-hidden="true"></div>
         <div class="pet-particles" id="pet-particles" aria-hidden="true"></div>
@@ -329,7 +336,7 @@
     </section>
 
     <!-- Дашборд -->
-    <section class="panel dashboard-panel">
+    <section class="panel dashboard-panel" id="dashboard-panel">
       <div class="panel-head">
         <h2>Сводка за неделю</h2>
         <span class="pill">обновляется в реальном времени</span>
@@ -729,6 +736,7 @@
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/theme.js"></script>
+  <script src="js/nav.js"></script>
   <script src="js/pet.js"></script>
   <script src="js/chart.js"></script>
   <script src="js/consumption-utils.js"></script>
