@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const { readDb, writeDb } = require('../data/db');
 const { createUser, toPublicUser, ALLOWED_TYPES } = require('../models/User');
 const config = require('../config/config');
+const demoDataService = require('../services/demoDataService');
 
 function signToken(user) {
   return jwt.sign({ id: user.id }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
@@ -45,6 +46,11 @@ async function register(req, res) {
   });
 
   db.users.push(user);
+
+  // Пока нет реального Arduino/ручных показаний — насыпаем правдоподобную
+  // историю (по тарифам и нормативам для типа аккаунта), чтобы дашборд и
+  // аналитика не были пустыми/с прочерками сразу после регистрации.
+  db.readings.push(...demoDataService.seedInitialHistory(user));
   writeDb(db);
 
   const token = signToken(user);
@@ -70,12 +76,30 @@ async function login(req, res) {
     return res.status(401).json({ error: 'Неверный email или пароль' });
   }
 
+  // Если с прошлого захода прошло больше суток (или у аккаунта вообще нет
+  // показаний — например, он создан до появления демо-данных) — добавляем
+  // свежие показания, чтобы цифры на дашборде отличались от прошлого раза,
+  // как будто реально что-то поступило с устройства.
+  const newReadings = demoDataService.maybeAppendToday(user, db.readings);
+  if (newReadings.length) db.readings.push(...newReadings);
+
   const token = signToken(user);
+  if (newReadings.length) writeDb(db);
   return res.json({ token, user: toPublicUser(user) });
 }
 
 // GET /api/auth/me (требует токен)
+// Токен живёт 30 дней, поэтому при повторных заходах чаще всего дёргается
+// именно этот эндпоинт, а не /login. Здесь же освежаем демо-показания,
+// чтобы при каждом новом визите (не чаще раза в REFRESH_AFTER_HOURS часов)
+// на дашборде и в аналитике были новые цифры, а не одни и те же навсегда.
 function me(req, res) {
+  const db = readDb();
+  const newReadings = demoDataService.maybeAppendToday(req.user, db.readings);
+  if (newReadings.length) {
+    db.readings.push(...newReadings);
+    writeDb(db);
+  }
   return res.json({ user: toPublicUser(req.user) });
 }
 
