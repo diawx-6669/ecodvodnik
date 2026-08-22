@@ -104,8 +104,9 @@ function twinRecalcTotals() {
   twinState.dailyModelKwh = twinState.devices.reduce((s, d) => s + twinDeviceDailyKwh(d), 0);
 
   const units = Number(document.getElementById('twin-units').value) || 1;
+  const twinType = document.getElementById('twin-type').value;
   const recommended = typeof window.getRecommendedUsage === 'function'
-    ? window.getRecommendedUsage('electricity', units)
+    ? window.getRecommendedUsage(twinType, units).electricity
     : twinState.dailyModelKwh * 30 * 0.9;
   // getRecommendedUsage обычно возвращает месячную норму — переводим в среднесуточную
   twinState.dailyRealKwh = recommended / 30;

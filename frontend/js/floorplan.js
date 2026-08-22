@@ -125,18 +125,24 @@ function fpDetect() {
   const src = cv.imread(fpState.srcCanvas);
   const gray = new cv.Mat();
   const edges = new cv.Mat();
-  const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
+  const kernel = cv.Mat.ones(2, 2, cv.CV_8U);
   const contours = new cv.MatVector();
   const hierarchy = new cv.Mat();
 
   try {
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
     cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0);
-    cv.Canny(gray, edges, 50, 150);
-    cv.dilate(edges, edges, kernel);
-    cv.findContours(edges, contours, hierarchy, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE);
+    // Более высокий порог Canny — тонкие штрихи текста комнат ("Балкон",
+    // "Спальня" и т.п.) и мебельные значки обычно дают более слабый градиент,
+    // чем сплошные линии стен, поэтому меньше шума попадёт в контуры.
+    cv.Canny(gray, edges, 60, 180);
+    // Дилатация всего на 1 итерацию маленьким ядром — иначе стены "склеиваются"
+    // с соседним текстом/мебелью в одно большое пятно, и biggest-контур потом
+    // петляет через текст, что и даёт ломаные "полоски" на превью.
+    cv.dilate(edges, edges, kernel, new cv.Point(-1, -1), 1);
+    cv.findContours(edges, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
 
-    const minArea = fpState.srcCanvas.width * fpState.srcCanvas.height * 0.01;
+    const minArea = fpState.srcCanvas.width * fpState.srcCanvas.height * 0.015;
     const candidates = [];
     for (let i = 0; i < contours.size(); i++) {
       const cnt = contours.get(i);
@@ -144,12 +150,33 @@ function fpDetect() {
       if (area >= minArea) {
         const peri = cv.arcLength(cnt, true);
         const approx = new cv.Mat();
-        cv.approxPolyDP(cnt, approx, 0.01 * peri, true);
+        cv.approxPolyDP(cnt, approx, 0.012 * peri, true);
         const pts = [];
         for (let j = 0; j < approx.rows; j++) {
           pts.push({ x: approx.data32S[j * 2], y: approx.data32S[j * 2 + 1] });
         }
-        if (pts.length >= 3) candidates.push({ area, pts });
+
+        // Фильтр формы: реальные комнаты/контур помещения — компактные
+        // многоугольники. "Рваные" контуры (текст, мебель, шум) дают либо
+        // низкую solidity (площадь много меньше площади выпуклой оболочки —
+        // как раз то, что рисует контур с лучами-"полосками"), либо низкий
+        // extent (площадь много меньше площади ограничивающего прямоугольника).
+        let keep = pts.length >= 4 && pts.length <= 16;
+        if (keep) {
+          const hull = new cv.Mat();
+          cv.convexHull(cnt, hull, false, true);
+          const hullArea = cv.contourArea(hull);
+          const solidity = hullArea > 0 ? area / hullArea : 0;
+          hull.delete();
+
+          const rect = cv.boundingRect(cnt);
+          const rectArea = rect.width * rect.height;
+          const extent = rectArea > 0 ? area / rectArea : 0;
+
+          keep = solidity >= 0.62 && extent >= 0.3;
+        }
+
+        if (keep) candidates.push({ area, pts });
         approx.delete();
       }
       cnt.delete();
@@ -165,7 +192,7 @@ function fpDetect() {
   fpRedraw();
 
   if (!fpState.outer) {
-    fpSetStatus('Не удалось найти чёткий контур помещения. Попробуйте более контрастное фото/скан плана (тёмные линии на светлом фоне).');
+    fpSetStatus('Не удалось найти чёткий контур помещения — распознанные линии оказались слишком "рваными" (текст/мебель на плане мешают). Попробуйте более чистый скан плана без подписей внутри контура, либо контрастное фото на светлом фоне.');
     document.getElementById('fp-apply-btn').disabled = true;
   } else {
     const roomsMsg = fpState.rooms.length
