@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="css/goals.css" />
   <link rel="stylesheet" href="css/twin.css" />
   <link rel="stylesheet" href="css/floorplan.css" />
+  <link rel="stylesheet" href="css/sun-schedule.css" />
   <link rel="stylesheet" href="css/profile.css" />
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#0b1512" />
@@ -530,6 +531,27 @@
       </div>
     </section>
 
+    <!-- ===================== Свет по солнцу ===================== -->
+    <section class="panel sun-panel">
+      <div class="panel-head">
+        <h2>Свет по солнцу</h2>
+        <span class="pill">AI считает, когда комнате хватает дневного света</span>
+      </div>
+
+      <div class="sun-top">
+        <p class="sun-hint-main">Укажите координаты (или город и улицу) и сторону, куда выходит окно
+          комнаты — рассчитаем движение солнца и подскажем, в какое время в этой комнате
+          стоит включать свет, а когда достаточно естественного.</p>
+        <div class="sun-top-controls">
+          <label>Дата <input type="date" id="sun-date" /></label>
+          <button type="button" id="sun-add-room-btn" class="sun-btn">+ Добавить комнату</button>
+        </div>
+      </div>
+
+      <div class="sun-empty" id="sun-empty">Пока нет ни одной комнаты — добавьте первую, чтобы построить график солнца.</div>
+      <div class="sun-room-list" id="sun-room-list"></div>
+    </section>
+
   </main>
 
   <footer class="footer">Future Minds Hackathon 2026 · Трек EcoFin · MVP</footer>
@@ -715,5 +737,6 @@
   <script async src="https://docs.opencv.org/4.9.0/opencv.js"></script>
   <script src="js/floorplan.js"></script>
   <script src="js/twin.js"></script>
+  <script src="js/sun-schedule.js"></script>
 </body>
 </html>
