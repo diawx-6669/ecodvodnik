@@ -30,7 +30,7 @@ function renderNotifications(alerts) {
   list.innerHTML = alerts
     .map((a) => `
       <div class="notif-item" data-id="${a.id}">
-        <div class="notif-item-icon">${a.type === 'water' ? '💧' : '⚡'}</div>
+        <div class="notif-item-icon notif-item-icon-${a.type}">${a.type === 'water' ? 'Вода' : 'Свет'}</div>
         <div class="notif-item-body">
           <div class="notif-item-text">${a.message}</div>
           <div class="notif-item-time">${formatAlertTime(a.createdAt)}</div>

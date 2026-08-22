@@ -6,7 +6,6 @@
 // Использует window.goalsAPI из goals-api.js.
 
 const GOALS_TYPE_LABEL = { water: 'Вода', electricity: 'Электричество' };
-const GOALS_TYPE_ICON = { water: '💧', electricity: '⚡' };
 const GOALS_TYPE_UNIT = { water: 'л', electricity: 'кВт·ч' };
 
 function goalsCurrentMonthYear() {
@@ -40,7 +39,6 @@ function renderGoalsProgress(progress) {
   container.innerHTML = progress
     .map((goal) => {
       const label = GOALS_TYPE_LABEL[goal.type] || goal.type;
-      const icon = GOALS_TYPE_ICON[goal.type] || '🎯';
       const unit = GOALS_TYPE_UNIT[goal.type] || '';
       const percent = Math.min(100, Number(goal.percentageUsed) || 0);
       const statusText = goal.isExceeded
@@ -50,7 +48,7 @@ function renderGoalsProgress(progress) {
       return `
         <div class="goal-item ${goal.isExceeded ? 'exceeded' : ''}">
           <div class="goal-header">
-            <span class="goal-icon">${icon}</span>
+            <span class="goal-icon ${goal.type}"></span>
             <span class="goal-title">${label}</span>
             <span class="goal-status">${goal.percentageUsed}%</span>
           </div>
@@ -125,7 +123,7 @@ async function loadConsumptionSummary() {
     const summary = await window.goalsAPI.getConsumptionSummary(goalsCurrentMonthYear());
     container.innerHTML = `
       <div class="summary-line">
-        За этот месяц: 💧 ${summary.water.total_liters} л, ⚡ ${summary.electricity.total_kwh} кВт·ч
+        За этот месяц: вода — ${summary.water.total_liters} л, электричество — ${summary.electricity.total_kwh} кВт·ч
         (${summary.water.reading_count + summary.electricity.reading_count} показаний) — это данные,
         которые попадут в CSV, если не менять диапазон дат выше.
       </div>

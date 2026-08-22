@@ -11,7 +11,7 @@ function getTips(req, res) {
     : db.readings.filter((r) => !r.userId);
 
   const summary = analyticsService.buildSummary(readings, req.user, db.settings);
-  const tips = tipsService.buildTips(summary);
+  const tips = tipsService.buildTips(summary, req.user ? req.user.type : 'household');
 
   return res.json({ tips });
 }

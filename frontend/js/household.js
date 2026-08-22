@@ -5,6 +5,49 @@ function householdEl(id) {
   return document.getElementById(id);
 }
 
+// Текст блока зависит от типа аккаунта: семья — только для типа household,
+// школы и предприятия видят нейтральные формулировки про организацию/группу.
+const HOUSEHOLD_LABELS = {
+  household: {
+    title: 'Семейный аккаунт',
+    hint: 'Объедините показания нескольких людей в одном домохозяйстве — сводка и питомец станут общими.',
+    namePlaceholder: 'Название (например, «Наша семья»)',
+    createBtn: 'Создать домохозяйство',
+    leaveBtn: 'Покинуть домохозяйство',
+  },
+  school: {
+    title: 'Аккаунт школы',
+    hint: 'Объедините показания нескольких сотрудников школы в одном аккаунте — сводка и питомец станут общими.',
+    namePlaceholder: 'Название (например, «Школа №5»)',
+    createBtn: 'Создать аккаунт школы',
+    leaveBtn: 'Покинуть аккаунт школы',
+  },
+  business: {
+    title: 'Аккаунт предприятия',
+    hint: 'Объедините показания нескольких сотрудников в одном аккаунте — сводка и питомец станут общими.',
+    namePlaceholder: 'Название (например, «Наша компания»)',
+    createBtn: 'Создать аккаунт предприятия',
+    leaveBtn: 'Покинуть аккаунт предприятия',
+  },
+};
+
+function applyHouseholdLabels() {
+  const type = (window.appAuth && window.appAuth.user && window.appAuth.user.type) || 'household';
+  const labels = HOUSEHOLD_LABELS[type] || HOUSEHOLD_LABELS.household;
+
+  const title = householdEl('household-title');
+  const hint = householdEl('household-hint');
+  const nameInput = householdEl('household-name-input');
+  const createBtn = householdEl('household-create-btn');
+  const leaveBtn = householdEl('household-leave-btn');
+
+  if (title) title.textContent = labels.title;
+  if (hint) hint.textContent = labels.hint;
+  if (nameInput) nameInput.placeholder = labels.namePlaceholder;
+  if (createBtn) createBtn.textContent = labels.createBtn;
+  if (leaveBtn) leaveBtn.textContent = labels.leaveBtn;
+}
+
 function setHouseholdMessage(text, kind) {
   const el = householdEl('household-msg');
   if (!el) return;
@@ -19,6 +62,7 @@ async function loadHousehold() {
     return;
   }
   section.classList.remove('hidden');
+  applyHouseholdLabels();
 
   try {
     const { household, members } = await api.getHousehold();
@@ -47,7 +91,7 @@ function renderHousehold(household, members) {
   householdEl('household-members').innerHTML = members
     .map((m) => `
       <div class="profile-row">
-        <span class="profile-row-label">${m.name}${m.id === household.ownerId ? ' 👑' : ''}</span>
+        <span class="profile-row-label">${m.name}${m.id === household.ownerId ? ' (владелец)' : ''}</span>
         <span class="profile-row-value">${m.email}</span>
       </div>`)
     .join('');

@@ -156,6 +156,14 @@
     </div>
   </header>
 
+  <nav class="quick-nav" id="quick-nav" aria-label="Быстрая навигация по разделам">
+    <a href="#recommendations-section" class="quick-nav-link">Рекомендации</a>
+    <a href="#tips-section" class="quick-nav-link">Советы по экономии</a>
+    <a href="#twin-panel" class="quick-nav-link">3D-модель</a>
+    <a href="#history-panel" class="quick-nav-link">История и графики</a>
+    <a href="#sun-panel" class="quick-nav-link">Свет по солнцу</a>
+  </nav>
+
   <main class="layout">
     <!-- Питомец -->
     <section class="panel pet-panel">
@@ -354,11 +362,15 @@
 
       <div id="anomalies" class="anomalies"></div>
 
-      <h3>Рекомендации</h3>
-      <div id="recommendations" class="recommendations"></div>
+      <div id="recommendations-section" class="anchor-section">
+        <h3>Рекомендации</h3>
+        <div id="recommendations" class="recommendations"></div>
+      </div>
 
-      <h3>Советы по экономии</h3>
-      <div id="tips-list" class="tips-list"></div>
+      <div id="tips-section" class="anchor-section">
+        <h3>Советы по экономии</h3>
+        <div id="tips-list" class="tips-list"></div>
+      </div>
 
       <h3>Добавить показание вручную</h3>
       <form id="reading-form" class="reading-form">
@@ -427,7 +439,7 @@
     </section>
 
     <!-- 3D-двойник помещения -->
-    <section class="panel twin-panel">
+    <section class="panel twin-panel" id="twin-panel">
       <div class="panel-head">
         <h2>3D-двойник помещения</h2>
         <span class="pill">AI расставляет приборы и считает экономию</span>
@@ -532,7 +544,7 @@
     </section>
 
     <!-- ===================== Свет по солнцу ===================== -->
-    <section class="panel sun-panel">
+    <section class="panel sun-panel" id="sun-panel">
       <div class="panel-head">
         <h2>Свет по солнцу</h2>
         <span class="pill">AI считает, когда комнате хватает дневного света</span>
@@ -625,16 +637,16 @@
         только по секретному коду.
       </div>
 
-      <!-- Семейный аккаунт -->
+      <!-- Семейный / организационный аккаунт (текст подставляется по типу аккаунта в household.js) -->
       <div class="profile-block hidden" id="household-section">
-        <h3>Семейный аккаунт</h3>
-        <p class="profile-block-hint">Объедините показания нескольких людей в одном
+        <h3 id="household-title">Семейный аккаунт</h3>
+        <p class="profile-block-hint" id="household-hint">Объедините показания нескольких людей в одном
           домохозяйстве — сводка и питомец станут общими.</p>
 
         <div id="household-none">
           <form class="profile-form" id="household-create-form">
             <input type="text" id="household-name-input" placeholder="Название (например, «Наша семья»)" />
-            <button type="submit" class="profile-btn">Создать домохозяйство</button>
+            <button type="submit" class="profile-btn" id="household-create-btn">Создать домохозяйство</button>
           </form>
           <form class="profile-form" id="household-join-form" style="margin-top:10px;">
             <input type="text" id="household-code-input" placeholder="Код приглашения" required />

@@ -26,7 +26,7 @@ function processAchievementToastQueue() {
     document.body.appendChild(toast);
   }
   toast.innerHTML = `
-    <span class="achievement-toast-icon">${ach.icon}</span>
+    <span class="achievement-badge-letter">${(ach.title || '?').trim().charAt(0).toUpperCase()}</span>
     <span class="achievement-toast-body">
       <span class="achievement-toast-title">Новое достижение!</span>
       <span class="achievement-toast-name">${ach.title}</span>
@@ -50,10 +50,10 @@ function renderAchievements(view) {
   grid.innerHTML = view.achievements
     .map((a) => `
       <div class="achievement-card ${a.unlocked ? 'unlocked' : 'locked'}" title="${a.description}">
-        <div class="achievement-card-icon">${a.icon}</div>
+        <div class="achievement-card-icon"><span class="achievement-badge-letter">${(a.title || '?').trim().charAt(0).toUpperCase()}</span></div>
         <div class="achievement-card-title">${a.title}</div>
         <div class="achievement-card-desc">${a.description}</div>
-        ${a.unlocked ? `<div class="achievement-card-xp">+${a.xpReward} XP</div>` : '<div class="achievement-card-lock">🔒</div>'}
+        ${a.unlocked ? `<div class="achievement-card-xp">+${a.xpReward} XP</div>` : '<div class="achievement-card-lock">Заблокировано</div>'}
       </div>`)
     .join('');
 }

@@ -21,7 +21,12 @@
 .notif-dropdown-head { font-size: 12.5px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 6px 10px; }
 .notif-list { display: grid; gap: 8px; }
 .notif-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.035); border: 1px solid var(--stroke); }
-.notif-item-icon { font-size: 16px; }
+.notif-item-icon {
+  flex: none; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 3px 7px; border-radius: 999px; line-height: 1.4;
+}
+.notif-item-icon-water { color: var(--aqua); background: rgba(69, 217, 255, 0.14); }
+.notif-item-icon-electricity { color: #ffcf5c; background: rgba(255, 207, 92, 0.14); }
 .notif-item-body { flex: 1; }
 .notif-item-text { font-size: 12.8px; line-height: 1.4; }
 .notif-item-time { font-size: 11px; color: var(--muted); margin-top: 3px; }
@@ -66,11 +71,17 @@
 .achievement-card.unlocked { border-color: rgba(53, 224, 143, 0.4); background: rgba(53, 224, 143, 0.07); }
 .achievement-card.locked { opacity: 0.5; filter: grayscale(0.6); }
 .achievement-card:hover { transform: translateY(-2px); }
-.achievement-card-icon { font-size: 26px; margin-bottom: 6px; }
+.achievement-card-icon { margin-bottom: 6px; display: flex; justify-content: center; }
+.achievement-badge-letter {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 50%; flex: none;
+  font-size: 15px; font-weight: 800; color: #04180f;
+  background: linear-gradient(140deg, var(--green), var(--aqua));
+}
 .achievement-card-title { font-size: 12.5px; font-weight: 800; margin-bottom: 4px; }
 .achievement-card-desc { font-size: 10.8px; color: var(--muted); line-height: 1.35; min-height: 28px; }
 .achievement-card-xp { margin-top: 6px; font-size: 11px; font-weight: 800; color: var(--green); }
-.achievement-card-lock { margin-top: 6px; font-size: 12px; }
+.achievement-card-lock { margin-top: 6px; font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
 
 .achievement-toast {
   position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px);
@@ -81,7 +92,6 @@
   pointer-events: none;
 }
 .achievement-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-.achievement-toast-icon { font-size: 22px; }
 .achievement-toast-body { display: flex; flex-direction: column; }
 .achievement-toast-title { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
 .achievement-toast-name { font-size: 13.5px; font-weight: 800; }
