@@ -20,7 +20,7 @@
 .notif-dropdown.open { display: block; }
 .notif-dropdown-head { font-size: 12.5px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 6px 10px; }
 .notif-list { display: grid; gap: 8px; }
-.notif-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px; border-radius: 12px; background: var(--tint-35); border: 1px solid var(--stroke); }
+.notif-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.035); border: 1px solid var(--stroke); }
 .notif-item-icon {
   flex: none; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
   padding: 3px 7px; border-radius: 999px; line-height: 1.4;
@@ -47,7 +47,7 @@
 .history-tabs { display: flex; gap: 6px; }
 .history-tab {
   padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700; cursor: pointer;
-  border: 1px solid var(--stroke); background: var(--tint-40); color: var(--muted);
+  border: 1px solid var(--stroke); background: rgba(255,255,255,0.04); color: var(--muted);
   transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
 .history-tab:hover { color: var(--text); }
@@ -65,7 +65,7 @@
 }
 .achievement-card {
   padding: 14px; border-radius: 16px; text-align: center;
-  border: 1px solid var(--stroke); background: var(--tint-35);
+  border: 1px solid var(--stroke); background: rgba(255,255,255,0.035);
   transition: transform 0.25s ease, border-color 0.25s ease;
 }
 .achievement-card.unlocked { border-color: rgba(53, 224, 143, 0.4); background: rgba(53, 224, 143, 0.07); }
@@ -98,7 +98,7 @@
 
 /* --- Советы по экономии --- */
 .tips-list { display: grid; gap: 10px; margin-bottom: 6px; }
-.tip-item { padding: 12px 14px; border-radius: 14px; border: 1px solid var(--stroke); background: var(--tint-30); }
+.tip-item { padding: 12px 14px; border-radius: 14px; border: 1px solid var(--stroke); background: rgba(255,255,255,0.03); }
 .tip-item-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
 .tip-item-title { font-weight: 700; font-size: 13.5px; }
 .tip-item-savings { font-size: 11.5px; color: var(--green); font-weight: 700; white-space: nowrap; }
@@ -107,29 +107,29 @@
 
 /* --- Админ: статистика и пользователи --- */
 .admin-stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
-.admin-stat-card { padding: 10px; border-radius: 12px; border: 1px solid var(--stroke); background: var(--tint-30); text-align: center; }
+.admin-stat-card { padding: 10px; border-radius: 12px; border: 1px solid var(--stroke); background: rgba(255,255,255,0.03); text-align: center; }
 .admin-stat-value { font-size: 17px; font-weight: 800; color: var(--green); }
 .admin-stat-label { font-size: 10.5px; color: var(--muted); margin-top: 3px; }
 .admin-users-list { display: grid; gap: 6px; max-height: 220px; overflow-y: auto; }
 .admin-user-email { display: block; font-size: 10.8px; color: var(--muted); font-weight: 400; }
-.admin-role-select { padding: 5px 8px; border-radius: 8px; border: 1px solid var(--stroke); background: var(--tint-50); color: var(--text); font-size: 12px; }
+.admin-role-select { padding: 5px 8px; border-radius: 8px; border: 1px solid var(--stroke); background: rgba(255,255,255,0.05); color: var(--text); font-size: 12px; }
 
 /* --- Переиспользуем поле field-label из auth-формы для новых форм --- */
 #admin-settings-form .field-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
 /* --- Тёмный реилюминг для цели/экспорт секций (изначально светлая goals.css) --- */
 .goals-section, .alerts-section, .export-section {
-  background: var(--tint-30) !important;
+  background: rgba(255,255,255,0.03) !important;
   border: 1px solid var(--stroke) !important;
   margin-top: 18px !important;
 }
 .goals-header h3, .alerts-header h3, .export-header h3 { color: var(--text) !important; }
-.goal-item, .summary-card { background: var(--tint-45) !important; box-shadow: none !important; }
+.goal-item, .summary-card { background: rgba(255,255,255,0.045) !important; box-shadow: none !important; }
 .goal-title, .summary-card h4 { color: var(--text) !important; }
 .goal-input-form select, .goal-input-form input, .export-controls input, .export-controls select {
-  background: var(--tint-40) !important; border: 1px solid var(--stroke) !important; color: var(--text) !important;
+  background: rgba(255,255,255,0.04) !important; border: 1px solid var(--stroke) !important; color: var(--text) !important;
 }
-.summary-row { border-bottom: 1px dashed var(--tint-70) !important; color: var(--text); }
+.summary-row { border-bottom: 1px dashed rgba(255,255,255,0.07) !important; color: var(--text); }
 .text-muted { color: var(--muted) !important; }
 
 @media (max-width: 700px) {

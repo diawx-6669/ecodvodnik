@@ -1,57 +1,37 @@
-/* Тёмная тема — переопределяет токены из :root в style.css.
-   Весь интерфейс построен на var(--...), поэтому этого достаточно,
-   чтобы аккуратно перекрасить всё приложение. Не «полностью чёрная»:
-   база — глубокий сине-зелёный графит. */
+/* Светлая тема — переопределяет переменные из :root в style.css.
+   Всё остальное в приложении построено на var(--...), поэтому этого
+   переопределения достаточно, чтобы перекрасить весь интерфейс. */
 
-html[data-theme="dark"] {
-  color-scheme: dark;
+html[data-theme="light"] {
+  --bg: #f3f8f6;
+  --bg-2: #e7f2ec;
+  --surface: rgba(8, 30, 24, 0.045);
+  --surface-strong: rgba(8, 30, 24, 0.08);
+  --stroke: rgba(8, 40, 30, 0.12);
+  --text: #0e211c;
+  --muted: #5c7069;
+  --shadow: 0 24px 60px -28px rgba(20, 40, 34, 0.28);
+  --glow-green: 0 0 0 1px rgba(15, 158, 99, 0.22), 0 18px 46px -20px rgba(15, 158, 99, 0.35);
+}
 
-  --bg: #0f1a18;
-  --bg-2: #14211f;
-  --surface: #162422;
-  --surface-strong: #1b2b28;
-  --surface-sunken: #121d1b;
-  --stroke: rgba(255, 255, 255, 0.09);
-  --stroke-strong: rgba(255, 255, 255, 0.16);
+html[data-theme="light"] body {
+  background: radial-gradient(120% 100% at 50% 0%, var(--bg-2) 0%, var(--bg) 60%);
+}
 
-  --text: #eaf3ef;
-  --text-soft: #cadbd4;
-  --muted: #8ea59d;
+html[data-theme="light"] .aurora { opacity: 0.55; }
+html[data-theme="light"] .grid { opacity: 0.5; }
 
-  --green: #2fcf8d;
-  --green-deep: #16a06a;
-  --green-soft: rgba(47, 207, 141, 0.14);
-  --aqua: #46c6ec;
-  --aqua-soft: rgba(70, 198, 236, 0.14);
-  --violet: #8b7cff;
-  --warn: #f0b24a;
-  --warn-soft: rgba(240, 178, 74, 0.14);
-  --danger: #ff7a7a;
-  --on-accent: #052018;
+html[data-theme="light"] .site-nav {
+  background: linear-gradient(180deg, rgba(243, 248, 246, 0.96), rgba(236, 246, 241, 0.92));
+}
 
-  --tint-20: rgba(255, 255, 255, 0.02);
-  --tint-30: rgba(255, 255, 255, 0.03);
-  --tint-35: rgba(255, 255, 255, 0.035);
-  --tint-40: rgba(255, 255, 255, 0.04);
-  --tint-45: rgba(255, 255, 255, 0.045);
-  --tint-50: rgba(255, 255, 255, 0.05);
-  --tint-55: rgba(255, 255, 255, 0.055);
-  --tint-60: rgba(255, 255, 255, 0.06);
-  --tint-70: rgba(255, 255, 255, 0.07);
-  --tint-75: rgba(255, 255, 255, 0.075);
-  --tint-80: rgba(255, 255, 255, 0.08);
-  --tint-90: rgba(255, 255, 255, 0.09);
-  --tint-100: rgba(255, 255, 255, 0.10);
-  --tint-130: rgba(255, 255, 255, 0.13);
-  --tint-140: rgba(255, 255, 255, 0.14);
-  --tint-150: rgba(255, 255, 255, 0.15);
-  --tint-160: rgba(255, 255, 255, 0.16);
-  --tint-220: rgba(255, 255, 255, 0.22);
+html[data-theme="light"] .site-nav-link.is-active {
+  color: #04180f;
+}
 
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 22px 48px -30px rgba(0, 0, 0, 0.9);
-  --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.45), 0 36px 80px -40px rgba(0, 0, 0, 1);
-  --glow-green: 0 12px 30px -16px rgba(47, 207, 141, 0.6);
+html[data-theme="light"] .auth-card,
+html[data-theme="light"] .profile-sheet {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(236, 246, 241, 0.98));
 }
 
 /* --- Переключатель темы --- */
@@ -59,12 +39,12 @@ html[data-theme="dark"] {
   display: inline-flex; align-items: center; justify-content: center;
   width: 38px; height: 38px; border-radius: 12px; cursor: pointer;
   border: 1px solid var(--stroke);
-  background: var(--surface);
-  color: var(--muted);
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  transition: background 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
   flex: 0 0 auto;
 }
-.theme-toggle:hover { color: var(--green); border-color: color-mix(in oklab, var(--green) 45%, transparent); background: var(--green-soft); }
+.theme-toggle:hover { background: rgba(53, 224, 143, 0.12); border-color: rgba(53, 224, 143, 0.35); transform: translateY(-1px); }
 .theme-toggle svg { width: 18px; height: 18px; }
 .theme-toggle .icon-sun { display: none; }
 .theme-toggle .icon-moon { display: block; }

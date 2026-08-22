@@ -5,11 +5,11 @@
 const THEME_KEY = 'ecodvoinik_theme';
 
 function getStoredTheme() {
-  return localStorage.getItem(THEME_KEY) || 'light';
+  return localStorage.getItem(THEME_KEY) || 'dark';
 }
 
 function applyTheme(theme) {
-  const safe = theme === 'dark' ? 'dark' : 'light';
+  const safe = theme === 'light' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', safe);
   localStorage.setItem(THEME_KEY, safe);
 }

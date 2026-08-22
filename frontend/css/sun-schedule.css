@@ -127,7 +127,7 @@
 .sun-seg { height: 100%; }
 .sun-seg-direct { background: linear-gradient(180deg, #ffd873, #ffb23f); }
 .sun-seg-daylight { background: linear-gradient(180deg, #7fd8ff, #45d9ff); opacity: 0.55; }
-.sun-seg-dark { background: var(--tint-80); }
+.sun-seg-dark { background: rgba(255, 255, 255, 0.08); }
 
 .sun-legend {
   display: flex;
