@@ -35,7 +35,11 @@ function renderNotifications(alerts) {
           <div class="notif-item-text">${a.message}</div>
           <div class="notif-item-time">${formatAlertTime(a.createdAt)}</div>
         </div>
-        <button type="button" class="notif-item-ack" title="Отметить как прочитанное">✓</button>
+        <button type="button" class="notif-item-ack" title="Отметить как прочитанное" aria-label="Отметить как прочитанное">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" aria-hidden="true">
+            <path d="M5 12.5 9.5 17 19 7.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
       </div>`)
     .join('');
 
