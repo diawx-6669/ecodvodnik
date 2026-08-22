@@ -54,3 +54,109 @@ html[data-theme="light"] .theme-toggle .icon-moon { display: none; }
 @media (max-width: 700px) {
   .theme-toggle { width: 34px; height: 34px; }
 }
+
+/* ---------- Редизайн «Nordic Field» ----------
+   Спокойная синяя палитра и новая иерархия: сначала питомец + ключевые
+   показатели, затем длинные аналитические разделы. Все id и поведение JS сохранены. */
+html[data-theme="light"] {
+  --bg: #eef3f7;
+  --bg-2: #dfeaf1;
+  --surface: rgba(255, 255, 255, 0.78);
+  --surface-strong: rgba(255, 255, 255, 0.92);
+  --stroke: rgba(36, 65, 83, 0.14);
+  --text: #183244;
+  --muted: #657d8c;
+  --green: #2d7d87;
+  --green-deep: #1c596a;
+  --aqua: #64b8bf;
+  --warn: #c98546;
+  --shadow: 0 24px 55px -30px rgba(37, 66, 86, 0.34);
+  --glow-green: 0 0 0 1px rgba(45, 125, 135, 0.2), 0 16px 38px -22px rgba(45, 125, 135, 0.4);
+}
+
+html[data-theme="light"] body {
+  background: linear-gradient(145deg, #f4f7f9 0%, #e7f0f4 52%, #f8fafb 100%);
+}
+html[data-theme="light"] .aurora { opacity: 0.22; }
+html[data-theme="light"] .blob { filter: blur(110px); }
+html[data-theme="light"] .b1 { background: #64b8bf; }
+html[data-theme="light"] .b2 { background: #9bb8d0; }
+html[data-theme="light"] .b3 { background: #d4b285; }
+
+html[data-theme="light"] .topbar {
+  background: rgba(255,255,255,.82);
+  border-bottom-color: rgba(36,65,83,.1);
+  padding-block: 14px;
+}
+html[data-theme="light"] .site-nav {
+  background: rgba(247,250,252,.9);
+  border-bottom-color: rgba(36,65,83,.1);
+}
+html[data-theme="light"] .site-nav-link { background: transparent; }
+html[data-theme="light"] .site-nav-link.is-active {
+  color: #fff;
+  background: var(--green-deep);
+  box-shadow: 0 8px 18px -12px rgba(28,89,106,.8);
+}
+
+@media (min-width: 901px) {
+  .layout {
+    grid-template-columns: minmax(380px, 0.9fr) minmax(0, 1.6fr);
+    gap: 20px;
+    padding: 30px clamp(22px, 4vw, 62px);
+  }
+  .pet-panel {
+    min-height: 690px;
+    padding: 30px 28px 24px;
+    background: linear-gradient(165deg, rgba(255,255,255,.94), rgba(228,241,244,.78));
+  }
+  .dashboard-panel {
+    min-height: 690px;
+    padding: 30px;
+    background: rgba(255,255,255,.74);
+  }
+  .pet-stage { flex: 1; min-height: 315px; }
+  .pet-avatar { width: 270px; height: 270px; }
+  .pet-panel .chat-box { margin-top: auto; }
+  .dashboard-panel .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dashboard-panel .card { padding: 21px; }
+  .history-panel, .achievements-panel, .twin-panel, .sun-panel {
+    background: rgba(255,255,255,.72);
+  }
+}
+
+html[data-theme="light"] .panel {
+  border-color: rgba(36,65,83,.13);
+  box-shadow: 0 20px 48px -32px rgba(37,66,86,.42);
+  backdrop-filter: blur(20px);
+}
+html[data-theme="light"] .card {
+  border-color: rgba(36,65,83,.11);
+  box-shadow: 0 10px 26px -22px rgba(37,66,86,.42);
+}
+html[data-theme="light"] .card.water { background: linear-gradient(145deg, #d9eff1, #f7fbfb); }
+html[data-theme="light"] .card.energy { background: linear-gradient(145deg, #f4e6d3, #fffaf4); }
+html[data-theme="light"] .card.highlight { background: linear-gradient(145deg, #d7e7ed, #f7fbfc); border-color: rgba(45,125,135,.24); }
+html[data-theme="light"] .chat-form input,
+html[data-theme="light"] .reading-form select,
+html[data-theme="light"] .reading-form input {
+  background: #f8fbfc;
+  border-color: rgba(36,65,83,.15);
+}
+html[data-theme="light"] .chat-form button,
+html[data-theme="light"] .reading-form button,
+html[data-theme="light"] .auth-submit {
+  background: var(--green-deep);
+  color: #fff;
+  box-shadow: 0 12px 24px -16px rgba(28,89,106,.8);
+}
+html[data-theme="light"] .msg.user { background: #e0edf2; }
+html[data-theme="light"] .msg.pet { background: #e0f0ed; }
+html[data-theme="light"] .pet-bar { background: rgba(36,65,83,.1); }
+
+@media (max-width: 900px) {
+  .layout { padding: 14px; gap: 14px; }
+  .pet-panel { padding-top: 22px; }
+  .pet-stage { min-height: 220px; }
+  .pet-avatar { width: 230px; height: 230px; }
+}
