@@ -22,6 +22,8 @@
 }
 
 .fp-file-btn {
+  position: relative;
+  display: inline-block;
   background: var(--surface-strong);
   border: 1px solid var(--stroke);
   color: var(--text);
@@ -33,6 +35,16 @@
   transition: border-color 0.2s ease, color 0.2s ease;
 }
 .fp-file-btn:hover { border-color: var(--aqua); color: var(--aqua); }
+
+/* Не используем атрибут hidden — на iOS/Safari label+hidden иногда не открывает выбор файла */
+.fp-file-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
 
 .fp-calib { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
 .fp-calib input {
@@ -83,15 +95,55 @@
   .fp-body { grid-template-columns: 1fr; }
 }
 
-.fp-canvas {
-  width: 100%;
-  max-height: 360px;
-  display: block;
-  border-radius: 14px;
-  border: 1px solid var(--stroke);
+.fp-body.fp-drop-active .fp-canvas-wrap {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(53, 224, 143, 0.18);
+}
+
+.fp-canvas-wrap {
+  position: relative;
+  min-height: 260px;
+  border-radius: 12px;
+  border: 1px dashed var(--stroke);
   background: var(--bg-2);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.fp-canvas-wrap.fp-has-image {
   cursor: crosshair;
 }
+
+.fp-canvas {
+  width: 100%;
+  height: auto;
+  min-height: 260px;
+  display: block;
+  border-radius: 14px;
+  cursor: crosshair;
+}
+
+.fp-canvas-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.fp-canvas-empty small {
+  font-size: 11.5px;
+  opacity: 0.8;
+}
+
+.fp-canvas-empty.hidden { display: none; }
 
 .fp-steps {
   margin: 0 0 10px 18px;
@@ -99,6 +151,26 @@
   font-size: 12.5px;
   color: var(--muted);
   line-height: 1.65;
+}
+
+.fp-canvas-wrap.fp-loading::after {
+  content: 'Загрузка изображения…';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 18, 12, 0.78);
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 700;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.fp-file-btn.fp-loading {
+  opacity: 0.65;
+  pointer-events: none;
 }
 
 .fp-status {

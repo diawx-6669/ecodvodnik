@@ -1,0 +1,92 @@
+/* ===================== Выбор адреса на карте мира ===================== */
+
+.am-panel {
+  background: linear-gradient(150deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-sm);
+  padding: 18px;
+  margin: 16px 0 20px;
+}
+
+.am-head h3 { display: flex; align-items: center; gap: 8px; font-size: 15px; margin: 0; text-transform: none; letter-spacing: 0; }
+.am-head h3::after { content: none; }
+.am-hint { color: var(--muted); font-size: 12.5px; margin-top: 6px; max-width: 640px; line-height: 1.5; }
+
+.am-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.am-address-input {
+  flex: 1 1 260px;
+  min-width: 220px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--stroke);
+  color: var(--text);
+  border-radius: 11px;
+  padding: 10px 13px;
+  font-family: inherit;
+  font-size: 13px;
+}
+.am-address-input:focus {
+  outline: none;
+  border-color: rgba(52,224,161,0.55);
+  box-shadow: 0 0 0 3px rgba(52,224,161,0.12);
+}
+
+.am-map {
+  width: 100%;
+  height: 340px;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  overflow: hidden;
+  background: var(--bg-2);
+}
+
+.am-status {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  background: rgba(77, 201, 255, 0.08);
+  border: 1px solid rgba(77, 201, 255, 0.2);
+  border-radius: 12px;
+  padding: 11px 13px;
+}
+
+.am-status.am-status-error {
+  background: rgba(255, 107, 129, 0.1);
+  border-color: rgba(255, 107, 129, 0.28);
+}
+
+.am-status.am-status-ok {
+  background: rgba(53, 224, 143, 0.1);
+  border-color: rgba(53, 224, 143, 0.28);
+}
+
+/* Тёмная тема для карты Leaflet, чтобы не выбивалась белым фоном из общего дизайна */
+.am-map .leaflet-control-attribution {
+  background: rgba(4, 18, 12, 0.75) !important;
+  color: var(--muted) !important;
+  font-size: 10.5px !important;
+}
+.am-map .leaflet-control-attribution a { color: var(--aqua) !important; }
+
+.am-map .leaflet-popup-content-wrapper {
+  background: var(--surface-strong, #10231c);
+  color: var(--text);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+.am-map .leaflet-popup-tip { background: var(--surface-strong, #10231c); }
+.am-map .leaflet-popup-content { font-size: 12.5px; line-height: 1.5; margin: 10px 12px; }
+
+.am-map .leaflet-bar a {
+  background: var(--surface-strong, #10231c);
+  color: var(--text);
+  border-bottom: 1px solid var(--stroke);
+}
+.am-map .leaflet-bar a:hover { background: rgba(255,255,255,0.08); }

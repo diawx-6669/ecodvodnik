@@ -332,6 +332,18 @@ function twinBuildScene(areaM2) {
     floorMesh = new THREE.Mesh(geo, mat);
     scene.add(floorMesh);
 
+    // стены — контур здания, вытянутый вверх (раньше для реального плана/адреса
+    // стены не строились вовсе, и модель выглядела как плоская подложка вместо дома)
+    const wallHeight = floorplan.levels
+      ? Math.min(24, Math.max(2.4, floorplan.levels * 2.8))
+      : 2.7;
+    const wallGeo = new THREE.ExtrudeGeometry(shape, { depth: wallHeight, bevelEnabled: false });
+    wallGeo.rotateX(Math.PI / 2);
+    const wallEdges = new THREE.EdgesGeometry(wallGeo);
+    const wallLines = new THREE.LineSegments(wallEdges, new THREE.LineBasicMaterial({ color: 0x2a5c47 }));
+    wallLines.position.y = wallHeight;
+    scene.add(wallLines);
+
     // внутренние комнаты — тонкие контуры-линии
     floorplan.rooms.forEach((room) => {
       const pts = room.map((p) => new THREE.Vector3(p.x, 0.02, p.z));
@@ -429,9 +441,12 @@ function twinOnResize() {
 
 // ---------- главная точка входа ----------
 function twinGenerate() {
+  const wrap = document.getElementById('twin-scene-wrap');
+  if (!wrap) return;
+
   if (typeof THREE === 'undefined') {
-    document.getElementById('twin-scene-wrap').innerHTML =
-      '<div class="twin-scene-empty">Не удалось загрузить 3D-движок (Three.js) — проверьте подключение к интернету и обновите страницу.</div>';
+    wrap.innerHTML =
+      '<div class="twin-scene-empty">Не удалось загрузить 3D-движок (Three.js). Проверьте интернет и обновите страницу.</div>';
     return;
   }
 
@@ -442,6 +457,7 @@ function twinGenerate() {
   twinState.devices = twinBuildDevices(type, areaM2, units);
 
   twinDisposeScene();
+  wrap.innerHTML = '';
   twinBuildScene(areaM2);
 
   twinRenderDeviceList();

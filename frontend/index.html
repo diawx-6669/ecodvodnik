@@ -14,6 +14,8 @@
   <link rel="stylesheet" href="css/goals.css" />
   <link rel="stylesheet" href="css/twin.css" />
   <link rel="stylesheet" href="css/floorplan.css" />
+  <link rel="stylesheet" href="css/address-map.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <link rel="stylesheet" href="css/sun-schedule.css" />
   <link rel="stylesheet" href="css/profile.css" />
   <link rel="manifest" href="manifest.webmanifest" />
@@ -452,16 +454,33 @@
         <span class="pill">AI расставляет приборы и считает экономию</span>
       </div>
 
+      <div class="am-panel">
+        <div class="am-head">
+          <h3>Адрес объекта на карте мира <span class="pill pill-sm">OpenStreetMap</span></h3>
+          <p class="am-hint">Введите адрес или отметьте дом кликом/меткой на карте — если контур здания найдётся в OpenStreetMap, 3D-модель ниже построится по настоящей форме дома, а не по обобщённому прямоугольнику.</p>
+        </div>
+
+        <div class="am-controls">
+          <input type="text" id="am-address-input" class="am-address-input" placeholder="Например: ул. Абая 10, Алматы" />
+          <button type="button" id="am-search-btn" class="fp-btn">Найти на карте</button>
+          <button type="button" id="am-use-btn" class="fp-btn fp-btn-primary" disabled>Построить 3D по этому зданию</button>
+          <button type="button" id="am-clear-btn" class="fp-btn fp-btn-ghost">Сбросить адрес</button>
+        </div>
+
+        <div id="am-map" class="am-map"></div>
+        <div class="am-status" id="am-status">Кликните по карте, перетащите метку или найдите адрес, чтобы выбрать дом.</div>
+      </div>
+
       <div class="fp-panel">
         <div class="fp-head">
           <h3>План помещения по фото/чертежу <span class="pill pill-sm">бета</span></h3>
-          <p class="fp-hint">Загрузите фото или скан плана — AI распознает контур помещения и границы комнат вместо расчёта по площади «на глаз».</p>
+          <p class="fp-hint">Загрузите JPG/PNG/WEBP плана или фото комнаты сверху. Если берёте кадр из рендера — сохраните как JPG/PNG до 4096 px (2–8 МБ), иначе браузер может «висеть» несколько минут.</p>
         </div>
 
         <div class="fp-controls">
           <label class="fp-file-btn">
             Выбрать план (фото/скан)
-            <input type="file" id="fp-file" accept="image/*" hidden />
+            <input type="file" id="fp-file" class="fp-file-input" accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp" />
           </label>
           <div class="fp-calib">
             <span>Длина отмеченного отрезка, м</span>
@@ -473,11 +492,17 @@
           <button type="button" id="fp-clear-btn" class="fp-btn fp-btn-ghost">Сбросить план</button>
         </div>
 
-        <div class="fp-body">
-          <canvas id="fp-canvas" class="fp-canvas"></canvas>
+        <div class="fp-body" id="fp-drop-zone">
+          <div class="fp-canvas-wrap">
+            <canvas id="fp-canvas" class="fp-canvas"></canvas>
+            <div class="fp-canvas-empty" id="fp-canvas-empty">
+              <span>Выберите файл или перетащите план сюда</span>
+              <small>JPG, PNG или WEBP</small>
+            </div>
+          </div>
           <div class="fp-side">
             <ol class="fp-steps">
-              <li>Загрузите фото/скан плана.</li>
+              <li>Загрузите JPG/PNG/WEBP или перетащите файл на превью.</li>
               <li>Кликните 2 точки на отрезке с известной длиной (например, стена) и укажите её в метрах → «Задать масштаб».</li>
               <li>Нажмите «Распознать план» — синим выделится внешний контур, зелёным — найденные комнаты.</li>
               <li>«Построить 3D по плану» — подставит реальную форму в модель ниже.</li>
@@ -754,9 +779,11 @@
   <script src="js/admin-panel.js"></script>
   <script src="js/pwa.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script async src="https://docs.opencv.org/4.9.0/opencv.js"></script>
-  <script src="js/floorplan.js"></script>
-  <script src="js/twin.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.9.0/dist/opencv.js" defer></script>
+  <script src="js/floorplan.js" defer></script>
+  <script src="js/twin.js" defer></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="js/address-map.js" defer></script>
   <script src="js/sun-schedule.js"></script>
 </body>
 </html>

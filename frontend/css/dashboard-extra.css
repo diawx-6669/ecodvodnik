@@ -122,15 +122,3 @@
 @media (max-width: 700px) {
   .achievements-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
 }
-
-/* Dashboard polish: denser information cards with a clear hierarchy. */
-.anomalies { display: grid; gap: 8px; }
-.anomaly-item { border-radius: 14px; background: rgba(255,107,107,.055); }
-.recommendations { display: grid; gap: 8px; }
-.recommendation-item { border-radius: 14px; }
-.reading-form, .goal-input-form, .export-controls { gap: 8px; }
-.reading-form input, .reading-form select,
-.goal-input-form input, .goal-input-form select,
-.export-controls input, .export-controls select {
-  min-height: 42px;
-}
