@@ -13,6 +13,13 @@ const amState = {
   lon: null,
   address: '',
 };
+// Скрипты подключены как обычные <script> (не modules), поэтому top-level
+// const/let НЕ становится свойством window — в отличие от var/function.
+// sun-schedule.js (и другие блоки) читают координаты именно через
+// window.amState, так что без явного присваивания они всегда видели
+// window.amState === undefined и писали "точка не указана", даже когда
+// точка на карте уже была отмечена.
+window.amState = amState;
 
 const AM_DEFAULT_VIEW = { lat: 20, lon: 10, zoom: 2 };
 

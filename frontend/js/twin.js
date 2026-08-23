@@ -156,7 +156,7 @@ function twinRenderRoomsUI() {
       row.className = 'twin-room-device-row';
       const nameSpan = document.createElement('span');
       nameSpan.className = 'rd-name';
-      nameSpan.textContent = dev.name;
+      nameSpan.textContent = dev.model ? `${dev.name} — ${dev.model}` : dev.name;
       const powerSpan = document.createElement('span');
       powerSpan.className = 'rd-power';
       powerSpan.textContent = `${dev.watts} Вт · ${dev.hours} ч/день`;
@@ -172,6 +172,16 @@ function twinRenderRoomsUI() {
       right.append(powerSpan, rmBtn);
       row.append(nameSpan, right);
       devList.appendChild(row);
+
+      // Если указана паспортная/квитанционная мощность — сразу под строкой
+      // прибора показываем сравнение с тем, что введено в модель.
+      if (dev.ratedWatts) {
+        const cmp = twinCompareRatedWatts(dev.watts, dev.ratedWatts);
+        const cmpRow = document.createElement('div');
+        cmpRow.className = `twin-room-device-compare twin-room-device-compare-${cmp.level}`;
+        cmpRow.textContent = cmp.text;
+        devList.appendChild(cmpRow);
+      }
     });
 
     const form = document.createElement('div');
@@ -179,6 +189,10 @@ function twinRenderRoomsUI() {
     const nameField = document.createElement('input');
     nameField.type = 'text';
     nameField.placeholder = 'Прибор, напр. Холодильник';
+    const modelField = document.createElement('input');
+    modelField.type = 'text';
+    modelField.placeholder = 'Модель (необязательно), напр. Samsung RB33';
+    modelField.className = 'twin-room-model-field';
     const wattsField = document.createElement('input');
     wattsField.type = 'number';
     wattsField.min = '1';
@@ -190,6 +204,12 @@ function twinRenderRoomsUI() {
     hoursField.step = '0.1';
     hoursField.placeholder = 'ч/день';
     hoursField.value = '1';
+    const ratedField = document.createElement('input');
+    ratedField.type = 'number';
+    ratedField.min = '0';
+    ratedField.placeholder = 'Вт по паспорту/квитанции';
+    ratedField.title = 'Необязательно: максимальная мощность, указанная на шильдике прибора или в квитанции/у счётчика — для сверки с тем, что введено выше.';
+    ratedField.className = 'twin-room-rated-field';
     const addBtn = document.createElement('button');
     addBtn.type = 'button';
     addBtn.className = 'twin-room-add-btn';
@@ -198,9 +218,12 @@ function twinRenderRoomsUI() {
     errorMsg.className = 'twin-room-add-error hidden';
     const submit = () => {
       const name = nameField.value.trim();
+      const model = modelField.value.trim();
       // не у всех раскладок/локалей number-инпут понимает запятую как разделитель
       const watts = Number(String(wattsField.value).replace(',', '.'));
       const hours = Number(String(hoursField.value).replace(',', '.'));
+      const ratedRaw = String(ratedField.value).replace(',', '.').trim();
+      const ratedWatts = ratedRaw === '' ? null : Number(ratedRaw);
       if (!name) {
         errorMsg.textContent = 'Впишите название прибора.';
         errorMsg.classList.remove('hidden');
@@ -219,14 +242,20 @@ function twinRenderRoomsUI() {
         hoursField.focus();
         return;
       }
+      if (ratedWatts != null && (Number.isNaN(ratedWatts) || ratedWatts < 0)) {
+        errorMsg.textContent = 'Мощность по паспорту/квитанции должна быть числом от 0 или пустой.';
+        errorMsg.classList.remove('hidden');
+        ratedField.focus();
+        return;
+      }
       errorMsg.classList.add('hidden');
-      twinAddDeviceToRoom(room.id, { name, watts, hours });
+      twinAddDeviceToRoom(room.id, { name, model: model || null, watts, hours, ratedWatts });
     };
     addBtn.addEventListener('click', submit);
-    [nameField, wattsField, hoursField].forEach((el) => {
+    [nameField, modelField, wattsField, hoursField, ratedField].forEach((el) => {
       el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
     });
-    form.append(nameField, wattsField, hoursField, addBtn);
+    form.append(nameField, modelField, wattsField, hoursField, ratedField, addBtn);
 
     card.append(head, devList, form, errorMsg);
     list.appendChild(card);
@@ -243,6 +272,8 @@ function twinBuildDevicesFromRooms() {
       devices.push({
         id: `room-${room.id}-dev-${dev.id}`,
         name: `${dev.name} (${roomName})`,
+        model: dev.model || null,
+        ratedWatts: dev.ratedWatts != null ? dev.ratedWatts : null,
         watts: dev.watts,
         hoursPerDay: dev.hours,
         essential: false,
@@ -255,6 +286,34 @@ function twinBuildDevicesFromRooms() {
     });
   });
   return devices;
+}
+
+// ---------- сверка введённой мощности с паспортом прибора/квитанцией ----------
+// dev.watts — то, что задано в модели двойника; ratedWatts — то, что пользователь
+// переписал с шильдика прибора, счётчика или квитанции. Порог в 15% выбран как
+// разумный запас на округление и на то, что реальная мощность приборов часто
+// ниже "пиковой" паспортной — совпадение до пары ватт можно не ожидать.
+function twinCompareRatedWatts(modelWatts, ratedWatts) {
+  const diff = modelWatts - ratedWatts;
+  const diffPct = ratedWatts > 0 ? (diff / ratedWatts) * 100 : 0;
+  const absPct = Math.abs(diffPct);
+
+  if (absPct <= 15) {
+    return {
+      level: 'ok',
+      text: `✓ Совпадает с паспортом/квитанцией (${ratedWatts} Вт), расхождение ${absPct.toFixed(0)}%.`,
+    };
+  }
+  if (diff > 0) {
+    return {
+      level: 'warn',
+      text: `⚠ В модели ${modelWatts} Вт, а по паспорту/квитанции — ${ratedWatts} Вт (на ${absPct.toFixed(0)}% меньше). Возможно, прибор изношен или указана не пиковая мощность — проверьте цифры.`,
+    };
+  }
+  return {
+    level: 'warn',
+    text: `⚠ В модели ${modelWatts} Вт, а по паспорту/квитанции — ${ratedWatts} Вт (на ${absPct.toFixed(0)}% больше). Возможно, прибор потребляет больше заявленного — стоит перепроверить показания.`,
+  };
 }
 
 function twinOnTypeChange(e) {
