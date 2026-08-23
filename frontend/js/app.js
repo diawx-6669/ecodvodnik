@@ -114,7 +114,10 @@ function petNameKey() {
 }
 
 function loadPetName() {
-  document.getElementById('pet-name-text').textContent = localStorage.getItem(petNameKey()) || 'Эко';
+  const name = localStorage.getItem(petNameKey()) || 'Эко';
+  document.getElementById('pet-name-text').textContent = name;
+  const chatName = document.getElementById('chat-pet-name');
+  if (chatName) chatName.textContent = name;
 }
 
 document.getElementById('rename-pet-btn').addEventListener('click', () => {
@@ -125,6 +128,8 @@ document.getElementById('rename-pet-btn').addEventListener('click', () => {
     const trimmed = name.trim();
     localStorage.setItem(key, trimmed);
     document.getElementById('pet-name-text').textContent = trimmed;
+    const chatName = document.getElementById('chat-pet-name');
+    if (chatName) chatName.textContent = trimmed;
     appendChatMessage('pet', `Теперь меня зовут ${trimmed}. Мне нравится!`);
   }
 });
@@ -139,13 +144,16 @@ document.getElementById('chat-form').addEventListener('submit', async (e) => {
 
   appendChatMessage('user', message);
   input.value = '';
+  if (typeof window.showChatTyping === 'function') window.showChatTyping();
 
   try {
     const { reply, pet } = await api.sendMessage(message);
+    if (typeof window.hideChatTyping === 'function') window.hideChatTyping();
     appendChatMessage('pet', reply);
     renderPetState(pet);
     if (typeof window.checkAndRenderAchievements === 'function') window.checkAndRenderAchievements();
   } catch (err) {
+    if (typeof window.hideChatTyping === 'function') window.hideChatTyping();
     appendChatMessage('pet', 'У меня что-то со связью... попробуй ещё раз.');
     console.error(err);
   }
