@@ -497,7 +497,23 @@
             </button>
           </div>
           <button type="button" id="fp-undo-point-btn" class="fp-btn fp-btn-ghost">Отменить точку</button>
+          <button type="button" id="fp-new-wall-seg-btn" class="fp-btn">Новый отрезок стены</button>
+          <button type="button" id="fp-connect-btn" class="fp-btn">Соединить соседние точки</button>
           <button type="button" id="fp-finish-wall-btn" class="fp-btn" disabled>Замкнуть контур стен</button>
+        </div>
+
+        <div class="fp-area-tools">
+          <div class="fp-area-preview" id="fp-area-preview">Площадь по контуру: —</div>
+          <details class="fp-area-manual">
+            <summary>Площадь вручную (Г-образная / сложная форма)</summary>
+            <p class="fp-area-manual-hint">Добавьте прямоугольные секции (например, две части буквы «Г»). Сумма секций подставится вместо авто-расчёта.</p>
+            <div class="fp-dim-list" id="fp-dim-list"></div>
+            <button type="button" id="fp-add-dim-btn" class="fp-btn fp-btn-ghost">+ Добавить секцию (длина × ширина)</button>
+            <label class="fp-manual-area-row">
+              <span>Или итоговая площадь, м²</span>
+              <input type="number" id="fp-manual-area" min="1" step="0.1" placeholder="напр. 24" />
+            </label>
+          </details>
         </div>
 
         <div class="fp-body" id="fp-drop-zone">
@@ -513,8 +529,8 @@
               <li>Загрузите JPG/PNG/WEBP или перетащите файл на превью.</li>
               <li>Кликните 2 точки на отрезке с известной длиной (например, стена) и укажите её в метрах → «Задать масштаб».</li>
               <li>«Распознать автоматически» — подходит для простых прямоугольных планов на контрастном фоне.</li>
-              <li>Если контур не совпал или комната сложной формы (буквой Г/П и т.п.) — включите режим «Стены» и кликните все углы контура по порядку, затем «Замкнуть контур стен». Режимом «Окна» можно отметить окна парой точек на стене — они лягут голубыми отрезками.</li>
-              <li>«Построить 3D по плану» — подставит реальную форму в модель ниже.</li>
+              <li>Для сложной формы: режим «Стены» — отметьте отрезки (между окнами — «Новый отрезок стены»). «Окна» — пара точек на проёме. Затем «Соединить соседние точки» или «Замкнуть контур стен».</li>
+              <li>«Построить 3D по плану» — подставит форму и площадь (проверьте периметр; при ошибке — секции вручную).</li>
             </ol>
             <div class="fp-status" id="fp-status">Загрузите изображение плана, чтобы начать.</div>
           </div>
