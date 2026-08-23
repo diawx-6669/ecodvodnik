@@ -429,9 +429,12 @@ function twinOnResize() {
 
 // ---------- главная точка входа ----------
 function twinGenerate() {
+  const wrap = document.getElementById('twin-scene-wrap');
+  if (!wrap) return;
+
   if (typeof THREE === 'undefined') {
-    document.getElementById('twin-scene-wrap').innerHTML =
-      '<div class="twin-scene-empty">Не удалось загрузить 3D-движок (Three.js) — проверьте подключение к интернету и обновите страницу.</div>';
+    wrap.innerHTML =
+      '<div class="twin-scene-empty">Не удалось загрузить 3D-движок (Three.js). Проверьте интернет и обновите страницу.</div>';
     return;
   }
 
@@ -442,6 +445,7 @@ function twinGenerate() {
   twinState.devices = twinBuildDevices(type, areaM2, units);
 
   twinDisposeScene();
+  wrap.innerHTML = '';
   twinBuildScene(areaM2);
 
   twinRenderDeviceList();
