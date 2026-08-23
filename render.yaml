@@ -1,0 +1,15 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# Если сервис уже создан вручную — можно просто нажать Manual Deploy после push в main.
+services:
+  - type: web
+    name: ecodvodnik
+    runtime: node
+    plan: free
+    buildCommand: cd backend && npm ci --omit=dev
+    startCommand: node backend/server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
