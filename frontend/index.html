@@ -16,7 +16,6 @@
   <link rel="stylesheet" href="css/floorplan.css" />
   <link rel="stylesheet" href="css/sun-schedule.css" />
   <link rel="stylesheet" href="css/profile.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#0b1512" />
   <script>
@@ -177,14 +176,6 @@
     <section class="panel pet-panel" id="pet-panel">
       <div class="pet-stage">
         <div class="pet-aura" aria-hidden="true"></div>
-        <div class="pet-platform" aria-hidden="true">
-          <span class="platform-disc"></span>
-          <span class="platform-ring r1"></span>
-          <span class="platform-ring r2"></span>
-          <span class="mote m1"></span>
-          <span class="mote m2"></span>
-          <span class="mote m3"></span>
-        </div>
         <div class="pet-particles" id="pet-particles" aria-hidden="true"></div>
         <div id="pet-avatar" class="pet-avatar" data-mood="neutral">
           <svg viewBox="0 0 220 220" class="pet-svg" aria-hidden="true">
@@ -314,24 +305,22 @@
         </div>
       </div>
 
-      <div class="pet-meta">
-        <div class="pet-name">
-          <span id="pet-name-text">Эко</span>
-          <button id="rename-pet-btn" class="rename-icon-btn" type="button" title="Переименовать питомца" aria-label="Переименовать питомца">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none">
-              <path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8L17.3 5.5a2 2 0 0 0-2.8 0L4 16v4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
-              <path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="1.7" />
-            </svg>
-          </button>
-          <span class="pet-chip" id="pet-mood-label">Настроение: нейтральное</span>
-        </div>
-
-        <div class="pet-level-wrap">
-          <div class="pet-level">LVL <span id="pet-level">1</span></div>
-          <div class="pet-bar"><span id="pet-bar-fill"></span></div>
-        </div>
-        <div class="pet-stage-chip" id="pet-stage-label">Стадия: семечко</div>
+      <div class="pet-name">
+        <span id="pet-name-text">Эко</span>
+        <button id="rename-pet-btn" class="rename-icon-btn" type="button" title="Переименовать питомца" aria-label="Переименовать питомца">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none">
+            <path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8L17.3 5.5a2 2 0 0 0-2.8 0L4 16v4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+            <path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="1.7" />
+          </svg>
+        </button>
+        <span class="pet-chip" id="pet-mood-label">Настроение: нейтральное</span>
       </div>
+
+      <div class="pet-level-wrap">
+        <div class="pet-level">LVL <span id="pet-level">1</span></div>
+        <div class="pet-bar"><span id="pet-bar-fill"></span></div>
+      </div>
+      <div class="pet-stage-chip" id="pet-stage-label">Стадия: семечко</div>
 
       <div class="chat-box">
         <div id="chat-messages" class="chat-messages"></div>
@@ -569,8 +558,9 @@
       </div>
 
       <div class="sun-top">
-        <p class="sun-hint-main">Отметьте на карте, где находится комната, и укажите сторону окна —
-          AI рассчитает движение солнца и подскажет, когда включать свет, а когда хватит естественного.</p>
+        <p class="sun-hint-main">Укажите координаты (или город и улицу) и сторону, куда выходит окно
+          комнаты — рассчитаем движение солнца и подскажем, в какое время в этой комнате
+          стоит включать свет, а когда достаточно естественного.</p>
         <div class="sun-top-controls">
           <label>Дата <input type="date" id="sun-date" /></label>
           <button type="button" id="sun-add-room-btn" class="sun-btn">+ Добавить комнату</button>
@@ -767,7 +757,6 @@
   <script async src="https://docs.opencv.org/4.9.0/opencv.js"></script>
   <script src="js/floorplan.js"></script>
   <script src="js/twin.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="js/sun-schedule.js"></script>
 </body>
 </html>

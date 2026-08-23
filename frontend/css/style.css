@@ -213,7 +213,7 @@ html { scroll-behavior: smooth; }
 .pet-panel {
   position: sticky;
   top: calc(var(--header-stack) + 12px);
-  align-self: start;
+  align-self: stretch;
 }
 
 .dashboard-panel { min-height: 420px; }
@@ -319,78 +319,23 @@ html { scroll-behavior: smooth; }
 }
 
 /* ---------- питомец ---------- */
-.pet-panel { display: flex; flex-direction: column; align-items: center; height: fit-content; position: relative; overflow: visible; }
+.pet-panel { display: flex; flex-direction: column; align-items: center; }
 
-/* Стеклянный «террариум» — рамка сцены питомца, чтобы он стоял в оформленной
-   среде, а не в пустоте. Только декоративная разметка, логику не трогает. */
 .pet-stage {
   position: relative; width: 100%; display: grid; place-items: center;
-  padding: 18px 0 40px;
-  margin-bottom: 4px;
-  border-radius: calc(var(--radius) - 4px);
-  background:
-    radial-gradient(80% 60% at 50% 100%, color-mix(in oklab, var(--pet-main) 16%, transparent), transparent 72%),
-    linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015));
-  border: 1px solid var(--stroke);
-  overflow: hidden;
-  isolation: isolate;
-  transition: background 0.6s ease;
+  padding: 10px 0 6px;
 }
-.pet-stage::before {
-  /* лёгкое верхнее свечение стекла */
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(150deg, rgba(255,255,255,0.10), transparent 45%);
-}
-
 .pet-aura {
   position: absolute; width: 240px; height: 240px; border-radius: 50%;
   background: radial-gradient(circle, color-mix(in oklab, var(--pet-main) 45%, transparent) 0%, transparent 68%);
   filter: blur(18px);
   animation: aura 6s ease-in-out infinite;
-  z-index: 0;
 }
 @keyframes aura { 0%,100% { transform: scale(0.92); opacity: 0.65; } 50% { transform: scale(1.06); opacity: 1; } }
 
-/* Постамент/подставка под питомцем — заполняет пространство внизу сцены */
-.pet-platform {
-  position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%);
-  width: 84%; max-width: 260px; height: 58px; z-index: 1; pointer-events: none;
-}
-.pet-platform .platform-disc {
-  position: absolute; inset: 0; border-radius: 50%;
-  background: radial-gradient(58% 100% at 50% 32%, color-mix(in oklab, var(--pet-main) 34%, transparent), transparent 74%);
-  filter: blur(1px);
-  transition: background 0.6s ease;
-}
-.pet-platform .platform-ring {
-  position: absolute; left: 50%; top: 46%; width: 100%; height: 62%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  border: 1px solid color-mix(in oklab, var(--pet-light) 55%, transparent);
-  opacity: 0.5;
-  animation: platform-pulse 4.2s ease-in-out infinite;
-}
-.pet-platform .platform-ring.r2 { width: 68%; height: 42%; opacity: 0.32; animation-delay: 0.7s; }
-@keyframes platform-pulse {
-  0%, 100% { transform: translate(-50%, -50%) scale(0.94); opacity: 0.45; }
-  50% { transform: translate(-50%, -50%) scale(1.04); opacity: 0.8; }
-}
-.pet-platform .mote {
-  position: absolute; width: 4px; height: 4px; border-radius: 50%;
-  background: var(--pet-light); box-shadow: 0 0 8px var(--pet-main);
-  animation: mote-drift 5s ease-in-out infinite;
-}
-.pet-platform .mote.m1 { left: 14%; bottom: 70%; animation-delay: 0s; }
-.pet-platform .mote.m2 { right: 12%; bottom: 78%; animation-delay: 1.4s; }
-.pet-platform .mote.m3 { left: 50%; bottom: 88%; animation-delay: 2.6s; }
-@keyframes mote-drift {
-  0%, 100% { transform: translateY(0) scale(0.85); opacity: 0.35; }
-  50% { transform: translateY(-8px) scale(1.15); opacity: 1; }
-}
-
-.pet-particles { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.pet-particles { position: absolute; inset: 0; pointer-events: none; }
 .pet-particles span {
-  position: absolute; bottom: 34%; left: 50%;
+  position: absolute; bottom: 22%; left: 50%;
   width: 7px; height: 7px; border-radius: 50%;
   background: var(--pet-light); opacity: 0;
   animation: float-up var(--dur, 5s) linear infinite;
@@ -404,7 +349,7 @@ html { scroll-behavior: smooth; }
 }
 
 .pet-avatar {
-  position: relative; z-index: 3; width: 220px; height: 220px;
+  position: relative; width: 220px; height: 220px;
   animation: pet-idle 4s ease-in-out infinite;
   cursor: pointer;
 }
@@ -489,18 +434,7 @@ html { scroll-behavior: smooth; }
 .pet-emote { animation: emote 3s ease-in-out infinite; transform-origin: center; }
 @keyframes emote { 0%, 70%, 100% { opacity: 0; transform: translateY(0); } 20%, 55% { opacity: 1; transform: translateY(-6px); } }
 
-/* Карточка со сводкой о питомце — заполняет пространство под сценой красиво
-   оформленной панелью, а не пустотой. */
-.pet-meta {
-  width: 100%;
-  margin-top: 6px;
-  padding: 16px 18px 14px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-  border: 1px solid var(--stroke);
-}
-
-.pet-name { font-family: 'Sora', sans-serif; font-weight: 800; font-size: 19px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.pet-name { margin-top: 8px; font-family: 'Sora', sans-serif; font-weight: 800; font-size: 19px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
 .pet-chip {
   font-family: 'Manrope', sans-serif; font-size: 11.5px; font-weight: 600; color: var(--text);
   padding: 5px 11px; border-radius: 999px;
@@ -509,13 +443,10 @@ html { scroll-behavior: smooth; }
   transition: background 0.5s ease, border-color 0.5s ease;
 }
 
-.pet-level-wrap { width: 100%; margin: 16px 0 8px; display: flex; align-items: center; gap: 12px; }
-.pet-level {
-  font-size: 11.5px; font-weight: 800; letter-spacing: 0.08em; color: var(--muted); white-space: nowrap;
-  padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,0.05); border: 1px solid var(--stroke);
-}
-.pet-level span { color: var(--green); font-size: 14px; }
-.pet-bar { flex: 1; height: 9px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.35); }
+.pet-level-wrap { width: 100%; margin: 14px 0 6px; display: flex; align-items: center; gap: 12px; }
+.pet-level { font-size: 12px; font-weight: 800; letter-spacing: 0.08em; color: var(--muted); white-space: nowrap; }
+.pet-level span { color: var(--green); font-size: 15px; }
+.pet-bar { flex: 1; height: 8px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; }
 .pet-bar span {
   display: block; height: 100%; width: 30%; border-radius: 999px;
   background: linear-gradient(90deg, var(--pet-accent), var(--pet-main), var(--pet-light));
@@ -523,15 +454,16 @@ html { scroll-behavior: smooth; }
   box-shadow: 0 0 14px var(--pet-main);
 }
 .pet-stage-chip {
-  font-size: 11.5px; color: var(--muted);
+  margin-bottom: 12px; font-size: 11.5px; color: var(--muted);
   text-align: center; letter-spacing: 0.03em;
-  padding-top: 10px; margin-top: 4px;
-  border-top: 1px dashed var(--stroke);
 }
 
 /* ---------- чат ---------- */
-.chat-box { width: 100%; border-top: 1px solid var(--stroke); padding-top: 18px; margin-top: 18px; }
-.chat-messages { max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; padding-right: 4px; }
+.chat-box {
+  width: 100%; border-top: 1px solid var(--stroke); padding-top: 16px;
+  flex: 1; display: flex; flex-direction: column; min-height: 0;
+}
+.chat-messages { flex: 1; min-height: 160px; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; margin-bottom: 14px; padding-right: 4px; }
 .chat-messages::-webkit-scrollbar { width: 6px; }
 .chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 99px; }
 
