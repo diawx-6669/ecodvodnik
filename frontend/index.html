@@ -566,6 +566,7 @@
         <div class="twin-field twin-field-btn">
           <label>&nbsp;</label>
           <button type="button" id="twin-generate-btn" class="twin-generate-btn">Сгенерировать модель</button>
+          <p class="twin-generate-status" id="twin-generate-status"></p>
         </div>
       </div>
 
@@ -577,7 +578,7 @@
         <div class="twin-side">
           <div class="twin-rooms">
             <h3>Комнаты и приборы <span class="pill pill-sm">по комнатам</span></h3>
-            <p class="twin-rooms-hint">Впишите названия комнат и оборудование, которое в них расходует энергию — модель расставит приборы по своим комнатам, а не одной кучей по кругу. Если не заполнять — модель подберёт типовой набор приборов сама.</p>
+            <p class="twin-rooms-hint">Сначала нажмите «+ Добавить прибор» в комнате (или оставьте форму заполненной — при генерации прибор подхватится автоматически). Затем «Сгенерировать модель». Кнопка «Найти модель» ищет характеристики в интернете. Если комнаты не заполнять — подставится типовой набор.</p>
             <div class="twin-rooms-list" id="twin-rooms-list"></div>
             <button type="button" id="twin-add-room-btn" class="fp-btn fp-btn-ghost">+ Добавить комнату</button>
           </div>
@@ -841,7 +842,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.9.0/dist/opencv.js" defer></script>
   <script src="js/floorplan.js?v=20260823c" defer></script>
-  <script src="js/twin.js" defer></script>
+  <script src="js/twin.js?v=20260823d" defer></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="js/address-map.js" defer></script>
   <script src="js/sun-schedule.js"></script>

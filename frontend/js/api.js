@@ -89,6 +89,7 @@ const api = {
   getRecommendations: () => apiGet('/assistant/recommendations'),
   getChatHistory: () => apiGet('/assistant/history'),
   sendMessage: (message) => apiPost('/assistant/message', { message }),
+  lookupAppliance: (payload) => apiPost('/appliances/lookup', payload),
   addReading: (type, value) => apiPost('/readings', { type, value, source: 'manual' }),
 
   // --- Аккаунт ---
