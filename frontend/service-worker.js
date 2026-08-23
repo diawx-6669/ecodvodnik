@@ -12,7 +12,7 @@
 // "Свет по солнцу" не появлялись на сайте у тестировщика). Теперь стратегия
 // network-first: сначала пробуем сеть и обновляем кэш, а к кэшу обращаемся
 // только как к запасному варианту (офлайн).
-const CACHE_NAME = 'ecodvoinik-shell-v5';
+const CACHE_NAME = 'ecodvoinik-shell-v6';
 const SHELL_FILES = [
   './',
   './index.html',
@@ -23,6 +23,7 @@ const SHELL_FILES = [
   './css/goals.css',
   './css/twin.css',
   './css/floorplan.css',
+  './css/address-map.css',
   './css/profile.css',
   './css/sun-schedule.css',
   './js/api.js',
@@ -45,6 +46,7 @@ const SHELL_FILES = [
   './js/admin-panel.js',
   './js/floorplan.js',
   './js/twin.js',
+  './js/address-map.js',
   './js/sun-schedule.js',
   './assets/favicon.svg',
 ];
