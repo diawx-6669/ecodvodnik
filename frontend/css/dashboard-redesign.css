@@ -34,7 +34,15 @@
 }
 
 .panel { background: linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.025)); }
-.pet-panel { background: linear-gradient(165deg, rgba(52,224,161,.12), rgba(77,201,255,.045) 48%, rgba(255,255,255,.035)); }
+.pet-panel {
+  align-self: start;
+  background: linear-gradient(165deg, rgba(52,224,161,.12), rgba(77,201,255,.045) 48%, rgba(255,255,255,.035));
+}
+
+/* Карточка питомца не должна растягиваться до высоты дашборда.
+   Сообщения остаются компактными и прокручиваются при длинном диалоге. */
+.pet-panel .chat-box { flex: 0 0 auto; }
+.pet-panel .chat-messages { flex: 0 1 auto; min-height: 132px; max-height: 190px; }
 
 .dashboard-panel {
   padding: clamp(22px, 2.6vw, 34px);
