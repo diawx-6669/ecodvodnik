@@ -264,6 +264,7 @@ function fpApplyLoadedImage(source, fileName, sizeMb = 0) {
   document.getElementById('fp-finish-wall-btn').disabled = true;
   fpClearDimRows();
   fpUpdateAreaPreview();
+  fpUpdateCalibDraftHint();
 
   fpToggleEmptyOverlay(false);
   fpRedraw();
@@ -354,9 +355,10 @@ function fpOnCanvasClick(e) {
   fpState.calibDraft.push({ x, y });
 
   fpRedraw();
+  fpUpdateCalibDraftHint();
   fpSetStatus(fpState.calibDraft.length === 2
-    ? 'Отрезок отмечен. Введите длину с чертежа (400 → выберите «см») и нажмите «Добавить отрезок». Можно добавить несколько стен.'
-    : 'Отмечена 1 точка — кликните вторую на том же отрезке стены с цифрой на плане.');
+    ? 'Отрезок отмечен на плане. Введите длину (400 → «см») и нажмите «Добавить отрезок».'
+    : 'Отмечена 1 точка — кликните вторую на том же отрезке стены.');
 }
 
 function fpSetMode(mode) {
@@ -600,6 +602,33 @@ function fpFinishWall() {
   fpConnectNeighbors();
 }
 
+function fpSetCalibFeedback(text, tone = 'info') {
+  const summary = document.getElementById('fp-calib-summary');
+  const panel = document.querySelector('.fp-calib-panel');
+  if (summary) {
+    summary.textContent = text;
+    summary.dataset.tone = tone;
+  }
+  if (panel && tone === 'error') {
+    panel.classList.add('fp-calib-panel-flash');
+    setTimeout(() => panel.classList.remove('fp-calib-panel-flash'), 1200);
+  }
+  if (panel && tone === 'ok') {
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+function fpUpdateCalibDraftHint() {
+  const n = fpState.calibDraft.length;
+  if (n === 0) {
+    fpSetCalibFeedback('Шаг 1: режим «Масштаб» → кликните 2 точки по стене с цифрой на чертеже.', 'info');
+  } else if (n === 1) {
+    fpSetCalibFeedback('Шаг 1: отмечена 1 точка — кликните вторую на том же отрезке стены.', 'info');
+  } else {
+    fpSetCalibFeedback('Шаг 2: введите длину с чертежа (400 при «см») → нажмите «Добавить отрезок».', 'info');
+  }
+}
+
 function fpCalibInputToMeters() {
   const raw = Number(document.getElementById('fp-calib-dist')?.value);
   if (!raw || raw <= 0) return null;
@@ -613,22 +642,33 @@ function fpFormatLengthM(m) {
 }
 
 function fpAddCalibRef() {
+  if (fpState.mode !== 'calib') {
+    fpSetMode('calib');
+  }
+
   if (!fpState.img) {
+    fpSetCalibFeedback('Сначала загрузите изображение плана.', 'error');
     fpSetStatus('Сначала загрузите изображение плана.');
     return;
   }
   if (fpState.calibDraft.length < 2) {
+    fpSetCalibFeedback(
+      `Нужно 2 точки на плане (сейчас ${fpState.calibDraft.length}). Включите режим «Масштаб» и кликните по стене с цифрой.`,
+      'error',
+    );
     fpSetStatus('Сначала отметьте 2 точки на одной стене (режим «Масштаб»).');
     return;
   }
   const lengthM = fpCalibInputToMeters();
   if (!lengthM) {
+    fpSetCalibFeedback('Введите длину в поле выше (например 400, если единица «см»).', 'error');
     fpSetStatus('Укажите длину отрезка — как на чертеже (400 при единице «см» = 4 м).');
     return;
   }
   const [a, b] = fpState.calibDraft;
   const pxDist = Math.hypot(b.x - a.x, b.y - a.y);
   if (pxDist < 3) {
+    fpSetCalibFeedback('Точки слишком близко — отметьте их заново на плане.', 'error');
     fpSetStatus('Точки слишком близко — отметьте их заново.');
     return;
   }
@@ -644,9 +684,14 @@ function fpAddCalibRef() {
   fpRenderCalibList();
   fpApplyScaleFromRefs(true);
   fpRedraw();
+  fpSetCalibFeedback(
+    `✓ Добавлен отрезок ${fpState.calibRefs.length}: ${fpFormatLengthM(lengthM)}. `
+    + 'Можно добавить ещё стены или нажать «Рассчитать масштаб».',
+    'ok',
+  );
   fpSetStatus(
     `Отрезок ${fpState.calibRefs.length} добавлен (${fpFormatLengthM(lengthM)}). `
-    + 'Отметьте ещё 1–2 стены с цифрами на плане или нажмите «Рассчитать масштаб».',
+    + 'Отметьте ещё 1–2 стены или нажмите «Рассчитать масштаб».',
   );
 }
 
@@ -726,10 +771,11 @@ function fpRenderCalibList() {
 
   if (summary) {
     if (!fpState.calibRefs.length) {
-      summary.textContent = 'Отметьте стены с цифрами на плане (400, 127, 143…). Если цифры в см — выберите «см».';
+      fpUpdateCalibDraftHint();
     } else {
+      summary.dataset.tone = 'ok';
       summary.textContent = `Отрезков: ${fpState.calibRefs.length}, сумма длин: ${fpFormatLengthM(sumM)}`
-        + (fpState.scaleManual ? ` · масштаб задан` : ' · нажмите «Рассчитать масштаб»');
+        + (fpState.scaleManual ? ' · масштаб задан ✓' : ' · нажмите «Рассчитать масштаб»');
     }
   }
 }
