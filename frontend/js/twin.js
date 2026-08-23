@@ -493,14 +493,45 @@ function twinOnResize() {
   twinState.renderer.setSize(width, height);
 }
 
+function twinRenderOfflineScene(areaM2) {
+  const wrap = document.getElementById('twin-scene-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const scene = document.createElement('div');
+  scene.className = 'twin-offline-scene';
+  const title = document.createElement('div');
+  title.className = 'twin-offline-title';
+  title.textContent = `Схема помещения · ${Math.round(areaM2)} м²`;
+  const note = document.createElement('div');
+  note.className = 'twin-offline-note';
+  note.textContent = 'Локальный режим: приборы и расчёт экономии работают без загрузки 3D-движка.';
+  const grid = document.createElement('div');
+  grid.className = 'twin-offline-grid';
+  twinState.devices.forEach((device) => {
+    const item = document.createElement('div');
+    item.className = 'twin-offline-device';
+    item.style.setProperty('--device-color', device.color);
+    item.textContent = device.name.replace(/ ×\d+$/, '');
+    grid.appendChild(item);
+  });
+  scene.append(title, note, grid);
+  wrap.appendChild(scene);
+}
+
 // ---------- главная точка входа ----------
 function twinGenerate() {
   const wrap = document.getElementById('twin-scene-wrap');
   if (!wrap) return;
 
   if (typeof THREE === 'undefined') {
-    wrap.innerHTML =
-      '<div class="twin-scene-empty">Не удалось загрузить 3D-движок (Three.js). Проверьте интернет и обновите страницу.</div>';
+    const type = document.getElementById('twin-type').value;
+    const areaM2 = Math.max(6, Number(document.getElementById('twin-area').value) || 60);
+    const units = Math.max(1, Number(document.getElementById('twin-units').value) || 1);
+    twinState.devices = twinBuildDevices(type, areaM2, units);
+    twinDisposeScene();
+    twinRenderOfflineScene(areaM2);
+    twinRenderDeviceList();
+    twinRecalcTotals();
     return;
   }
 

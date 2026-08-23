@@ -19,8 +19,10 @@ const AM_DEFAULT_VIEW = { lat: 20, lon: 10, zoom: 2 };
 function amInit() {
   const mapEl = document.getElementById('am-map');
   if (!mapEl) return; // блока нет в DOM
+  amBindControls();
   if (typeof L === 'undefined') {
-    amSetStatus('Не удалось загрузить карту (Leaflet). Проверьте интернет и обновите страницу.', 'error');
+    amRenderOfflineMap(mapEl);
+    amSetStatus('Карта работает в локальном режиме: кликните по сетке, чтобы выбрать точку. Адрес можно добавить вручную.', 'ok');
     return;
   }
 
@@ -35,6 +37,15 @@ function amInit() {
 
   amState.map = map;
 
+  /* Карта загрузилась — кнопки уже привязаны в amBindControls(). */
+  // Карта может инициализироваться раньше, чем контейнер получит итоговые
+  // размеры (шрифты/картинки ещё грузятся) — без этого тайлы иногда рисуются
+  // только в углу контейнера.
+  window.addEventListener('load', () => map.invalidateSize());
+  setTimeout(() => map.invalidateSize(), 300);
+}
+
+function amBindControls() {
   const searchBtn = document.getElementById('am-search-btn');
   const addressInput = document.getElementById('am-address-input');
   if (searchBtn) searchBtn.addEventListener('click', amSearchAddress);
@@ -49,12 +60,41 @@ function amInit() {
 
   const clearBtn = document.getElementById('am-clear-btn');
   if (clearBtn) clearBtn.addEventListener('click', amClear);
+}
 
-  // Карта может инициализироваться раньше, чем контейнер получит итоговые
-  // размеры (шрифты/картинки ещё грузятся) — без этого тайлы иногда рисуются
-  // только в углу контейнера.
-  window.addEventListener('load', () => map.invalidateSize());
-  setTimeout(() => map.invalidateSize(), 300);
+function amRenderOfflineMap(mapEl) {
+  mapEl.classList.add('am-map-offline');
+  mapEl.innerHTML = '<div class="am-offline-map-label">Локальная карта · кликните, чтобы выбрать точку</div><div class="am-offline-marker" aria-hidden="true"></div>';
+  mapEl.addEventListener('click', (event) => {
+    const rect = mapEl.getBoundingClientRect();
+    const x = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    const y = Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height));
+    const lat = Math.round((70 - y * 140) * 1000) / 1000;
+    const lon = Math.round((x * 360 - 180) * 1000) / 1000;
+    amSetPoint(lat, lon, { offline: true });
+    amSetStatus(`Точка выбрана: ${lat.toFixed(3)}°, ${lon.toFixed(3)}°. Можно построить модель по ориентировочной площади.`, 'ok');
+  });
+}
+
+function amUpdateOfflineMarker() {
+  const mapEl = document.getElementById('am-map');
+  const marker = mapEl?.querySelector('.am-offline-marker');
+  if (!marker || amState.lat == null || amState.lon == null) return;
+  marker.style.left = `${((amState.lon + 180) / 360) * 100}%`;
+  marker.style.top = `${((70 - amState.lat) / 140) * 100}%`;
+  marker.classList.add('is-visible');
+}
+
+function amEstimatedFootprint(areaM2) {
+  const sideA = Math.sqrt(areaM2 * 1.25);
+  const sideB = areaM2 / sideA;
+  return {
+    outer: [
+      { x: -sideA / 2, z: -sideB / 2 }, { x: sideA / 2, z: -sideB / 2 },
+      { x: sideA / 2, z: sideB / 2 }, { x: -sideA / 2, z: sideB / 2 },
+    ],
+    rooms: [], area: areaM2,
+  };
 }
 
 function amSetStatus(text, kind) {
@@ -90,7 +130,7 @@ async function amSearchAddress() {
     amSetPoint(lat, lon, { reverseGeocode: false, recenter: true, zoom: 18 });
     amSetStatus(`Найдено: ${data[0].display_name}. Теперь нажмите «Построить 3D по этому зданию» — контур попробуем взять из OpenStreetMap.`, 'ok');
   } catch (e) {
-    amSetStatus('Не удалось обратиться к сервису геокодирования (нет сети?). Отметьте дом на карте вручную.', 'error');
+    amSetStatus('Внешний поиск адреса сейчас недоступен. Выберите точку на локальной карте — модель всё равно можно построить.', 'ok');
   }
 }
 
@@ -130,6 +170,7 @@ function amSetPoint(lat, lon, opts) {
     }
     if (options.recenter) map.setView([lat, lon], options.zoom || Math.max(map.getZoom(), 16));
   }
+  if (options.offline) amUpdateOfflineMarker();
 
   const useBtn = document.getElementById('am-use-btn');
   if (useBtn) useBtn.disabled = false;
@@ -250,8 +291,12 @@ async function amUseBuilding() {
   try {
     const footprint = await amFetchBuildingFootprint(amState.lat, amState.lon);
     if (!footprint) {
-      amSetStatus('В этой точке нет размеченного контура здания в OpenStreetMap — модель будет построена по введённой ниже площади и типу объекта, но точка на карте сохранена.', 'error');
-      if (useBtn) useBtn.disabled = false;
+      const areaInput = document.getElementById('twin-area');
+      const area = Math.max(6, Number(areaInput?.value) || 60);
+      window.EcotchiFloorplan = amEstimatedFootprint(area);
+      amSetStatus(`Контур здания не найден, поэтому создана локальная модель площадью ${Math.round(area)} м².`, 'ok');
+      const genBtn = document.getElementById('twin-generate-btn');
+      if (genBtn) genBtn.click();
       return;
     }
 
@@ -266,7 +311,12 @@ async function amUseBuilding() {
     const genBtn = document.getElementById('twin-generate-btn');
     if (genBtn) genBtn.click();
   } catch (e) {
-    amSetStatus('Не удалось получить контур здания (сервис Overpass недоступен или нет сети). Попробуйте ещё раз чуть позже — модель пока строится по площади и типу объекта.', 'error');
+    const areaInput = document.getElementById('twin-area');
+    const area = Math.max(6, Number(areaInput?.value) || 60);
+    window.EcotchiFloorplan = amEstimatedFootprint(area);
+    amSetStatus(`Данные карты сейчас недоступны, поэтому построена локальная модель площадью ${Math.round(area)} м². Её можно использовать и настраивать как обычно.`, 'ok');
+    const genBtn = document.getElementById('twin-generate-btn');
+    if (genBtn) genBtn.click();
   } finally {
     if (useBtn) useBtn.disabled = false;
   }
@@ -282,6 +332,8 @@ function amClear() {
     amState.map.removeLayer(amState.marker);
     amState.marker = null;
   }
+  const offlineMarker = document.querySelector('.am-offline-marker');
+  if (offlineMarker) offlineMarker.classList.remove('is-visible');
   const input = document.getElementById('am-address-input');
   if (input) input.value = '';
   const useBtn = document.getElementById('am-use-btn');

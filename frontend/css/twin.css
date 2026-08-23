@@ -67,11 +67,24 @@
 }
 .twin-scene-wrap canvas { display: block; width: 100%; height: 100%; }
 
-.twin-scene-empty {
+.twin-scene-empty { 
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
   color: var(--muted); font-size: 13.5px; text-align: center; padding: 20px;
 }
+
+/* Полезная схема вместо сообщения об ошибке, если CDN с Three.js недоступен. */
+.twin-offline-scene {
+  min-height: 320px; padding: 24px; display: flex; flex-direction: column; justify-content: center;
+  border-radius: 16px;
+  background: linear-gradient(rgba(77,201,255,.10) 1px, transparent 1px), linear-gradient(90deg, rgba(77,201,255,.10) 1px, transparent 1px), radial-gradient(circle at 50% 20%, rgba(52,224,161,.16), transparent 56%), #0b1714;
+  background-size: 24px 24px, 24px 24px, auto, auto;
+}
+.twin-offline-title { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; }
+.twin-offline-note { margin-top: 7px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.twin-offline-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 22px; }
+.twin-offline-device { min-height: 54px; display: grid; place-items: center; padding: 8px; text-align: center; color: var(--text); font-size: 11px; font-weight: 700; border: 1px solid color-mix(in srgb, var(--device-color) 72%, transparent); border-radius: 11px; background: color-mix(in srgb, var(--device-color) 16%, rgba(9,24,18,.85)); box-shadow: 0 0 18px color-mix(in srgb, var(--device-color) 22%, transparent); }
+@media (max-width: 520px) { .twin-offline-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 .twin-devices h3, .twin-compare h3, .twin-forecast h3 { margin-bottom: 8px; }
 

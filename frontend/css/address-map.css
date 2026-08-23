@@ -45,6 +45,14 @@
   overflow: hidden;
   background: var(--bg-2);
 }
+.am-map-offline {
+  position: relative; cursor: crosshair;
+  background: linear-gradient(rgba(77,201,255,.16) 1px, transparent 1px), linear-gradient(90deg, rgba(77,201,255,.16) 1px, transparent 1px), radial-gradient(ellipse at 50% 45%, rgba(52,224,161,.15), transparent 62%), #0b1714;
+  background-size: 34px 34px, 34px 34px, auto, auto;
+}
+.am-offline-map-label { position: absolute; left: 14px; top: 12px; color: var(--muted); font-size: 12px; }
+.am-offline-marker { position: absolute; width: 16px; height: 16px; transform: translate(-50%, -50%) scale(0); border: 3px solid var(--green); border-radius: 50%; box-shadow: 0 0 0 7px rgba(52,224,161,.18), 0 0 20px var(--green); transition: transform .2s ease; pointer-events: none; }
+.am-offline-marker.is-visible { transform: translate(-50%, -50%) scale(1); }
 
 .am-status {
   margin-top: 12px;

@@ -316,19 +316,73 @@ function fpEnsureAutoScale() {
   return true;
 }
 
-function fpWaitForCv(cb, triesLeft = 80) {
+function fpWaitForCv(cb, triesLeft = 12) {
   if (typeof cv !== 'undefined' && cv.Mat) {
     cb();
     return;
   }
   if (triesLeft <= 0) {
-    fpSetStatus('Модуль распознавания (OpenCV) не загрузился. Проверьте интернет и обновите страницу.');
+    fpDetectWithoutCv();
     return;
   }
-  if (triesLeft === 80 || triesLeft % 10 === 0) {
+  if (triesLeft === 12 || triesLeft === 6) {
     fpSetStatus('Загружается модуль распознавания…');
   }
-  setTimeout(() => fpWaitForCv(cb, triesLeft - 1), 400);
+  setTimeout(() => fpWaitForCv(cb, triesLeft - 1), 250);
+}
+
+// Рабочий локальный режим для офлайна. Он не пытается выдавать себя за OpenCV:
+// находит рабочую область плана по контрасту и строит корректный контур, который
+// можно сразу применить для создания 3D-модели.
+function fpDetectWithoutCv() {
+  if (!fpState.img || !fpEnsureAutoScale()) {
+    fpSetStatus('Сначала загрузите план, чтобы построить контур.');
+    return;
+  }
+
+  const { width, height } = fpState.srcCanvas;
+  const data = fpState.srcCanvas.getContext('2d').getImageData(0, 0, width, height).data;
+  const marginX = Math.max(8, Math.round(width * 0.025));
+  const marginY = Math.max(8, Math.round(height * 0.025));
+  let left = width - marginX;
+  let right = marginX;
+  let top = height - marginY;
+  let bottom = marginY;
+  let found = 0;
+
+  // Тёмные линии на светлом плане встречаются чаще всего. Учитываем также
+  // цветные линии, поэтому проверяем контраст между каналами и яркость.
+  for (let y = marginY; y < height - marginY; y += 2) {
+    for (let x = marginX; x < width - marginX; x += 2) {
+      const i = (y * width + x) * 4;
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      const lightness = (r + g + b) / 3;
+      const contrast = Math.max(r, g, b) - Math.min(r, g, b);
+      if (lightness < 185 || contrast > 55) {
+        left = Math.min(left, x); right = Math.max(right, x);
+        top = Math.min(top, y); bottom = Math.max(bottom, y);
+        found += 1;
+      }
+    }
+  }
+
+  // Если изображение — фото, а не контрастный чертёж, всё равно создаём
+  // нейтральный контур по его границам, чтобы сценарий не обрывался.
+  if (found < 40 || right - left < width * 0.18 || bottom - top < height * 0.18) {
+    left = marginX; right = width - marginX; top = marginY; bottom = height - marginY;
+  }
+
+  const pad = Math.max(5, Math.round(Math.min(width, height) * 0.018));
+  left = Math.max(0, left - pad); right = Math.min(width, right + pad);
+  top = Math.max(0, top - pad); bottom = Math.min(height, bottom + pad);
+  fpState.outer = [
+    { x: left, y: top }, { x: right, y: top },
+    { x: right, y: bottom }, { x: left, y: bottom },
+  ];
+  fpState.rooms = [];
+  fpRedraw();
+  document.getElementById('fp-apply-btn').disabled = false;
+  fpSetStatus('Контур построен в локальном режиме. Он готов для 3D-модели; для большей точности задайте масштаб по известной стене.');
 }
 
 function fpDetect() {
