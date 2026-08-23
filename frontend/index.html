@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="css/dashboard-extra.css" />
   <link rel="stylesheet" href="css/goals.css" />
   <link rel="stylesheet" href="css/twin.css" />
-  <link rel="stylesheet" href="css/floorplan.css?v=20260823" />
+  <link rel="stylesheet" href="css/floorplan.css?v=20260823b" />
   <link rel="stylesheet" href="css/address-map.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <link rel="stylesheet" href="css/sun-schedule.css" />
@@ -476,9 +476,18 @@
             <input type="file" id="fp-file" class="fp-file-input" accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp" />
           </label>
           <div class="fp-calib">
-            <span>Длина отмеченного отрезка, м</span>
-            <input type="number" id="fp-calib-dist" min="0.1" step="0.1" placeholder="напр. 4.2" />
-            <button type="button" id="fp-set-scale-btn" class="fp-btn">Задать масштаб</button>
+            <span>Длина отрезка на плане</span>
+            <input type="number" id="fp-calib-dist" min="0.1" step="any" placeholder="400 или 4.0" />
+            <select id="fp-calib-unit" class="fp-calib-unit" aria-label="Единица длины">
+              <option value="cm" selected>см (как на чертеже)</option>
+              <option value="m">метры</option>
+            </select>
+            <button type="button" id="fp-set-scale-btn" class="fp-btn">Добавить отрезок</button>
+            <button type="button" id="fp-apply-scale-btn" class="fp-btn fp-btn-primary">Рассчитать масштаб</button>
+          </div>
+          <div class="fp-calib-panel">
+            <div class="fp-calib-summary" id="fp-calib-summary">Отметьте стены с цифрами на плане (400, 127, 143…). Если цифры в см — выберите «см».</div>
+            <div class="fp-calib-list" id="fp-calib-list"></div>
           </div>
           <button type="button" id="fp-detect-btn" class="fp-btn">Распознать автоматически</button>
           <button type="button" id="fp-apply-btn" class="fp-btn fp-btn-primary" disabled>Построить 3D по плану</button>
@@ -527,10 +536,9 @@
           <div class="fp-side">
             <ol class="fp-steps">
               <li>Загрузите JPG/PNG/WEBP или перетащите файл на превью.</li>
-              <li>Кликните 2 точки на отрезке с известной длиной (например, стена) и укажите её в метрах → «Задать масштаб».</li>
-              <li>«Распознать автоматически» — подходит для простых прямоугольных планов на контрастном фоне.</li>
-              <li>Для сложной формы: режим «Стены» — отметьте отрезки (между окнами — «Новый отрезок стены»). «Окна» — пара точек на проёме. Затем «Соединить соседние точки» или «Замкнуть контур стен».</li>
-              <li>«Построить 3D по плану» — подставит форму и площадь (проверьте периметр; при ошибке — секции вручную).</li>
+              <li>Режим «Масштаб»: на каждой стене с цифрой — 2 точки, введите длину (400 → «см»), «Добавить отрезок». 2–4 стены → «Рассчитать масштаб».</li>
+              <li>Режим «Стены» — отрезки контура; «Окна» — проёмы; «Соединить соседние точки».</li>
+              <li>Проверьте строку площади: периметр ≈ 20 м, площадь ≈ 24 м² для вашего плана.</li>
             </ol>
             <div class="fp-status" id="fp-status">Загрузите изображение плана, чтобы начать.</div>
           </div>
@@ -831,7 +839,7 @@
   <script src="js/pwa.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.9.0/dist/opencv.js" defer></script>
-  <script src="js/floorplan.js?v=20260823" defer></script>
+  <script src="js/floorplan.js?v=20260823b" defer></script>
   <script src="js/twin.js" defer></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="js/address-map.js" defer></script>

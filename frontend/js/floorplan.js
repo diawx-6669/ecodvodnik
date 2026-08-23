@@ -6,7 +6,8 @@ const fpState = {
   srcCanvas: null,
   canvas: null,
   ctx: null,
-  calibPoints: [],
+  calibDraft: [],
+  calibRefs: [],
   scale: null,
   scaleManual: false,
   outer: null,
@@ -56,7 +57,8 @@ function fpInit() {
   } else {
     fpState.canvas.addEventListener('click', fpOnCanvasClick);
   }
-  document.getElementById('fp-set-scale-btn').addEventListener('click', fpSetScale);
+  document.getElementById('fp-set-scale-btn').addEventListener('click', fpAddCalibRef);
+  document.getElementById('fp-apply-scale-btn')?.addEventListener('click', fpApplyScaleFromRefs);
   document.getElementById('fp-detect-btn').addEventListener('click', () => fpWaitForCv(fpDetect));
   document.getElementById('fp-apply-btn').addEventListener('click', fpApplyToTwin);
   document.getElementById('fp-clear-btn').addEventListener('click', fpClear);
@@ -71,6 +73,7 @@ function fpInit() {
 
   document.getElementById('fp-add-dim-btn')?.addEventListener('click', () => fpAddDimRow());
   document.getElementById('fp-manual-area')?.addEventListener('input', fpUpdateAreaPreview);
+  document.getElementById('fp-calib-unit')?.addEventListener('change', fpRenderCalibList);
 
   const dropZone = document.getElementById('fp-drop-zone');
   if (dropZone) {
@@ -245,7 +248,8 @@ function fpApplyLoadedImage(source, fileName, sizeMb = 0) {
   }
 
   fpState.img = { width: srcW, height: srcH };
-  fpState.calibPoints = [];
+  fpState.calibDraft = [];
+  fpState.calibRefs = [];
   fpState.scale = null;
   fpState.scaleManual = false;
   fpState.outer = null;
@@ -267,7 +271,8 @@ function fpApplyLoadedImage(source, fileName, sizeMb = 0) {
   const resizedNote = srcW > FP_MAX_SOURCE_PX || srcH > FP_MAX_SOURCE_PX
     ? ` (исходник ${srcW}×${srcH} px уменьшен для обработки)`
     : '';
-  fpSetStatus(`План «${fileName}» загружен (${w}×${h} px)${resizedNote}. Отметьте 2 точки на стене с известной длиной и задайте масштаб.`);
+  fpSetStatus(`План «${fileName}» загружен (${w}×${h} px)${resizedNote}. Режим «Масштаб»: отметьте 2 точки на стене с цифрой с чертежа (например 400 см) и добавьте отрезок.`);
+  fpRenderCalibList();
 }
 
 function fpToggleEmptyOverlay(show) {
@@ -345,13 +350,13 @@ function fpOnCanvasClick(e) {
     return;
   }
 
-  if (fpState.calibPoints.length >= 2) fpState.calibPoints = [];
-  fpState.calibPoints.push({ x, y });
+  if (fpState.calibDraft.length >= 2) fpState.calibDraft = [];
+  fpState.calibDraft.push({ x, y });
 
   fpRedraw();
-  fpSetStatus(fpState.calibPoints.length === 2
-    ? 'Точки отмечены. Введите реальную длину отрезка в метрах и нажмите «Задать масштаб».'
-    : 'Отмечена 1 точка — кликните вторую на том же отрезке.');
+  fpSetStatus(fpState.calibDraft.length === 2
+    ? 'Отрезок отмечен. Введите длину с чертежа (400 → выберите «см») и нажмите «Добавить отрезок». Можно добавить несколько стен.'
+    : 'Отмечена 1 точка — кликните вторую на том же отрезке стены с цифрой на плане.');
 }
 
 function fpSetMode(mode) {
@@ -368,7 +373,7 @@ function fpSetMode(mode) {
   } else if (mode === 'window') {
     fpSetStatus('Режим «Окна»: 2 точки на проёме (голубой отрезок). Окна соединяют соседние отрезки стен при сборке контура.');
   } else {
-    fpSetStatus('Режим «Масштаб»: кликните 2 точки на отрезке с известной длиной.');
+    fpSetStatus('Режим «Масштаб»: кликните 2 точки на стене с размером на чертеже → введите длину → «Добавить отрезок». Лучше 2–4 стены, затем «Рассчитать масштаб».');
   }
 }
 
@@ -383,8 +388,17 @@ function fpUndoPoint() {
   } else if (fpState.mode === 'window') {
     if (fpState.windowDraft.length) fpState.windowDraft.pop();
     else if (fpState.windows.length) fpState.windows.pop();
-  } else if (fpState.calibPoints.length) {
-    fpState.calibPoints.pop();
+  } else if (fpState.mode === 'calib') {
+    if (fpState.calibDraft.length) fpState.calibDraft.pop();
+    else if (fpState.calibRefs.length) {
+      fpState.calibRefs.pop();
+      fpRenderCalibList();
+      if (fpState.calibRefs.length) fpApplyScaleFromRefs(true);
+      else {
+        fpState.scale = null;
+        fpState.scaleManual = false;
+      }
+    }
   }
   fpUpdateWallButtons();
   fpRedraw();
@@ -548,7 +562,6 @@ function fpApplyAssembledContour(contour, msg) {
   fpState.outerIsManual = true;
   fpState.wallSegments = [];
   fpState.currentWallSegment = [];
-  fpEnsureAutoScale();
   fpRedraw();
   document.getElementById('fp-apply-btn').disabled = false;
   document.getElementById('fp-finish-wall-btn').disabled = true;
@@ -587,39 +600,142 @@ function fpFinishWall() {
   fpConnectNeighbors();
 }
 
-function fpSetScale() {
+function fpCalibInputToMeters() {
+  const raw = Number(document.getElementById('fp-calib-dist')?.value);
+  if (!raw || raw <= 0) return null;
+  const unit = document.getElementById('fp-calib-unit')?.value || 'm';
+  return unit === 'cm' ? raw / 100 : raw;
+}
+
+function fpFormatLengthM(m) {
+  if (m >= 10) return `${m.toFixed(1)} м`;
+  return `${m.toFixed(2)} м`;
+}
+
+function fpAddCalibRef() {
   if (!fpState.img) {
     fpSetStatus('Сначала загрузите изображение плана.');
     return;
   }
-  if (fpState.calibPoints.length < 2) {
-    fpSetStatus('Сначала отметьте 2 точки на плане (клик по изображению).');
+  if (fpState.calibDraft.length < 2) {
+    fpSetStatus('Сначала отметьте 2 точки на одной стене (режим «Масштаб»).');
     return;
   }
-  const distM = Number(document.getElementById('fp-calib-dist').value);
-  if (!distM || distM <= 0) {
-    fpSetStatus('Укажите реальную длину отмеченного отрезка в метрах.');
+  const lengthM = fpCalibInputToMeters();
+  if (!lengthM) {
+    fpSetStatus('Укажите длину отрезка — как на чертеже (400 при единице «см» = 4 м).');
     return;
   }
-  const [a, b] = fpState.calibPoints;
+  const [a, b] = fpState.calibDraft;
   const pxDist = Math.hypot(b.x - a.x, b.y - a.y);
   if (pxDist < 3) {
     fpSetStatus('Точки слишком близко — отметьте их заново.');
     return;
   }
-  fpState.scale = distM / pxDist;
-  fpState.scaleManual = true;
-  fpUpdateAreaPreview();
-  fpSetStatus(`Масштаб задан: 1 px ≈ ${fpState.scale.toFixed(4)} м. Теперь можно обводить стены или распознать план автоматически.`);
+
+  fpState.calibRefs.push({
+    id: Date.now(),
+    a: { x: a.x, y: a.y },
+    b: { x: b.x, y: b.y },
+    lengthM,
+  });
+  fpState.calibDraft = [];
+  document.getElementById('fp-calib-dist').value = '';
+  fpRenderCalibList();
+  fpApplyScaleFromRefs(true);
+  fpRedraw();
+  fpSetStatus(
+    `Отрезок ${fpState.calibRefs.length} добавлен (${fpFormatLengthM(lengthM)}). `
+    + 'Отметьте ещё 1–2 стены с цифрами на плане или нажмите «Рассчитать масштаб».',
+  );
 }
 
-function fpEnsureAutoScale() {
-  if (fpState.scale) return true;
-  if (!fpState.srcCanvas?.width) return false;
-  fpState.scale = 10 / fpState.srcCanvas.width;
-  fpState.scaleManual = false;
-  fpSetStatus('Масштаб оценён автоматически (ширина плана ≈ 10 м). Для точной площади отметьте 2 точки и задайте масштаб вручную.');
+function fpApplyScaleFromRefs(silent = false) {
+  if (!fpState.calibRefs.length) {
+    if (!silent) fpSetStatus('Добавьте хотя бы один отрезок: 2 точки на стене + длина с чертежа.');
+    return false;
+  }
+
+  let totalM = 0;
+  let totalPx = 0;
+  fpState.calibRefs.forEach((ref) => {
+    const px = Math.hypot(ref.b.x - ref.a.x, ref.b.y - ref.a.y);
+    if (px >= 3 && ref.lengthM > 0) {
+      totalM += ref.lengthM;
+      totalPx += px;
+    }
+  });
+
+  if (totalPx < 3) {
+    if (!silent) fpSetStatus('Нет валидных отрезков для расчёта масштаба.');
+    return false;
+  }
+
+  fpState.scale = totalM / totalPx;
+  fpState.scaleManual = true;
+  fpUpdateAreaPreview();
+  fpRenderCalibList();
+
+  if (!silent) {
+    fpSetStatus(
+      `Масштаб по ${fpState.calibRefs.length} отрезкам (сумма ${fpFormatLengthM(totalM)}): `
+      + `1 px ≈ ${fpState.scale.toFixed(4)} м. Теперь обведите стены или нажмите «Соединить соседние точки».`,
+    );
+  }
   return true;
+}
+
+function fpRenderCalibList() {
+  const list = document.getElementById('fp-calib-list');
+  const summary = document.getElementById('fp-calib-summary');
+  if (!list) return;
+
+  list.innerHTML = '';
+  let sumM = 0;
+  fpState.calibRefs.forEach((ref, i) => {
+    sumM += ref.lengthM;
+    const row = document.createElement('div');
+    row.className = 'fp-calib-row';
+    const unit = document.getElementById('fp-calib-unit')?.value || 'm';
+    const displayVal = unit === 'cm' ? (ref.lengthM * 100).toFixed(0) : ref.lengthM.toFixed(2);
+    row.innerHTML = `
+      <span>Стена ${i + 1}:</span>
+      <input type="number" min="0.1" step="any" value="${displayVal}" data-calib-idx="${i}" />
+      <span class="fp-calib-row-unit">${unit === 'cm' ? 'см' : 'м'}</span>
+      <button type="button" title="Удалить">✕</button>
+    `;
+    row.querySelector('input').addEventListener('change', (e) => {
+      const val = Number(e.target.value);
+      const u = document.getElementById('fp-calib-unit')?.value || 'm';
+      ref.lengthM = u === 'cm' ? val / 100 : val;
+      fpApplyScaleFromRefs(true);
+      fpRenderCalibList();
+    });
+    row.querySelector('button').addEventListener('click', () => {
+      fpState.calibRefs.splice(i, 1);
+      fpRenderCalibList();
+      if (fpState.calibRefs.length) fpApplyScaleFromRefs(true);
+      else {
+        fpState.scale = null;
+        fpState.scaleManual = false;
+        fpUpdateAreaPreview();
+      }
+    });
+    list.appendChild(row);
+  });
+
+  if (summary) {
+    if (!fpState.calibRefs.length) {
+      summary.textContent = 'Отметьте стены с цифрами на плане (400, 127, 143…). Если цифры в см — выберите «см».';
+    } else {
+      summary.textContent = `Отрезков: ${fpState.calibRefs.length}, сумма длин: ${fpFormatLengthM(sumM)}`
+        + (fpState.scaleManual ? ` · масштаб задан` : ' · нажмите «Рассчитать масштаб»');
+    }
+  }
+}
+
+function fpSetScale() {
+  fpAddCalibRef();
 }
 
 function fpWaitForCv(cb, triesLeft = 12) {
@@ -638,8 +754,12 @@ function fpWaitForCv(cb, triesLeft = 12) {
 }
 
 function fpDetectWithoutCv() {
-  if (!fpState.img || !fpEnsureAutoScale()) {
+  if (!fpState.img) {
     fpSetStatus('Сначала загрузите план, чтобы построить контур.');
+    return;
+  }
+  if (!fpState.scaleManual) {
+    fpSetStatus('Сначала задайте масштаб по 1–3 стенам с цифрами на чертеже (режим «Масштаб»).');
     return;
   }
 
@@ -691,8 +811,12 @@ function fpDetect() {
     fpSetStatus('Сначала загрузите изображение плана.');
     return;
   }
-  if (!fpEnsureAutoScale()) {
-    fpSetStatus('Не удалось определить масштаб — загрузите план заново.');
+  if (!fpState.scaleManual) {
+    fpSetStatus('Сначала задайте масштаб: отметьте стены с цифрами на плане (400 см, 127 см…) и нажмите «Рассчитать масштаб».');
+    return;
+  }
+  if (!fpState.scale) {
+    fpSetStatus('Нажмите «Рассчитать масштаб» после добавления отрезков.');
     return;
   }
 
@@ -829,19 +953,35 @@ function fpRedraw() {
   });
 
   ctx.fillStyle = '#ffb23f';
-  fpState.calibPoints.forEach((p) => {
+  fpState.calibRefs.forEach((ref) => {
+    ctx.beginPath();
+    ctx.moveTo(ref.a.x, ref.a.y);
+    ctx.lineTo(ref.b.x, ref.b.y);
+    ctx.strokeStyle = '#ffb23f';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    [ref.a, ref.b].forEach((p) => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  });
+
+  fpState.calibDraft.forEach((p) => {
     ctx.beginPath();
     ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
     ctx.fill();
   });
 
-  if (fpState.calibPoints.length === 2) {
-    ctx.strokeStyle = '#ffb23f';
-    ctx.lineWidth = 2;
+  if (fpState.calibDraft.length === 2) {
+    ctx.strokeStyle = '#ff6b2f';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([6, 4]);
     ctx.beginPath();
-    ctx.moveTo(fpState.calibPoints[0].x, fpState.calibPoints[0].y);
-    ctx.lineTo(fpState.calibPoints[1].x, fpState.calibPoints[1].y);
+    ctx.moveTo(fpState.calibDraft[0].x, fpState.calibDraft[0].y);
+    ctx.lineTo(fpState.calibDraft[1].x, fpState.calibDraft[1].y);
     ctx.stroke();
+    ctx.setLineDash([]);
   }
 
   fpToggleEmptyOverlay(false);
@@ -944,8 +1084,13 @@ function fpUpdateAreaPreview() {
   const el = document.getElementById('fp-area-preview');
   if (!el) return;
 
-  if (!fpState.outer || !fpState.scale) {
-    el.textContent = 'Площадь по контуру: — (задайте масштаб и контур)';
+  if (!fpState.outer) {
+    el.textContent = 'Площадь по контуру: — (сначала замкните контур стен)';
+    return;
+  }
+
+  if (!fpState.scaleManual || !fpState.scale) {
+    el.textContent = 'Площадь по контуру: — ⚠️ сначала задайте масштаб по цифрам на чертеже (режим «Масштаб»)';
     return;
   }
 
@@ -956,12 +1101,14 @@ function fpUpdateAreaPreview() {
   const peri = fpPolygonPerimeter(outerM);
   const resolved = fpResolveAreaM2(outerM);
 
+  const refSum = fpState.calibRefs.reduce((s, r) => s + r.lengthM, 0);
+
   let text = `Площадь по контуру: ≈ ${autoArea.toFixed(1)} м², периметр ≈ ${peri.toFixed(1)} м`;
-  if (!fpState.scaleManual) {
-    text += ' (масштаб оценён — задайте вручную для точности)';
+  if (refSum > 0) {
+    text += ` · эталон стен: ${refSum.toFixed(1)} м`;
   }
   if (fpHasSelfIntersection(fpState.outer)) {
-    text += ' · контур пересекается!';
+    text += ' · ⚠️ контур пересекается — площадь может быть неверной';
   }
   if (Math.abs(resolved - autoArea) > 0.5) {
     text += ` · будет использовано: ${resolved.toFixed(1)} м²`;
@@ -972,8 +1119,9 @@ function fpUpdateAreaPreview() {
 function fpApplyToTwin() {
   if (!fpState.outer) return;
 
-  if (!fpState.scaleManual) {
-    fpSetStatus('Для точной площади задайте масштаб по известному отрезку. Продолжаю с оценкой…');
+  if (!fpState.scaleManual || !fpState.scale) {
+    fpSetStatus('Сначала задайте масштаб по цифрам на чертеже (2–4 стены) и нажмите «Рассчитать масштаб».');
+    return;
   }
 
   const cx = fpState.outer.reduce((s, p) => s + p.x, 0) / fpState.outer.length;
@@ -1007,12 +1155,14 @@ function fpClear() {
   fpState.windowDraft = [];
   fpState.wallSegments = [];
   fpState.currentWallSegment = [];
-  fpState.calibPoints = [];
+  fpState.calibDraft = [];
+  fpState.calibRefs = [];
   fpState.scale = null;
   fpState.scaleManual = false;
   fpSetLoading(false);
   fpSetMode('calib');
   fpClearDimRows();
+  fpRenderCalibList();
 
   document.getElementById('fp-finish-wall-btn').disabled = true;
   document.getElementById('fp-apply-btn').disabled = true;
