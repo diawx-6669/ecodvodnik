@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <link rel="stylesheet" href="css/sun-schedule.css" />
   <link rel="stylesheet" href="css/profile.css" />
+  <link rel="stylesheet" href="css/dashboard-redesign.css" />
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#0b1512" />
   <script>
@@ -369,58 +370,67 @@
         </div>
       </div>
 
-      <div id="anomalies" class="anomalies"></div>
+      <div class="dashboard-workspace">
+        <div class="dashboard-insights">
+          <div id="anomalies" class="anomalies"></div>
 
-      <div id="recommendations-section" class="anchor-section">
-        <h3>Рекомендации</h3>
-        <div id="recommendations" class="recommendations"></div>
-      </div>
+          <div id="recommendations-section" class="anchor-section dashboard-module">
+            <h3>Рекомендации</h3>
+            <div id="recommendations" class="recommendations"></div>
+          </div>
 
-      <div id="tips-section" class="anchor-section">
-        <h3>Советы по экономии</h3>
-        <div id="tips-list" class="tips-list"></div>
-      </div>
-
-      <h3>Добавить показание вручную</h3>
-      <form id="reading-form" class="reading-form">
-        <select id="reading-type">
-          <option value="water">Вода (литры)</option>
-          <option value="electricity">Электричество (кВт·ч)</option>
-        </select>
-        <input type="number" id="reading-value" placeholder="Значение" step="0.01" required />
-        <button type="submit">Добавить</button>
-      </form>
-
-      <div class="goals-section">
-        <div class="goals-header">
-          <h3>Цели по расходу (месяц)</h3>
+          <div id="tips-section" class="anchor-section dashboard-module">
+            <h3>Советы по экономии</h3>
+            <div id="tips-list" class="tips-list"></div>
+          </div>
         </div>
-        <form class="goal-input-form" onsubmit="event.preventDefault(); setNewGoal();">
-          <select id="goal-type">
-            <option value="water">Вода (л/мес)</option>
-            <option value="electricity">Электричество (кВт·ч/мес)</option>
-          </select>
-          <input type="number" id="goal-value" placeholder="Целевое значение" min="1" step="1" required />
-          <button type="submit" class="btn-set-goal">Установить цель</button>
-        </form>
-        <div id="goals-container"></div>
-      </div>
 
-      <div class="export-section">
-        <div class="export-header">
-          <h3>Экспорт данных</h3>
-        </div>
-        <div class="export-controls">
-          <input type="date" id="export-start-date" />
-          <input type="date" id="export-end-date" />
-          <select id="export-type">
-            <option value="">Вода и электричество</option>
-            <option value="water">Только вода</option>
-            <option value="electricity">Только электричество</option>
-          </select>
-          <button type="button" onclick="exportDataAsCSV()">Скачать CSV</button>
-        </div>
-        <div id="summary-container"></div>
+        <aside class="dashboard-actions" aria-label="Быстрые действия">
+          <section class="quick-action-card">
+            <h3>Новое показание</h3>
+            <p>Добавьте расход, если датчик пока не подключён.</p>
+            <form id="reading-form" class="reading-form">
+              <select id="reading-type">
+                <option value="water">Вода (литры)</option>
+                <option value="electricity">Электричество (кВт·ч)</option>
+              </select>
+              <input type="number" id="reading-value" placeholder="Значение" step="0.01" required />
+              <button type="submit">Добавить</button>
+            </form>
+          </section>
+
+          <div class="goals-section">
+            <div class="goals-header">
+              <h3>Цели на месяц</h3>
+            </div>
+            <form class="goal-input-form" onsubmit="event.preventDefault(); setNewGoal();">
+              <select id="goal-type">
+                <option value="water">Вода (л/мес)</option>
+                <option value="electricity">Электричество (кВт·ч/мес)</option>
+              </select>
+              <input type="number" id="goal-value" placeholder="Целевое значение" min="1" step="1" required />
+              <button type="submit" class="btn-set-goal">Установить цель</button>
+            </form>
+            <div id="goals-container"></div>
+          </div>
+
+          <div class="export-section">
+            <div class="export-header">
+              <h3>Экспорт данных</h3>
+            </div>
+            <div class="export-controls">
+              <input type="date" id="export-start-date" />
+              <input type="date" id="export-end-date" />
+              <select id="export-type">
+                <option value="">Вода и электричество</option>
+                <option value="water">Только вода</option>
+                <option value="electricity">Только электричество</option>
+              </select>
+              <button type="button" onclick="exportDataAsCSV()">Скачать CSV</button>
+            </div>
+            <div id="summary-container"></div>
+          </div>
+        </aside>
       </div>
     </section>
 

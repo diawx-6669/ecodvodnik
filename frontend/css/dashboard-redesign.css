@@ -1,0 +1,95 @@
+/* Command center: компактная рабочая зона с явной визуальной иерархией. */
+:root { --dashboard-ink: #07130f; }
+
+.app-header {
+  background: rgba(7, 18, 14, 0.72);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.topbar {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 14px clamp(18px, 3vw, 42px);
+  background: transparent;
+}
+
+.site-nav { background: rgba(7, 18, 14, 0.54); }
+.site-nav-inner { max-width: 1440px; padding-inline: clamp(18px, 3vw, 42px); }
+.site-nav-link { display: inline-flex; align-items: center; gap: 7px; }
+.site-nav-link::before { font-size: 12px; opacity: .78; }
+.site-nav-link:nth-child(1)::before { content: '✦'; }
+.site-nav-link:nth-child(2)::before { content: '◌'; }
+.site-nav-link:nth-child(3)::before { content: '↗'; }
+.site-nav-link:nth-child(4)::before { content: '☼'; }
+.site-nav-link:nth-child(5)::before { content: '⌁'; }
+.site-nav-link:nth-child(6)::before { content: '✧'; }
+.site-nav-link:nth-child(7)::before { content: '◇'; }
+.site-nav-link:nth-child(8)::before { content: '☀'; }
+
+.layout {
+  max-width: 1440px;
+  grid-template-columns: minmax(285px, 330px) minmax(0, 1fr);
+  gap: clamp(18px, 2.5vw, 32px);
+  padding: clamp(20px, 3vw, 42px);
+}
+
+.panel { background: linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.025)); }
+.pet-panel { background: linear-gradient(165deg, rgba(52,224,161,.12), rgba(77,201,255,.045) 48%, rgba(255,255,255,.035)); }
+
+.dashboard-panel {
+  padding: clamp(22px, 2.6vw, 34px);
+  background:
+    radial-gradient(600px 240px at 100% 0%, rgba(77,201,255,.10), transparent 68%),
+    linear-gradient(145deg, rgba(255,255,255,.085), rgba(255,255,255,.025));
+}
+
+.dashboard-panel > .panel-head { margin-bottom: 14px; }
+.dashboard-panel h2 { font-size: clamp(24px, 2.2vw, 32px); }
+.dashboard-panel .pill { margin-left: auto; color: var(--green); border-color: rgba(52,224,161,.25); background: rgba(52,224,161,.075); }
+.device-status { margin: 0 0 22px; padding: 11px 14px; border-radius: 13px; background: rgba(5,20,15,.28); }
+
+.dashboard-panel .cards { margin: 0; gap: 14px; }
+.dashboard-panel .card { min-height: 148px; padding: 20px; border-radius: 18px; }
+.dashboard-panel .card-value { font-size: clamp(24px, 2.1vw, 31px); letter-spacing: -0.04em; }
+.dashboard-panel .card.highlight { box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 18px 40px -28px rgba(52,224,161,.6); }
+
+.dashboard-workspace { display: grid; grid-template-columns: minmax(0, 1.38fr) minmax(280px, .88fr); gap: 22px; margin-top: 22px; align-items: start; }
+.dashboard-insights, .dashboard-actions { display: grid; gap: 16px; }
+.dashboard-module, .quick-action-card { padding: 18px; border: 1px solid var(--stroke); border-radius: 18px; background: rgba(6,22,17,.27); }
+.dashboard-module h3, .quick-action-card h3 { margin: 0 0 14px; }
+.dashboard-panel h3 { font-size: 11px; }
+.dashboard-module h3::after, .quick-action-card h3::after { display: none; }
+.dashboard-module .recommendations, .dashboard-module .tips-list { gap: 9px; }
+.recommendation-item, .tip-item { padding: 13px 14px; border-radius: 13px; }
+.recommendation-item .rec-detail, .tip-item-detail { font-size: 12.5px; line-height: 1.5; }
+.anomalies { margin: 0; }
+
+.dashboard-actions { position: sticky; top: calc(var(--header-stack) + 14px); }
+.quick-action-card { background: linear-gradient(145deg, rgba(77,201,255,.10), rgba(7,26,20,.35)); }
+.quick-action-card p { margin: -4px 0 14px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.quick-action-card .reading-form { display: grid; grid-template-columns: 1fr 1fr; }
+.quick-action-card .reading-form button { grid-column: 1 / -1; }
+
+.dashboard-actions .goals-section, .dashboard-actions .export-section { margin: 0; padding: 18px; border-radius: 18px; box-shadow: none; }
+.dashboard-actions .goals-header h3, .dashboard-actions .export-header h3 { margin: 0 0 14px; }
+.dashboard-actions .goal-input-form, .dashboard-actions .export-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.dashboard-actions .goal-input-form button, .dashboard-actions .export-controls button { grid-column: 1 / -1; }
+
+@media (max-width: 1050px) {
+  .dashboard-workspace { grid-template-columns: 1fr; }
+  .dashboard-actions { position: static; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dashboard-actions .goal-input-form, .dashboard-actions .export-controls { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 900px) {
+  .layout { padding: 16px; }
+  .dashboard-actions { grid-template-columns: 1fr; }
+  .dashboard-panel .pill { margin-left: 0; }
+}
+
+@media (max-width: 600px) {
+  .topbar { gap: 10px; }
+  .dashboard-panel .cards { grid-template-columns: 1fr; }
+  .dashboard-panel .cards .card.highlight { grid-column: auto; }
+  .quick-action-card .reading-form { grid-template-columns: 1fr; }
+}
