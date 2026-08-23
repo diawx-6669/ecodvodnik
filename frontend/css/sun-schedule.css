@@ -16,45 +16,51 @@
 .sun-top-controls { display: flex; align-items: center; gap: 10px; }
 .sun-top-controls label { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
 .sun-top-controls input[type="date"] {
-  background: var(--surface);
+  background: rgba(255,255,255,0.05);
   border: 1px solid var(--stroke);
   color: var(--text);
-  border-radius: 10px;
-  padding: 7px 10px;
+  border-radius: 11px;
+  padding: 8px 11px;
   font-family: inherit;
   font-size: 13px;
+  color-scheme: dark;
 }
 
 .sun-btn {
-  background: var(--surface-strong);
-  border: 1px solid var(--stroke);
-  color: var(--text);
-  border-radius: 10px;
-  padding: 9px 14px;
+  background: linear-gradient(120deg, var(--green), var(--aqua));
+  border: none;
+  color: #04120c;
+  border-radius: 11px;
+  padding: 10px 15px;
   font-size: 13px;
+  font-weight: 800;
   cursor: pointer;
   font-family: inherit;
+  box-shadow: var(--glow-green);
+  transition: transform 0.18s ease, filter 0.18s ease;
 }
-.sun-btn:hover { border-color: var(--green); color: var(--green); }
+.sun-btn:hover { filter: brightness(1.08); transform: translateY(-2px); }
 
 .sun-empty {
   color: var(--muted);
   font-size: 13px;
-  background: var(--surface);
+  background: rgba(255,255,255,0.025);
   border: 1px dashed var(--stroke);
-  border-radius: 14px;
-  padding: 18px;
+  border-radius: var(--radius-sm);
+  padding: 22px;
   text-align: center;
 }
 
 .sun-room-list { display: flex; flex-direction: column; gap: 14px; }
 
 .sun-room-card {
-  background: var(--surface);
+  background: linear-gradient(150deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015));
   border: 1px solid var(--stroke);
-  border-radius: 16px;
-  padding: 16px;
+  border-radius: var(--radius-sm);
+  padding: 18px;
+  transition: border-color 0.25s ease;
 }
+.sun-room-card:hover { border-color: var(--stroke-strong); }
 
 .sun-room-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .sun-room-name {
@@ -79,8 +85,9 @@
   font-size: 12px;
   cursor: pointer;
   font-family: inherit;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
-.sun-del-btn:hover { color: var(--danger); border-color: var(--danger); }
+.sun-del-btn:hover { color: var(--danger); border-color: var(--danger); background: rgba(255,107,107,0.08); }
 
 .sun-room-fields {
   display: grid;
@@ -89,92 +96,32 @@
   align-items: end;
   margin-bottom: 14px;
 }
-.sun-room-fields-compact {
-  grid-template-columns: minmax(220px, 320px) 1fr;
-  align-items: center;
-}
 @media (max-width: 900px) {
   .sun-room-fields { grid-template-columns: 1fr 1fr; }
-  .sun-room-fields-compact { grid-template-columns: 1fr; }
-}
-
-.sun-map-section {
-  margin-bottom: 14px;
-}
-
-.sun-map-title {
-  font-size: 12.5px;
-  font-weight: 800;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 6px;
-}
-
-.sun-map-hint {
-  margin: 0 0 10px;
-  font-size: 12.5px;
-  color: var(--muted);
-  line-height: 1.45;
-}
-
-.sun-map-wrap {
-  border: 1px solid var(--stroke);
-  border-radius: 14px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.sun-map {
-  width: 100%;
-  height: 260px;
-  z-index: 1;
-}
-
-.sun-map-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.sun-tz-info {
-  font-size: 12px;
-  color: var(--muted);
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px dashed var(--stroke);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.sun-geo-status {
-  flex: 1;
-  min-width: 200px;
-  font-size: 12px;
-  color: var(--muted);
 }
 
 .sun-field { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; color: var(--muted); }
 .sun-field input,
 .sun-field select {
-  background: var(--surface-strong);
+  background: rgba(255,255,255,0.05);
   border: 1px solid var(--stroke);
   color: var(--text);
   border-radius: 10px;
-  padding: 8px 10px;
+  padding: 9px 11px;
   font-family: inherit;
   font-size: 13px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
+.sun-field input:focus,
+.sun-field select:focus { outline: none; border-color: rgba(52,224,161,0.55); box-shadow: 0 0 0 3px rgba(52,224,161,0.12); }
 
-.leaflet-container {
-  font-family: 'Manrope', system-ui, sans-serif;
-  background: #0c1614;
+.sun-geo-status {
+  grid-column: span 2;
+  font-size: 12px;
+  color: var(--muted);
+  align-self: center;
 }
-
-html[data-theme="light"] .leaflet-container {
-  background: #e7f2ec;
-}
+@media (max-width: 900px) { .sun-geo-status { grid-column: 1 / -1; } }
 
 .sun-room-body { border-top: 1px solid var(--stroke); padding-top: 12px; }
 
@@ -182,14 +129,15 @@ html[data-theme="light"] .leaflet-container {
 
 .sun-timeline {
   display: flex;
-  height: 28px;
-  border-radius: 8px;
+  height: 30px;
+  border-radius: 9px;
   overflow: hidden;
   border: 1px solid var(--stroke);
+  box-shadow: var(--shadow-sm);
 }
 .sun-seg { height: 100%; }
 .sun-seg-direct { background: linear-gradient(180deg, #ffd873, #ffb23f); }
-.sun-seg-daylight { background: linear-gradient(180deg, #7fd8ff, #45d9ff); opacity: 0.55; }
+.sun-seg-daylight { background: linear-gradient(180deg, #7fd8ff, #4dc9ff); opacity: 0.55; }
 .sun-seg-dark { background: rgba(255, 255, 255, 0.08); }
 
 .sun-legend {

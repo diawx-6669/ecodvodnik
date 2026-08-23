@@ -13,27 +13,34 @@
 .twin-field label { font-size: 12.5px; color: var(--muted); }
 .twin-field select,
 .twin-field input {
-  background: var(--surface);
+  background: rgba(255,255,255,0.05);
   border: 1px solid var(--stroke);
   color: var(--text);
   border-radius: 12px;
-  padding: 9px 11px;
+  padding: 10px 12px;
   font-family: inherit;
   font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.twin-field select:focus,
+.twin-field input:focus {
+  outline: none; border-color: rgba(52,224,161,0.55); box-shadow: 0 0 0 3px rgba(52,224,161,0.12);
 }
 
 .twin-generate-btn {
   grid-column: 1 / -1;
   background: linear-gradient(120deg, var(--green), var(--aqua));
   color: #04120c;
-  font-weight: 700;
+  font-weight: 800;
   border: none;
   border-radius: 12px;
-  padding: 11px 16px;
+  padding: 12px 16px;
   cursor: pointer;
   font-family: inherit;
+  box-shadow: var(--glow-green);
+  transition: transform 0.18s ease, filter 0.18s ease;
 }
-.twin-generate-btn:hover { filter: brightness(1.06); }
+.twin-generate-btn:hover { filter: brightness(1.06); transform: translateY(-2px); }
 
 @media (max-width: 900px) {
   .twin-setup { grid-template-columns: 1fr 1fr; }
@@ -51,11 +58,12 @@
 
 .twin-scene-wrap {
   position: relative;
-  border-radius: 16px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   border: 1px solid var(--stroke);
-  background: radial-gradient(120% 100% at 50% 0%, rgba(69, 217, 255, 0.08), transparent 60%), var(--bg-2);
+  background: radial-gradient(120% 100% at 50% 0%, rgba(77, 201, 255, 0.08), transparent 60%), var(--bg-2);
   min-height: 320px;
+  box-shadow: var(--shadow-sm);
 }
 .twin-scene-wrap canvas { display: block; width: 100%; height: 100%; }
 
@@ -71,9 +79,11 @@
 
 .twin-device-row {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  background: var(--surface); border: 1px solid var(--stroke);
-  border-radius: 12px; padding: 9px 12px; font-size: 13.5px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--stroke);
+  border-radius: 12px; padding: 10px 13px; font-size: 13.5px;
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
+.twin-device-row:hover { border-color: var(--stroke-strong); background: rgba(255,255,255,0.06); }
 .twin-device-row .dev-name { display: flex; align-items: center; gap: 8px; }
 .twin-device-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
 .twin-device-row .dev-power { color: var(--muted); font-size: 12px; }
@@ -93,10 +103,10 @@
 
 .twin-compare {
   margin-top: 16px;
-  background: var(--surface);
+  background: rgba(255,255,255,0.03);
   border: 1px solid var(--stroke);
-  border-radius: 14px;
-  padding: 14px;
+  border-radius: var(--radius-sm);
+  padding: 15px;
 }
 .twin-compare-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
 .twin-compare-label { width: 92px; font-size: 12.5px; color: var(--muted); flex: none; }
@@ -109,10 +119,10 @@
 
 .twin-forecast {
   margin-top: 16px;
-  background: var(--surface);
+  background: rgba(255,255,255,0.03);
   border: 1px solid var(--stroke);
-  border-radius: 14px;
-  padding: 14px;
+  border-radius: var(--radius-sm);
+  padding: 15px;
 }
 .twin-slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
 .twin-slider-row input[type="range"] { flex: 1; accent-color: var(--green); }
@@ -125,8 +135,8 @@
   font-size: 13px;
   line-height: 1.5;
   color: var(--text);
-  background: rgba(69, 217, 255, 0.08);
-  border: 1px solid rgba(69, 217, 255, 0.2);
+  background: rgba(77, 201, 255, 0.08);
+  border: 1px solid rgba(77, 201, 255, 0.2);
   border-radius: 12px;
   padding: 10px 12px;
 }

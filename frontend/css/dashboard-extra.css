@@ -13,9 +13,10 @@
 .notif-dropdown {
   display: none; position: absolute; right: 0; top: calc(100% + 10px);
   width: 320px; max-height: 380px; overflow-y: auto; z-index: 130;
-  border-radius: 16px; border: 1px solid var(--stroke);
-  background: linear-gradient(160deg, rgba(18, 34, 31, 0.98), rgba(9, 18, 17, 0.99));
-  box-shadow: var(--shadow); padding: 12px;
+  border-radius: var(--radius-sm); border: 1px solid var(--stroke);
+  background: linear-gradient(160deg, rgba(22, 40, 36, 0.98), rgba(11, 22, 19, 0.99));
+  box-shadow: var(--shadow-lg); padding: 12px;
+  backdrop-filter: blur(18px);
 }
 .notif-dropdown.open { display: block; }
 .notif-dropdown-head { font-size: 12.5px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 6px 10px; }
@@ -25,14 +26,14 @@
   flex: none; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
   padding: 3px 7px; border-radius: 999px; line-height: 1.4;
 }
-.notif-item-icon-water { color: var(--aqua); background: rgba(69, 217, 255, 0.14); }
+.notif-item-icon-water { color: var(--aqua); background: rgba(77, 201, 255, 0.14); }
 .notif-item-icon-electricity { color: #ffcf5c; background: rgba(255, 207, 92, 0.14); }
 .notif-item-body { flex: 1; }
 .notif-item-text { font-size: 12.8px; line-height: 1.4; }
 .notif-item-time { font-size: 11px; color: var(--muted); margin-top: 3px; }
 .notif-item-ack {
   width: 22px; height: 22px; flex: 0 0 auto; border-radius: 7px; cursor: pointer;
-  border: 1px solid var(--stroke); background: rgba(53, 224, 143, 0.1); color: var(--green);
+  border: 1px solid var(--stroke); background: rgba(52, 224, 161, 0.1); color: var(--green);
   display: inline-grid; place-items: center; padding: 0;
 }
 .notif-empty { font-size: 12.5px; color: var(--muted); text-align: center; padding: 14px 6px; }
@@ -46,9 +47,9 @@
 .history-panel { /* grid-area задан в style.css */ }
 .history-tabs { display: flex; gap: 6px; }
 .history-tab {
-  padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  padding: 7px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 700; cursor: pointer;
   border: 1px solid var(--stroke); background: rgba(255,255,255,0.04); color: var(--muted);
-  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
 }
 .history-tab:hover { color: var(--text); }
 .history-tab.active { background: linear-gradient(120deg, var(--green), var(--aqua)); color: #04180f; border-color: transparent; }
@@ -64,13 +65,13 @@
   display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-top: 8px;
 }
 .achievement-card {
-  padding: 14px; border-radius: 16px; text-align: center;
-  border: 1px solid var(--stroke); background: rgba(255,255,255,0.035);
-  transition: transform 0.25s ease, border-color 0.25s ease;
+  padding: 16px 14px; border-radius: var(--radius-sm); text-align: center;
+  border: 1px solid var(--stroke); background: linear-gradient(150deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
-.achievement-card.unlocked { border-color: rgba(53, 224, 143, 0.4); background: rgba(53, 224, 143, 0.07); }
+.achievement-card.unlocked { border-color: rgba(52, 224, 161, 0.4); background: rgba(52, 224, 161, 0.07); }
 .achievement-card.locked { opacity: 0.5; filter: grayscale(0.6); }
-.achievement-card:hover { transform: translateY(-2px); }
+.achievement-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-sm); }
 .achievement-card-icon { margin-bottom: 6px; display: flex; justify-content: center; }
 .achievement-badge-letter {
   display: inline-flex; align-items: center; justify-content: center;
@@ -85,11 +86,11 @@
 
 .achievement-toast {
   position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px);
-  display: flex; align-items: center; gap: 10px; padding: 12px 18px; z-index: 200;
-  border-radius: 16px; border: 1px solid rgba(53, 224, 143, 0.4);
-  background: linear-gradient(120deg, rgba(18,34,31,0.98), rgba(9,18,17,0.99));
+  display: flex; align-items: center; gap: 10px; padding: 13px 19px; z-index: 200;
+  border-radius: var(--radius-sm); border: 1px solid rgba(52, 224, 161, 0.4);
+  background: linear-gradient(120deg, rgba(22,40,36,0.98), rgba(11,22,19,0.99));
   box-shadow: var(--glow-green); opacity: 0; transition: opacity 0.35s ease, transform 0.35s ease;
-  pointer-events: none;
+  pointer-events: none; backdrop-filter: blur(14px);
 }
 .achievement-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .achievement-toast-body { display: flex; flex-direction: column; }
@@ -98,7 +99,8 @@
 
 /* --- Советы по экономии --- */
 .tips-list { display: grid; gap: 10px; margin-bottom: 6px; }
-.tip-item { padding: 12px 14px; border-radius: 14px; border: 1px solid var(--stroke); background: rgba(255,255,255,0.03); }
+.tip-item { padding: 13px 15px; border-radius: 14px; border: 1px solid var(--stroke); background: rgba(255,255,255,0.03); transition: border-color 0.2s ease, transform 0.2s ease; }
+.tip-item:hover { border-color: var(--stroke-strong); transform: translateY(-1px); }
 .tip-item-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
 .tip-item-title { font-weight: 700; font-size: 13.5px; }
 .tip-item-savings { font-size: 11.5px; color: var(--green); font-weight: 700; white-space: nowrap; }
@@ -107,7 +109,7 @@
 
 /* --- Админ: статистика и пользователи --- */
 .admin-stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
-.admin-stat-card { padding: 10px; border-radius: 12px; border: 1px solid var(--stroke); background: rgba(255,255,255,0.03); text-align: center; }
+.admin-stat-card { padding: 12px; border-radius: 12px; border: 1px solid var(--stroke); background: rgba(255,255,255,0.03); text-align: center; }
 .admin-stat-value { font-size: 17px; font-weight: 800; color: var(--green); }
 .admin-stat-label { font-size: 10.5px; color: var(--muted); margin-top: 3px; }
 .admin-users-list { display: grid; gap: 6px; max-height: 220px; overflow-y: auto; }
@@ -116,21 +118,6 @@
 
 /* --- Переиспользуем поле field-label из auth-формы для новых форм --- */
 #admin-settings-form .field-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
-
-/* --- Тёмный реилюминг для цели/экспорт секций (изначально светлая goals.css) --- */
-.goals-section, .alerts-section, .export-section {
-  background: rgba(255,255,255,0.03) !important;
-  border: 1px solid var(--stroke) !important;
-  margin-top: 18px !important;
-}
-.goals-header h3, .alerts-header h3, .export-header h3 { color: var(--text) !important; }
-.goal-item, .summary-card { background: rgba(255,255,255,0.045) !important; box-shadow: none !important; }
-.goal-title, .summary-card h4 { color: var(--text) !important; }
-.goal-input-form select, .goal-input-form input, .export-controls input, .export-controls select {
-  background: rgba(255,255,255,0.04) !important; border: 1px solid var(--stroke) !important; color: var(--text) !important;
-}
-.summary-row { border-bottom: 1px dashed rgba(255,255,255,0.07) !important; color: var(--text); }
-.text-muted { color: var(--muted) !important; }
 
 @media (max-width: 700px) {
   .achievements-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }

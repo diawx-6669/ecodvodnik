@@ -2,8 +2,8 @@
 
 .account-chip { cursor: pointer; }
 .account-chip:hover {
-  background: rgba(53, 224, 143, 0.12);
-  border-color: rgba(53, 224, 143, 0.35);
+  background: rgba(52, 224, 161, 0.12);
+  border-color: rgba(52, 224, 161, 0.35);
   transform: translateY(-1px);
 }
 
@@ -28,8 +28,8 @@ body.modal-open { overflow: hidden; }
   padding: 26px;
   border-radius: var(--radius);
   border: 1px solid var(--stroke);
-  background: linear-gradient(160deg, rgba(18, 34, 31, 0.96), rgba(9, 18, 17, 0.98));
-  box-shadow: var(--shadow);
+  background: linear-gradient(160deg, rgba(22, 40, 36, 0.96), rgba(11, 22, 19, 0.98));
+  box-shadow: var(--shadow-lg);
   animation: sheet-in 0.45s cubic-bezier(.2,.8,.2,1) both;
 }
 @keyframes sheet-in { from { opacity: 0; transform: translateY(26px) scale(0.97); } to { opacity: 1; transform: none; } }
@@ -106,8 +106,8 @@ body.modal-open { overflow: hidden; }
 }
 .profile-form input:focus {
   outline: none;
-  border-color: rgba(53, 224, 143, 0.5);
-  background: rgba(53, 224, 143, 0.07);
+  border-color: rgba(52, 224, 161, 0.5);
+  background: rgba(52, 224, 161, 0.07);
 }
 .profile-btn {
   padding: 12px 16px; border: none; border-radius: 13px; cursor: pointer;
@@ -150,16 +150,16 @@ body.modal-open { overflow: hidden; }
   color: var(--text); font-family: inherit;
   transition: transform 0.3s cubic-bezier(.2,.8,.2,1), border-color 0.3s ease, background 0.3s ease;
 }
-.mood-card:hover { transform: translateX(3px); border-color: rgba(53, 224, 143, 0.32); }
+.mood-card:hover { transform: translateX(3px); border-color: rgba(52, 224, 161, 0.32); }
 .mood-card.active {
-  border-color: rgba(53, 224, 143, 0.6);
-  background: rgba(53, 224, 143, 0.10);
+  border-color: rgba(52, 224, 161, 0.6);
+  background: rgba(52, 224, 161, 0.10);
 }
 .mood-card-dot {
   width: 16px; height: 16px; border-radius: 50%; flex: 0 0 auto; margin-top: 3px;
   box-shadow: 0 0 12px currentColor;
 }
-.mood-card-dot[data-mood-dot="happy"] { background: #35e08f; color: #35e08f; }
+.mood-card-dot[data-mood-dot="happy"] { background: #34e0a1; color: #34e0a1; }
 .mood-card-dot[data-mood-dot="neutral"] { background: #3fd9d0; color: #3fd9d0; }
 .mood-card-dot[data-mood-dot="worried"] { background: #ffcf5c; color: #ffcf5c; }
 .mood-card-dot[data-mood-dot="sad"] { background: #8fa3c4; color: #8fa3c4; }

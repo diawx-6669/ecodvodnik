@@ -16,7 +16,6 @@
   <link rel="stylesheet" href="css/floorplan.css" />
   <link rel="stylesheet" href="css/sun-schedule.css" />
   <link rel="stylesheet" href="css/profile.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#0b1512" />
   <script>
@@ -127,7 +126,7 @@
       <span class="brand-text">Эко<b>тчи</b></span>
     </div>
     <div class="tagline">AI-платформа экономии воды и электричества</div>
-    <div class="live-badge"><i></i> живой питомец онлайн</div>
+    <div class="live-badge"><i></i> <span>живой питомец онлайн</span></div>
     <button type="button" class="theme-toggle" id="theme-toggle-btn" title="Сменить тему">
       <svg class="icon-moon" viewBox="0 0 24 24" fill="none"><path d="M20 14.5a8 8 0 1 1-10.5-10.5 7 7 0 0 0 10.5 10.5Z" fill="currentColor"/></svg>
       <svg class="icon-sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><path d="M12 2v2.4M12 19.6V22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2 12h2.4M19.6 12H22M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -565,8 +564,9 @@
       </div>
 
       <div class="sun-top">
-        <p class="sun-hint-main">Отметьте на карте, где находится комната, и укажите сторону окна —
-          AI рассчитает движение солнца и подскажет, когда включать свет, а когда хватит естественного.</p>
+        <p class="sun-hint-main">Укажите координаты (или город и улицу) и сторону, куда выходит окно
+          комнаты — рассчитаем движение солнца и подскажем, в какое время в этой комнате
+          стоит включать свет, а когда достаточно естественного.</p>
         <div class="sun-top-controls">
           <label>Дата <input type="date" id="sun-date" /></label>
           <button type="button" id="sun-add-room-btn" class="sun-btn">+ Добавить комнату</button>
