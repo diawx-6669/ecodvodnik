@@ -258,10 +258,9 @@ function fpDrawPlaceholder() {
   }
   fpState.ctx.fillStyle = '#0c1614';
   fpState.ctx.fillRect(0, 0, w, h);
-  fpState.ctx.fillStyle = 'rgba(143, 166, 160, 0.85)';
-  fpState.ctx.font = '14px Manrope, sans-serif';
-  fpState.ctx.textAlign = 'center';
-  fpState.ctx.fillText('Здесь появится загруженный план', w / 2, h / 2);
+  // Текст-заглушку здесь не рисуем — за него уже отвечает HTML-оверлей
+  // .fp-canvas-empty поверх канваса; раньше оба текста накладывались друг
+  // на друга и выглядели нечитаемой кашей.
   fpToggleEmptyOverlay(true);
 }
 

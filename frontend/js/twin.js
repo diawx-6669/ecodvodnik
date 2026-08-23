@@ -302,6 +302,7 @@ function twinBuildScene(areaM2) {
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0b1512);
+  scene.fog = new THREE.Fog(0x0b1512, 10, 60);
 
   const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 200);
 
@@ -310,11 +311,22 @@ function twinBuildScene(areaM2) {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   wrap.appendChild(renderer.domElement);
 
-  // свет
-  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-  const sun = new THREE.DirectionalLight(0xbfe9ff, 0.9);
+  // свет — раньше пол/стены были почти того же тёмного цвета, что и фон,
+  // и модель выглядела как полупустая чёрная плоскость; добавили мягкий
+  // верхний/боковой свет и подняли контраст материалов
+  scene.add(new THREE.HemisphereLight(0x9fe8c9, 0x0a1410, 0.65));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+  const sun = new THREE.DirectionalLight(0xcdeeff, 1.05);
   sun.position.set(6, 10, 4);
   scene.add(sun);
+  const fill = new THREE.DirectionalLight(0x45d9ff, 0.35);
+  fill.position.set(-8, 4, -6);
+  scene.add(fill);
+
+  const WALL_EDGE_COLOR = 0x6df3b0;
+  const WALL_FILL_COLOR = 0x35e08f;
+  const FLOOR_COLOR = 0x1c4636;
+  const GRID_COLOR = 0x2fbd86;
 
   // пол/контур помещения
   const floorplan = window.EcotchiFloorplan;
@@ -328,19 +340,28 @@ function twinBuildScene(areaM2) {
 
     const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.12, bevelEnabled: false });
     geo.rotateX(Math.PI / 2);
-    const mat = new THREE.MeshStandardMaterial({ color: 0x123024, roughness: 0.9 });
+    const mat = new THREE.MeshStandardMaterial({ color: FLOOR_COLOR, roughness: 0.85, metalness: 0.05 });
     floorMesh = new THREE.Mesh(geo, mat);
     scene.add(floorMesh);
 
     // стены — контур здания, вытянутый вверх (раньше для реального плана/адреса
-    // стены не строились вовсе, и модель выглядела как плоская подложка вместо дома)
+    // стены не строились вовсе, и модель выглядела как плоская подложка вместо дома).
+    // Делаем их полупрозрачными "стеклянными", а не только тонким проводом —
+    // иначе на тёмном фоне контур почти не читается.
     const wallHeight = floorplan.levels
       ? Math.min(24, Math.max(2.4, floorplan.levels * 2.8))
       : 2.7;
     const wallGeo = new THREE.ExtrudeGeometry(shape, { depth: wallHeight, bevelEnabled: false });
     wallGeo.rotateX(Math.PI / 2);
+
+    const wallMesh = new THREE.Mesh(wallGeo, new THREE.MeshStandardMaterial({
+      color: WALL_FILL_COLOR, transparent: true, opacity: 0.14, roughness: 1, side: THREE.DoubleSide,
+    }));
+    wallMesh.position.y = wallHeight;
+    scene.add(wallMesh);
+
     const wallEdges = new THREE.EdgesGeometry(wallGeo);
-    const wallLines = new THREE.LineSegments(wallEdges, new THREE.LineBasicMaterial({ color: 0x2a5c47 }));
+    const wallLines = new THREE.LineSegments(wallEdges, new THREE.LineBasicMaterial({ color: WALL_EDGE_COLOR }));
     wallLines.position.y = wallHeight;
     scene.add(wallLines);
 
@@ -357,33 +378,66 @@ function twinBuildScene(areaM2) {
     footprintSize = Math.max(box.max.x - box.min.x, box.max.z - box.min.z, 4);
   } else {
     const geo = new THREE.BoxGeometry(footprintSize, 0.12, footprintSize);
-    const mat = new THREE.MeshStandardMaterial({ color: 0x123024, roughness: 0.9 });
+    const mat = new THREE.MeshStandardMaterial({ color: FLOOR_COLOR, roughness: 0.85, metalness: 0.05 });
     floorMesh = new THREE.Mesh(geo, mat);
     scene.add(floorMesh);
 
-    // простые внешние стены-контур
-    const edges = new THREE.EdgesGeometry(new THREE.BoxGeometry(footprintSize, 1.6, footprintSize));
-    const wallLines = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x2a5c47 }));
-    wallLines.position.y = 0.8;
+    // стены — тоже делаем полупрозрачными "стеклянными" коробками, а не
+    // просто тонкой проволокой, которую было почти не видно на тёмном фоне
+    const wallHeight = 2.7;
+    const wallBoxGeo = new THREE.BoxGeometry(footprintSize, wallHeight, footprintSize);
+    const wallMesh = new THREE.Mesh(wallBoxGeo, new THREE.MeshStandardMaterial({
+      color: WALL_FILL_COLOR, transparent: true, opacity: 0.14, roughness: 1, side: THREE.DoubleSide,
+    }));
+    wallMesh.position.y = wallHeight / 2;
+    scene.add(wallMesh);
+
+    const edges = new THREE.EdgesGeometry(wallBoxGeo);
+    const wallLines = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: WALL_EDGE_COLOR }));
+    wallLines.position.y = wallHeight / 2;
     scene.add(wallLines);
   }
 
-  // приборы — цветные кубики, расставленные по кругу в пределах контура
+  // лёгкая сетка на полу — даёт масштаб и глубину, иначе тёмный пол сливается с фоном
+  const gridSize = Math.max(8, footprintSize * 1.6);
+  const gridDivisions = Math.max(6, Math.round(gridSize / 1.2));
+  const grid = new THREE.GridHelper(gridSize, gridDivisions, GRID_COLOR, GRID_COLOR);
+  grid.position.y = -0.01;
+  grid.material.transparent = true;
+  grid.material.opacity = 0.12;
+  scene.add(grid);
+
+  // приборы — цветные кубики со "световым пятном" на полу под ними, расставленные
+  // по кругу в пределах контура
   const deviceGroup = new THREE.Group();
   const n = twinState.devices.length || 1;
   twinState.devices.forEach((dev, i) => {
     const angle = (i / n) * Math.PI * 2;
     const r = footprintSize * 0.32;
     const size = 0.22 + Math.min(0.28, dev.watts / 6000);
+    const px = Math.cos(angle) * r;
+    const pz = Math.sin(angle) * r;
+
     const geo = new THREE.BoxGeometry(size, size, size);
     const mat = new THREE.MeshStandardMaterial({
       color: new THREE.Color(dev.color),
       emissive: new THREE.Color(dev.color),
-      emissiveIntensity: dev.efficient ? 0.15 : 0.4,
+      emissiveIntensity: dev.efficient ? 0.35 : 0.65,
+      roughness: 0.4,
+      metalness: 0.15,
     });
     const cube = new THREE.Mesh(geo, mat);
-    cube.position.set(Math.cos(angle) * r, size / 2 + 0.06, Math.sin(angle) * r);
+    cube.position.set(px, size / 2 + 0.06, pz);
     deviceGroup.add(cube);
+
+    const glowGeo = new THREE.CircleGeometry(size * 1.5, 20);
+    glowGeo.rotateX(-Math.PI / 2);
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(dev.color), transparent: true, opacity: 0.22,
+    });
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    glow.position.set(px, 0.015, pz);
+    deviceGroup.add(glow);
   });
   scene.add(deviceGroup);
 
