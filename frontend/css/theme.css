@@ -34,6 +34,20 @@ html[data-theme="light"] .profile-sheet {
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(236, 246, 241, 0.98));
 }
 
+html[data-theme="light"] .pet-stage {
+  background:
+    radial-gradient(80% 60% at 50% 100%, color-mix(in oklab, var(--pet-main) 14%, transparent), transparent 72%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.15));
+}
+html[data-theme="light"] .pet-meta {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.25));
+}
+html[data-theme="light"] .reading-form select option,
+html[data-theme="light"] .goal-input-form select option,
+html[data-theme="light"] .export-controls select option {
+  background: #fff; color: #0e211c;
+}
+
 /* --- Переключатель темы --- */
 .theme-toggle {
   display: inline-flex; align-items: center; justify-content: center;
@@ -44,7 +58,7 @@ html[data-theme="light"] .profile-sheet {
   transition: background 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
   flex: 0 0 auto;
 }
-.theme-toggle:hover { background: rgba(53, 224, 143, 0.12); border-color: rgba(53, 224, 143, 0.35); transform: translateY(-1px); }
+.theme-toggle:hover { background: rgba(52, 224, 161, 0.12); border-color: rgba(52, 224, 161, 0.35); transform: translateY(-1px); }
 .theme-toggle svg { width: 18px; height: 18px; }
 .theme-toggle .icon-sun { display: none; }
 .theme-toggle .icon-moon { display: block; }

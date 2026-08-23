@@ -126,7 +126,7 @@
       <span class="brand-text">Эко<b>тчи</b></span>
     </div>
     <div class="tagline">AI-платформа экономии воды и электричества</div>
-    <div class="live-badge"><i></i> живой питомец онлайн</div>
+    <div class="live-badge"><i></i> <span>живой питомец онлайн</span></div>
     <button type="button" class="theme-toggle" id="theme-toggle-btn" title="Сменить тему">
       <svg class="icon-moon" viewBox="0 0 24 24" fill="none"><path d="M20 14.5a8 8 0 1 1-10.5-10.5 7 7 0 0 0 10.5 10.5Z" fill="currentColor"/></svg>
       <svg class="icon-sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><path d="M12 2v2.4M12 19.6V22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2 12h2.4M19.6 12H22M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -176,6 +176,14 @@
     <section class="panel pet-panel" id="pet-panel">
       <div class="pet-stage">
         <div class="pet-aura" aria-hidden="true"></div>
+        <div class="pet-platform" aria-hidden="true">
+          <span class="platform-disc"></span>
+          <span class="platform-ring r1"></span>
+          <span class="platform-ring r2"></span>
+          <span class="mote m1"></span>
+          <span class="mote m2"></span>
+          <span class="mote m3"></span>
+        </div>
         <div class="pet-particles" id="pet-particles" aria-hidden="true"></div>
         <div id="pet-avatar" class="pet-avatar" data-mood="neutral">
           <svg viewBox="0 0 220 220" class="pet-svg" aria-hidden="true">
@@ -305,22 +313,24 @@
         </div>
       </div>
 
-      <div class="pet-name">
-        <span id="pet-name-text">Эко</span>
-        <button id="rename-pet-btn" class="rename-icon-btn" type="button" title="Переименовать питомца" aria-label="Переименовать питомца">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none">
-            <path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8L17.3 5.5a2 2 0 0 0-2.8 0L4 16v4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
-            <path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="1.7" />
-          </svg>
-        </button>
-        <span class="pet-chip" id="pet-mood-label">Настроение: нейтральное</span>
-      </div>
+      <div class="pet-meta">
+        <div class="pet-name">
+          <span id="pet-name-text">Эко</span>
+          <button id="rename-pet-btn" class="rename-icon-btn" type="button" title="Переименовать питомца" aria-label="Переименовать питомца">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none">
+              <path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8L17.3 5.5a2 2 0 0 0-2.8 0L4 16v4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+              <path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="1.7" />
+            </svg>
+          </button>
+          <span class="pet-chip" id="pet-mood-label">Настроение: нейтральное</span>
+        </div>
 
-      <div class="pet-level-wrap">
-        <div class="pet-level">LVL <span id="pet-level">1</span></div>
-        <div class="pet-bar"><span id="pet-bar-fill"></span></div>
+        <div class="pet-level-wrap">
+          <div class="pet-level">LVL <span id="pet-level">1</span></div>
+          <div class="pet-bar"><span id="pet-bar-fill"></span></div>
+        </div>
+        <div class="pet-stage-chip" id="pet-stage-label">Стадия: семечко</div>
       </div>
-      <div class="pet-stage-chip" id="pet-stage-label">Стадия: семечко</div>
 
       <div class="chat-box">
         <div id="chat-messages" class="chat-messages"></div>
