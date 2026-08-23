@@ -183,20 +183,43 @@ function twinRenderRoomsUI() {
     wattsField.type = 'number';
     wattsField.min = '1';
     wattsField.placeholder = 'Вт';
+    wattsField.value = '100';
     const hoursField = document.createElement('input');
     hoursField.type = 'number';
     hoursField.min = '0.1';
     hoursField.step = '0.1';
     hoursField.placeholder = 'ч/день';
+    hoursField.value = '1';
     const addBtn = document.createElement('button');
     addBtn.type = 'button';
     addBtn.className = 'twin-room-add-btn';
     addBtn.textContent = '+ Добавить прибор';
+    const errorMsg = document.createElement('div');
+    errorMsg.className = 'twin-room-add-error hidden';
     const submit = () => {
       const name = nameField.value.trim();
-      const watts = Number(wattsField.value);
-      const hours = Number(hoursField.value);
-      if (!name || !watts || !hours) return;
+      // не у всех раскладок/локалей number-инпут понимает запятую как разделитель
+      const watts = Number(String(wattsField.value).replace(',', '.'));
+      const hours = Number(String(hoursField.value).replace(',', '.'));
+      if (!name) {
+        errorMsg.textContent = 'Впишите название прибора.';
+        errorMsg.classList.remove('hidden');
+        nameField.focus();
+        return;
+      }
+      if (!watts || watts <= 0) {
+        errorMsg.textContent = 'Укажите мощность в ваттах (больше 0).';
+        errorMsg.classList.remove('hidden');
+        wattsField.focus();
+        return;
+      }
+      if (!hours || hours <= 0) {
+        errorMsg.textContent = 'Укажите, сколько часов в день работает прибор (больше 0).';
+        errorMsg.classList.remove('hidden');
+        hoursField.focus();
+        return;
+      }
+      errorMsg.classList.add('hidden');
       twinAddDeviceToRoom(room.id, { name, watts, hours });
     };
     addBtn.addEventListener('click', submit);
@@ -205,7 +228,7 @@ function twinRenderRoomsUI() {
     });
     form.append(nameField, wattsField, hoursField, addBtn);
 
-    card.append(head, devList, form);
+    card.append(head, devList, form, errorMsg);
     list.appendChild(card);
   });
 }

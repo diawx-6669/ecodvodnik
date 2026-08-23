@@ -6,9 +6,10 @@
 // Формулы — стандартный низкоточный алгоритм солнечной позиции (склонение
 // и уравнение времени по рядам Спенсера, часовой угол/высота/азимут по
 // сферической тригонометрии), общеизвестная астрономическая математика,
-// не завязанная на конкретный внешний сервис. Геокодирование адреса
-// (город + улица -> координаты) идёт через публичный Nominatim
-// (OpenStreetMap) прямо из браузера пользователя.
+// работающая полностью офлайн. Координаты комнаты берутся либо с точки,
+// уже отмеченной на карте выше (address-map.js), либо вводятся вручную —
+// текстовый поиск адреса здесь намеренно не используется, чтобы не зависеть
+// от стороннего сервиса геокодирования.
 
 const SUN_ROOMS_KEY = 'ecodvoinik_sun_rooms';
 
@@ -34,7 +35,14 @@ function sunInit() {
 
   sunState.rooms = sunLoadRooms();
   addBtn.addEventListener('click', () => {
-    sunState.rooms.push(sunNewRoom());
+    const room = sunNewRoom();
+    // если пользователь уже отметил дом на карте выше — сразу подставляем
+    // его координаты, чтобы не искать адрес заново
+    if (window.amState && window.amState.lat != null && window.amState.lon != null) {
+      room.lat = window.amState.lat;
+      room.lon = window.amState.lon;
+    }
+    sunState.rooms.push(room);
     sunSaveRooms();
     sunRenderRooms();
   });
@@ -52,8 +60,6 @@ function sunNewRoom() {
   return {
     id: `room-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     name: `Комната ${sunState.rooms.length + 1}`,
-    city: '',
-    street: '',
     lat: null,
     lon: null,
     tzOffset: -new Date().getTimezoneOffset() / 60,
@@ -76,30 +82,17 @@ function sunSaveRooms() {
   } catch (e) { /* хранилище недоступно — просто не сохраняем */ }
 }
 
-// ---------- геокодирование адреса через Nominatim (OpenStreetMap) ----------
-async function sunGeocodeRoom(room, statusEl) {
-  const query = [room.street, room.city].filter(Boolean).join(', ');
-  if (!query) {
-    statusEl.textContent = 'Укажите город и/или улицу.';
+// ---------- взять координаты из точки, отмеченной на карте выше (address-map.js) ----------
+function sunUseMapPoint(room, statusEl) {
+  if (!window.amState || window.amState.lat == null || window.amState.lon == null) {
+    statusEl.textContent = 'На карте выше пока не отмечена точка — кликните по ней или введите широту/долготу вручную ниже.';
     return;
   }
-  statusEl.textContent = 'Ищу координаты…';
-  try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
-    const res = await fetch(url, { headers: { Accept: 'application/json' } });
-    const data = await res.json();
-    if (!data || !data.length) {
-      statusEl.textContent = 'Не удалось найти это место — попробуйте указать точнее (например, «Абая 10, Алматы») или введите координаты вручную.';
-      return;
-    }
-    room.lat = Number(data[0].lat);
-    room.lon = Number(data[0].lon);
-    sunSaveRooms();
-    statusEl.textContent = `Найдено: ${data[0].display_name}`;
-    sunRenderRooms();
-  } catch (e) {
-    statusEl.textContent = 'Не удалось обратиться к сервису геокодирования (нет сети?). Введите широту/долготу вручную.';
-  }
+  room.lat = window.amState.lat;
+  room.lon = window.amState.lon;
+  sunSaveRooms();
+  statusEl.textContent = `Координаты взяты с карты: ${room.lat.toFixed(4)}, ${room.lon.toFixed(4)}`;
+  sunRenderRooms();
 }
 
 // ---------- солнечная позиция ----------
@@ -236,12 +229,9 @@ function sunRenderRoomCard(room, dateStr) {
   head.appendChild(delBtn);
   card.appendChild(head);
 
-  // ---- поля: адрес / координаты / часовой пояс / сторона окна ----
+  // ---- поля: координаты / часовой пояс / сторона окна ----
   const fields = document.createElement('div');
   fields.className = 'sun-room-fields';
-
-  const cityInput = sunMakeField('Город', room.city, (v) => { room.city = v; sunSaveRooms(); });
-  const streetInput = sunMakeField('Улица, дом', room.street, (v) => { room.street = v; sunSaveRooms(); });
 
   const geoStatus = document.createElement('div');
   geoStatus.className = 'sun-geo-status';
@@ -252,15 +242,15 @@ function sunRenderRoomCard(room, dateStr) {
   const geoBtn = document.createElement('button');
   geoBtn.type = 'button';
   geoBtn.className = 'sun-btn';
-  geoBtn.textContent = 'Найти координаты по адресу';
-  geoBtn.addEventListener('click', () => sunGeocodeRoom(room, geoStatus));
+  geoBtn.textContent = 'Взять точку с карты выше';
+  geoBtn.addEventListener('click', () => sunUseMapPoint(room, geoStatus));
 
-  const latInput = sunMakeField('Широта (вручную)', room.lat != null ? room.lat : '', (v) => {
+  const latInput = sunMakeField('Широта', room.lat != null ? room.lat : '', (v) => {
     room.lat = v === '' ? null : Number(v);
     sunSaveRooms();
     sunRenderRoomBody(card, room, dateStr);
   }, 'number');
-  const lonInput = sunMakeField('Долгота (вручную)', room.lon != null ? room.lon : '', (v) => {
+  const lonInput = sunMakeField('Долгота', room.lon != null ? room.lon : '', (v) => {
     room.lon = v === '' ? null : Number(v);
     sunSaveRooms();
     sunRenderRoomBody(card, room, dateStr);
@@ -292,8 +282,6 @@ function sunRenderRoomCard(room, dateStr) {
   dirWrap.appendChild(dirTitle);
   dirWrap.appendChild(dirSelect);
 
-  fields.appendChild(cityInput);
-  fields.appendChild(streetInput);
   fields.appendChild(geoBtn);
   fields.appendChild(geoStatus);
   fields.appendChild(latInput);
@@ -333,7 +321,7 @@ function sunRenderRoomBody(card, room, dateStr) {
   if (room.lat == null || room.lon == null || Number.isNaN(room.lat) || Number.isNaN(room.lon)) {
     const msg = document.createElement('div');
     msg.className = 'sun-hint';
-    msg.textContent = 'Укажите координаты (найдите по адресу или введите вручную), чтобы построить график.';
+    msg.textContent = 'Укажите координаты — нажмите «Взять точку с карты выше» (если уже отметили дом на карте) или впишите широту/долготу вручную, чтобы построить график.';
     body.appendChild(msg);
     return;
   }

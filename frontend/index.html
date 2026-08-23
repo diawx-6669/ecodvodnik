@@ -601,24 +601,26 @@
       <div class="am-panel">
         <div class="am-head">
           <h3>Адрес объекта на карте мира <span class="pill pill-sm">OpenStreetMap</span></h3>
-          <p class="am-hint">Введите адрес или отметьте дом кликом/меткой на карте, чтобы получить точные координаты для расчёта солнца. Если контур здания найдётся в OpenStreetMap, кнопка «Построить 3D по этому зданию» ещё и подставит настоящую форму дома в 3D-двойник.</p>
+          <p class="am-hint">Отметьте дом кликом по карте или перетащите метку, чтобы получить точные координаты для расчёта солнца. Если контур здания найдётся в OpenStreetMap, кнопка «Построить 3D по этому зданию» ещё и подставит настоящую форму дома в 3D-двойник.</p>
         </div>
 
         <div class="am-controls">
-          <input type="text" id="am-address-input" class="am-address-input" placeholder="Например: ул. Абая 10, Алматы" />
-          <button type="button" id="am-search-btn" class="fp-btn">Найти на карте</button>
           <button type="button" id="am-use-btn" class="fp-btn fp-btn-primary" disabled>Построить 3D по этому зданию</button>
-          <button type="button" id="am-clear-btn" class="fp-btn fp-btn-ghost">Сбросить адрес</button>
+          <button type="button" id="am-clear-btn" class="fp-btn fp-btn-ghost">Сбросить точку</button>
         </div>
 
         <div id="am-map" class="am-map"></div>
-        <div class="am-status" id="am-status">Кликните по карте, перетащите метку или найдите адрес, чтобы выбрать дом.</div>
+        <div class="am-status" id="am-status">Кликните по карте или перетащите метку, чтобы выбрать дом.</div>
       </div>
 
       <div class="sun-top">
-        <p class="sun-hint-main">Укажите координаты (или город и улицу) и сторону, куда выходит окно
-          комнаты — рассчитаем движение солнца и подскажем, в какое время в этой комнате
-          стоит включать свет, а когда достаточно естественного.</p>
+        <p class="sun-hint-main">Рассчитываем движение солнца для каждой комнаты и подсказываем, когда
+          естественного света из окна хватает, а когда стоит включить лампу.</p>
+        <ol class="sun-steps">
+          <li>Отметьте дом на карте выше (клик по карте) — так все комнаты сразу получат координаты, либо впишите широту/долготу вручную в каждой комнате.</li>
+          <li>Нажмите «+ Добавить комнату» и укажите, куда выходит окно этой комнаты (север, юг и т.д.).</li>
+          <li>Ниже появится цветная шкала на сутки: жёлтый — прямой солнечный свет, голубой — рассеянный дневной свет, тёмный — нужен искусственный свет. Дату можно менять полем справа.</li>
+        </ol>
         <div class="sun-top-controls">
           <label>Дата <input type="date" id="sun-date" /></label>
           <button type="button" id="sun-add-room-btn" class="sun-btn">+ Добавить комнату</button>

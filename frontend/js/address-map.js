@@ -51,15 +51,6 @@ function amInit() {
 }
 
 function amBindControls() {
-  const searchBtn = document.getElementById('am-search-btn');
-  const addressInput = document.getElementById('am-address-input');
-  if (searchBtn) searchBtn.addEventListener('click', amSearchAddress);
-  if (addressInput) {
-    addressInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); amSearchAddress(); }
-    });
-  }
-
   const useBtn = document.getElementById('am-use-btn');
   if (useBtn) useBtn.addEventListener('click', amUseBuilding);
 
@@ -111,48 +102,20 @@ function amSetStatus(text, kind) {
   if (kind === 'ok') el.classList.add('am-status-ok');
 }
 
-// ---------- поиск адреса текстом (Nominatim) ----------
-async function amSearchAddress() {
-  const input = document.getElementById('am-address-input');
-  const query = input ? input.value.trim() : '';
-  if (!query) {
-    amSetStatus('Введите адрес, чтобы найти его на карте.', 'error');
-    return;
-  }
-
-  amSetStatus('Ищу адрес…');
-  try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&q=${encodeURIComponent(query)}`;
-    const res = await fetch(url, { headers: { Accept: 'application/json' } });
-    const data = await res.json();
-    if (!data || !data.length) {
-      amSetStatus('Не удалось найти такой адрес. Попробуйте указать точнее (город, улица, номер дома) или отметьте дом на карте вручную.', 'error');
-      return;
-    }
-    const lat = Number(data[0].lat);
-    const lon = Number(data[0].lon);
-    amState.address = data[0].display_name;
-    amSetPoint(lat, lon, { reverseGeocode: false, recenter: true, zoom: 18 });
-    amSetStatus(`Найдено: ${data[0].display_name}. Теперь нажмите «Построить 3D по этому зданию» — контур попробуем взять из OpenStreetMap.`, 'ok');
-  } catch (e) {
-    amSetStatus('Внешний поиск адреса сейчас недоступен. Выберите точку на локальной карте — модель всё равно можно построить.', 'ok');
-  }
-}
-
-// ---------- обратное геокодирование по клику/перетаскиванию метки ----------
+// ---------- обратное геокодирование по клику/перетаскиванию метки (необязательное,
+// только чтобы показать название места в статусе; при сбое сети просто не показываем
+// адрес — координаты для расчёта уже есть и без него) ----------
 async function amReverseGeocode(lat, lon) {
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
     const res = await fetch(url, { headers: { Accept: 'application/json' } });
     const data = await res.json();
     amState.address = (data && data.display_name) || '';
-    const input = document.getElementById('am-address-input');
-    if (input && amState.address) input.value = amState.address;
     amSetStatus(amState.address
       ? `Точка отмечена: ${amState.address}. Нажмите «Построить 3D по этому зданию».`
-      : 'Точка отмечена на карте. Нажмите «Построить 3D по этому зданию».', 'ok');
+      : `Точка отмечена: ${lat.toFixed(5)}, ${lon.toFixed(5)}. Нажмите «Построить 3D по этому зданию».`, 'ok');
   } catch (e) {
-    amSetStatus('Точка отмечена на карте (адрес определить не удалось — нет сети). Можно строить модель по координатам.', 'ok');
+    amSetStatus(`Точка отмечена: ${lat.toFixed(5)}, ${lon.toFixed(5)}. Нажмите «Построить 3D по этому зданию».`, 'ok');
   }
 }
 
@@ -339,12 +302,10 @@ function amClear() {
   }
   const offlineMarker = document.querySelector('.am-offline-marker');
   if (offlineMarker) offlineMarker.classList.remove('is-visible');
-  const input = document.getElementById('am-address-input');
-  if (input) input.value = '';
   const useBtn = document.getElementById('am-use-btn');
   if (useBtn) useBtn.disabled = true;
 
-  amSetStatus('Адрес сброшен — модель снова строится по площади и типу объекта.');
+  amSetStatus('Точка сброшена — модель снова строится по площади и типу объекта.');
 
   const genBtn = document.getElementById('twin-generate-btn');
   if (genBtn) genBtn.click();

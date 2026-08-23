@@ -363,12 +363,13 @@ function fpFinishWall() {
   }
   fpState.outer = fpState.manualWall.map((p) => ({ x: p.x, y: p.y }));
   fpState.outerIsManual = true;
+  fpState.manualWall = [];
   fpState.rooms = [];
   fpEnsureAutoScale();
   fpRedraw();
   document.getElementById('fp-apply-btn').disabled = false;
   document.getElementById('fp-finish-wall-btn').disabled = true;
-  fpSetStatus('Контур стен замкнут вручную — он точно совпадает с планом и подходит для комнат любой формы. Можно отметить окна или сразу нажать «Построить 3D по плану».');
+  fpSetStatus('Контур стен замкнут вручную — он точно совпадает с планом и подходит для комнат любой формы. Можно отметить окна (режим «Окна») или сразу нажать «Построить 3D по плану».');
 }
 
 function fpSetScale() {
@@ -587,8 +588,10 @@ function fpRedraw() {
   });
   ctx.lineCap = 'butt';
 
-  // контур стен, который сейчас рисует пользователь (не замкнут)
-  if (fpState.manualWall.length) {
+  // контур стен, который сейчас рисует пользователь (не замкнут). Показываем
+  // черновик только в режиме "Стены" — иначе (например, в режиме "Окна")
+  // недорисованный/уже зафиксированный контур закрывал собой окна поверх него.
+  if (fpState.mode === 'wall' && fpState.manualWall.length) {
     ctx.strokeStyle = '#ffd23f';
     ctx.lineWidth = 2.2;
     ctx.beginPath();
