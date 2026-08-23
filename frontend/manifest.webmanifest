@@ -1,0 +1,20 @@
+{
+  "name": "Экотчи — живой AI-питомец по ресурсам",
+  "short_name": "Экотчи",
+  "description": "AI-платформа экономии воды и электричества с живым питомцем",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#070d0c",
+  "theme_color": "#0b1512",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "assets/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

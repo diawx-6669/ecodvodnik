@@ -252,50 +252,12 @@ document.addEventListener('DOMContentLoaded', () => {
 function appendChatMessage(from, text) {
   const container = document.getElementById('chat-messages');
   if (!container) return;
-  // как только появилось первое сообщение — прячем подсказку-заглушку,
-  // чтобы под питомцем не оставалось пустого места
-  const empty = document.getElementById('chat-empty');
-  if (empty) empty.classList.add('hidden');
   const div = document.createElement('div');
   div.className = `msg ${from}`;
   div.textContent = text;
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
 }
-
-// Индикатор «питомец печатает…»
-function showChatTyping() {
-  const container = document.getElementById('chat-messages');
-  if (!container || document.getElementById('chat-typing')) return;
-  const div = document.createElement('div');
-  div.className = 'msg pet typing';
-  div.id = 'chat-typing';
-  div.innerHTML = '<i></i><i></i><i></i>';
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
-}
-
-function hideChatTyping() {
-  const el = document.getElementById('chat-typing');
-  if (el) el.remove();
-}
-
-// Быстрые подсказки: клик — сразу отправляем вопрос
-document.addEventListener('DOMContentLoaded', () => {
-  const chips = document.getElementById('chat-suggestions');
-  const input = document.getElementById('chat-input');
-  const form = document.getElementById('chat-form');
-  if (!chips || !input || !form) return;
-  chips.addEventListener('click', (e) => {
-    const chip = e.target.closest('.chat-chip');
-    if (!chip) return;
-    input.value = chip.textContent.trim();
-    form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true }));
-  });
-});
-
-window.showChatTyping = showChatTyping;
-window.hideChatTyping = hideChatTyping;
 
 // Доступно другим модулям (например, панели администратора)
 window.petMoodApi = {
