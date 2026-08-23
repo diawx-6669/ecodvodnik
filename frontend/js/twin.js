@@ -16,10 +16,19 @@ const twinState = {
   dragging: false,
   lastX: 0,
   lastY: 0,
-  devices: [],       // [{ id, name, watts, hoursPerDay, efficient, color }]
+  devices: [],       // [{ id, name, watts, hoursPerDay, efficient, color, roomIndex, roomName }]
   dailyModelKwh: 0,
   dailyRealKwh: 0,
 };
+
+// Комнаты, которые пользователь заполняет вручную (название + свои приборы).
+// Если хотя бы в одной комнате есть прибор — модель строит приборы по этим
+// комнатам вместо типового набора, и расставляет их по отдельным кластерам,
+// а не одной общей кучей/кругом на всё помещение (раньше, например, холодильник
+// и стиральная машина одной "квартиры" оказывались рядом по кругу без привязки
+// к тому, в какой они на самом деле комнате).
+const twinRoomsState = { rooms: [], nextRoomId: 1, nextDeviceId: 1 };
+const TWIN_ROOM_PALETTE = ['#45d9ff', '#35e08f', '#a78bfa', '#ffb23f', '#ff6b81', '#4ade80', '#38bdf8', '#f472b6'];
 
 const TWIN_DEVICE_CATALOG = {
   household: [
@@ -67,6 +76,162 @@ function twinInit() {
   slider.addEventListener('input', twinOnSlider);
 
   window.addEventListener('resize', twinOnResize);
+
+  const addRoomBtn = document.getElementById('twin-add-room-btn');
+  if (addRoomBtn) {
+    addRoomBtn.addEventListener('click', () => {
+      twinAddRoom();
+      twinRenderRoomsUI();
+    });
+    // сразу предлагаем одну пустую комнату, чтобы было понятно, что делать
+    twinAddRoom();
+    twinRenderRoomsUI();
+  }
+}
+
+// ---------- комнаты и приборы, которые задаёт пользователь ----------
+function twinAddRoom() {
+  twinRoomsState.rooms.push({ id: twinRoomsState.nextRoomId++, name: '', devices: [] });
+}
+
+function twinRemoveRoom(roomId) {
+  twinRoomsState.rooms = twinRoomsState.rooms.filter((r) => r.id !== roomId);
+  twinRenderRoomsUI();
+}
+
+function twinAddDeviceToRoom(roomId, device) {
+  const room = twinRoomsState.rooms.find((r) => r.id === roomId);
+  if (!room) return;
+  room.devices.push({ id: twinRoomsState.nextDeviceId++, ...device });
+  twinRenderRoomsUI();
+}
+
+function twinRemoveDeviceFromRoom(roomId, deviceId) {
+  const room = twinRoomsState.rooms.find((r) => r.id === roomId);
+  if (!room) return;
+  room.devices = room.devices.filter((d) => d.id !== deviceId);
+  twinRenderRoomsUI();
+}
+
+function twinRenderRoomsUI() {
+  const list = document.getElementById('twin-rooms-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  twinRoomsState.rooms.forEach((room, roomIdx) => {
+    const color = TWIN_ROOM_PALETTE[roomIdx % TWIN_ROOM_PALETTE.length];
+
+    const card = document.createElement('div');
+    card.className = 'twin-room-card';
+
+    const head = document.createElement('div');
+    head.className = 'twin-room-head';
+    const dot = document.createElement('span');
+    dot.className = 'twin-room-dot';
+    dot.style.background = color;
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'twin-room-name-input';
+    nameInput.placeholder = `Комната ${roomIdx + 1} (напр. Кухня)`;
+    nameInput.value = room.name;
+    nameInput.addEventListener('input', (e) => { room.name = e.target.value; });
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'twin-room-remove-btn';
+    removeBtn.textContent = '✕';
+    removeBtn.title = 'Удалить комнату';
+    removeBtn.addEventListener('click', () => twinRemoveRoom(room.id));
+    head.append(dot, nameInput, removeBtn);
+
+    const devList = document.createElement('div');
+    devList.className = 'twin-room-device-list';
+    if (!room.devices.length) {
+      const empty = document.createElement('div');
+      empty.className = 'twin-room-empty';
+      empty.textContent = 'Пока нет приборов — добавьте ниже.';
+      devList.appendChild(empty);
+    }
+    room.devices.forEach((dev) => {
+      const row = document.createElement('div');
+      row.className = 'twin-room-device-row';
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'rd-name';
+      nameSpan.textContent = dev.name;
+      const powerSpan = document.createElement('span');
+      powerSpan.className = 'rd-power';
+      powerSpan.textContent = `${dev.watts} Вт · ${dev.hours} ч/день`;
+      const rmBtn = document.createElement('button');
+      rmBtn.type = 'button';
+      rmBtn.className = 'twin-room-device-remove';
+      rmBtn.textContent = '✕';
+      rmBtn.addEventListener('click', () => twinRemoveDeviceFromRoom(room.id, dev.id));
+      const right = document.createElement('span');
+      right.style.display = 'flex';
+      right.style.alignItems = 'center';
+      right.style.gap = '8px';
+      right.append(powerSpan, rmBtn);
+      row.append(nameSpan, right);
+      devList.appendChild(row);
+    });
+
+    const form = document.createElement('div');
+    form.className = 'twin-room-add-form';
+    const nameField = document.createElement('input');
+    nameField.type = 'text';
+    nameField.placeholder = 'Прибор, напр. Холодильник';
+    const wattsField = document.createElement('input');
+    wattsField.type = 'number';
+    wattsField.min = '1';
+    wattsField.placeholder = 'Вт';
+    const hoursField = document.createElement('input');
+    hoursField.type = 'number';
+    hoursField.min = '0.1';
+    hoursField.step = '0.1';
+    hoursField.placeholder = 'ч/день';
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'twin-room-add-btn';
+    addBtn.textContent = '+ Добавить прибор';
+    const submit = () => {
+      const name = nameField.value.trim();
+      const watts = Number(wattsField.value);
+      const hours = Number(hoursField.value);
+      if (!name || !watts || !hours) return;
+      twinAddDeviceToRoom(room.id, { name, watts, hours });
+    };
+    addBtn.addEventListener('click', submit);
+    [nameField, wattsField, hoursField].forEach((el) => {
+      el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
+    });
+    form.append(nameField, wattsField, hoursField, addBtn);
+
+    card.append(head, devList, form);
+    list.appendChild(card);
+  });
+}
+
+function twinBuildDevicesFromRooms() {
+  const devices = [];
+  let paletteIdx = 0;
+  twinRoomsState.rooms.forEach((room, roomIdx) => {
+    if (!room.devices.length) return;
+    const roomName = room.name.trim() || `Комната ${roomIdx + 1}`;
+    room.devices.forEach((dev) => {
+      devices.push({
+        id: `room-${room.id}-dev-${dev.id}`,
+        name: `${dev.name} (${roomName})`,
+        watts: dev.watts,
+        hoursPerDay: dev.hours,
+        essential: false,
+        efficient: false,
+        color: TWIN_ROOM_PALETTE[paletteIdx % TWIN_ROOM_PALETTE.length],
+        roomIndex: roomIdx,
+        roomName,
+      });
+      paletteIdx += 1;
+    });
+  });
+  return devices;
 }
 
 function twinOnTypeChange(e) {
@@ -293,6 +458,47 @@ function twinDisposeScene() {
   twinState.camera = null;
 }
 
+// Считает позиции приборов на полу. Если приборы привязаны к комнатам
+// (roomIndex задан), группирует их по комнатам в отдельных ячейках сетки;
+// иначе — как раньше, одним кругом по всему контуру.
+function twinComputeDevicePositions(devices, footprintSize) {
+  const n = devices.length || 1;
+  const roomIndices = [...new Set(devices.map((d) => d.roomIndex).filter((v) => v !== undefined))];
+
+  if (roomIndices.length <= 1) {
+    const r = footprintSize * 0.32;
+    return devices.map((_, i) => ({
+      x: Math.cos((i / n) * Math.PI * 2) * r,
+      z: Math.sin((i / n) * Math.PI * 2) * r,
+    }));
+  }
+
+  const cols = Math.ceil(Math.sqrt(roomIndices.length));
+  const rows = Math.ceil(roomIndices.length / cols);
+  const cellW = footprintSize / cols;
+  const cellH = footprintSize / rows;
+
+  const roomDeviceCounters = new Map();
+  return devices.map((dev) => {
+    const slot = roomIndices.indexOf(dev.roomIndex);
+    const col = slot % cols;
+    const row = Math.floor(slot / cols);
+    const cx = (col - (cols - 1) / 2) * cellW;
+    const cz = (row - (rows - 1) / 2) * cellH;
+
+    const count = (roomDeviceCounters.get(dev.roomIndex) || 0);
+    roomDeviceCounters.set(dev.roomIndex, count + 1);
+    const roomDeviceCount = devices.filter((d) => d.roomIndex === dev.roomIndex).length;
+    const clusterR = Math.min(cellW, cellH) * 0.28;
+    const angle = (count / Math.max(1, roomDeviceCount)) * Math.PI * 2;
+
+    return {
+      x: cx + (roomDeviceCount > 1 ? Math.cos(angle) * clusterR : 0),
+      z: cz + (roomDeviceCount > 1 ? Math.sin(angle) * clusterR : 0),
+    };
+  });
+}
+
 function twinBuildScene(areaM2) {
   const wrap = document.getElementById('twin-scene-wrap');
   wrap.innerHTML = '';
@@ -407,16 +613,20 @@ function twinBuildScene(areaM2) {
   grid.material.opacity = 0.12;
   scene.add(grid);
 
-  // приборы — цветные кубики со "световым пятном" на полу под ними, расставленные
-  // по кругу в пределах контура
+  // приборы — цветные кубики со "световым пятном" на полу под ними.
+  // Раньше все приборы расставлялись по одному общему кругу на весь контур
+  // здания, из-за чего, например, холодильник и стиральная машина одной
+  // квартиры оказывались рядом друг с другом по кругу без всякой связи с тем,
+  // в какой они на самом деле комнате. Если приборы привязаны к комнатам
+  // (через панель "Комнаты и приборы"), делим контур на отдельные ячейки —
+  // по одной на комнату — и внутри каждой ячейки расставляем только приборы
+  // этой комнаты небольшим кластером.
   const deviceGroup = new THREE.Group();
-  const n = twinState.devices.length || 1;
+  const devicePositions = twinComputeDevicePositions(twinState.devices, footprintSize);
+
   twinState.devices.forEach((dev, i) => {
-    const angle = (i / n) * Math.PI * 2;
-    const r = footprintSize * 0.32;
+    const { x: px, z: pz } = devicePositions[i];
     const size = 0.22 + Math.min(0.28, dev.watts / 6000);
-    const px = Math.cos(angle) * r;
-    const pz = Math.sin(angle) * r;
 
     const geo = new THREE.BoxGeometry(size, size, size);
     const mat = new THREE.MeshStandardMaterial({
@@ -523,11 +733,13 @@ function twinGenerate() {
   const wrap = document.getElementById('twin-scene-wrap');
   if (!wrap) return;
 
+  const roomDevices = twinBuildDevicesFromRooms();
+
   if (typeof THREE === 'undefined') {
     const type = document.getElementById('twin-type').value;
     const areaM2 = Math.max(6, Number(document.getElementById('twin-area').value) || 60);
     const units = Math.max(1, Number(document.getElementById('twin-units').value) || 1);
-    twinState.devices = twinBuildDevices(type, areaM2, units);
+    twinState.devices = roomDevices.length ? roomDevices : twinBuildDevices(type, areaM2, units);
     twinDisposeScene();
     twinRenderOfflineScene(areaM2);
     twinRenderDeviceList();
@@ -539,7 +751,7 @@ function twinGenerate() {
   const areaM2 = Math.max(6, Number(document.getElementById('twin-area').value) || 60);
   const units = Math.max(1, Number(document.getElementById('twin-units').value) || 1);
 
-  twinState.devices = twinBuildDevices(type, areaM2, units);
+  twinState.devices = roomDevices.length ? roomDevices : twinBuildDevices(type, areaM2, units);
 
   twinDisposeScene();
   wrap.innerHTML = '';

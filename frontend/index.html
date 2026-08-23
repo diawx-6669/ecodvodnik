@@ -480,9 +480,24 @@
             <input type="number" id="fp-calib-dist" min="0.1" step="0.1" placeholder="напр. 4.2" />
             <button type="button" id="fp-set-scale-btn" class="fp-btn">Задать масштаб</button>
           </div>
-          <button type="button" id="fp-detect-btn" class="fp-btn">Распознать план</button>
+          <button type="button" id="fp-detect-btn" class="fp-btn">Распознать автоматически</button>
           <button type="button" id="fp-apply-btn" class="fp-btn fp-btn-primary" disabled>Построить 3D по плану</button>
           <button type="button" id="fp-clear-btn" class="fp-btn fp-btn-ghost">Сбросить план</button>
+        </div>
+
+        <div class="fp-controls fp-mode-controls">
+          <span class="fp-mode-label">Ручная обводка (если авто-контур не совпал с планом или комната не прямоугольная):</span>
+          <div class="fp-mode-group" role="group" aria-label="Режим рисования">
+            <button type="button" id="fp-mode-calib" class="fp-mode-btn is-active" data-mode="calib">Масштаб</button>
+            <button type="button" id="fp-mode-wall" class="fp-mode-btn" data-mode="wall">
+              <span class="fp-mode-dot fp-dot-wall"></span> Стены (жёлтый)
+            </button>
+            <button type="button" id="fp-mode-window" class="fp-mode-btn" data-mode="window">
+              <span class="fp-mode-dot fp-dot-window"></span> Окна (голубой)
+            </button>
+          </div>
+          <button type="button" id="fp-undo-point-btn" class="fp-btn fp-btn-ghost">Отменить точку</button>
+          <button type="button" id="fp-finish-wall-btn" class="fp-btn" disabled>Замкнуть контур стен</button>
         </div>
 
         <div class="fp-body" id="fp-drop-zone">
@@ -497,7 +512,8 @@
             <ol class="fp-steps">
               <li>Загрузите JPG/PNG/WEBP или перетащите файл на превью.</li>
               <li>Кликните 2 точки на отрезке с известной длиной (например, стена) и укажите её в метрах → «Задать масштаб».</li>
-              <li>Нажмите «Распознать план» — синим выделится внешний контур, зелёным — найденные комнаты.</li>
+              <li>«Распознать автоматически» — подходит для простых прямоугольных планов на контрастном фоне.</li>
+              <li>Если контур не совпал или комната сложной формы (буквой Г/П и т.п.) — включите режим «Стены» и кликните все углы контура по порядку, затем «Замкнуть контур стен». Режимом «Окна» можно отметить окна парой точек на стене — они лягут голубыми отрезками.</li>
               <li>«Построить 3D по плану» — подставит реальную форму в модель ниже.</li>
             </ol>
             <div class="fp-status" id="fp-status">Загрузите изображение плана, чтобы начать.</div>
@@ -534,6 +550,13 @@
         </div>
 
         <div class="twin-side">
+          <div class="twin-rooms">
+            <h3>Комнаты и приборы <span class="pill pill-sm">по комнатам</span></h3>
+            <p class="twin-rooms-hint">Впишите названия комнат и оборудование, которое в них расходует энергию — модель расставит приборы по своим комнатам, а не одной кучей по кругу. Если не заполнять — модель подберёт типовой набор приборов сама.</p>
+            <div class="twin-rooms-list" id="twin-rooms-list"></div>
+            <button type="button" id="twin-add-room-btn" class="fp-btn fp-btn-ghost">+ Добавить комнату</button>
+          </div>
+
           <div class="twin-devices">
             <h3>Приборы в модели</h3>
             <div class="twin-device-list" id="twin-device-list"></div>

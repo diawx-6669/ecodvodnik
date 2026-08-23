@@ -9,7 +9,12 @@ const fpState = {
   calibPoints: [],
   scale: null,
   outer: null,
+  outerIsManual: false,
   rooms: [],
+  windows: [],       // [[{x,y}, {x,y}], ...] — отрезки окон в px исходного канваса
+  windowDraft: [],   // временные точки текущего окна (0 или 1 точка)
+  mode: 'calib',     // 'calib' | 'wall' | 'window'
+  manualWall: [],    // точки контура стен, которые кликает пользователь
   objectUrl: null,
 };
 
@@ -52,6 +57,12 @@ function fpInit() {
   document.getElementById('fp-detect-btn').addEventListener('click', () => fpWaitForCv(fpDetect));
   document.getElementById('fp-apply-btn').addEventListener('click', fpApplyToTwin);
   document.getElementById('fp-clear-btn').addEventListener('click', fpClear);
+
+  document.querySelectorAll('.fp-mode-btn').forEach((btn) => {
+    btn.addEventListener('click', () => fpSetMode(btn.dataset.mode));
+  });
+  document.getElementById('fp-undo-point-btn').addEventListener('click', fpUndoPoint);
+  document.getElementById('fp-finish-wall-btn').addEventListener('click', fpFinishWall);
 
   const dropZone = document.getElementById('fp-drop-zone');
   if (dropZone) {
@@ -229,7 +240,12 @@ function fpApplyLoadedImage(source, fileName, sizeMb = 0) {
   fpState.calibPoints = [];
   fpState.scale = null;
   fpState.outer = null;
+  fpState.outerIsManual = false;
   fpState.rooms = [];
+  fpState.windows = [];
+  fpState.windowDraft = [];
+  fpState.manualWall = [];
+  fpSetMode('calib');
   document.getElementById('fp-apply-btn').disabled = true;
 
   fpToggleEmptyOverlay(false);
@@ -271,17 +287,88 @@ function fpOnCanvasClick(e) {
     else fpSetStatus('Сначала загрузите изображение плана.');
     return;
   }
-  if (fpState.calibPoints.length >= 2) fpState.calibPoints = [];
 
   const rect = fpState.canvas.getBoundingClientRect();
   const x = (e.clientX - rect.left) * (fpState.canvas.width / rect.width);
   const y = (e.clientY - rect.top) * (fpState.canvas.height / rect.height);
+
+  if (fpState.mode === 'wall') {
+    fpState.manualWall.push({ x, y });
+    fpRedraw();
+    document.getElementById('fp-finish-wall-btn').disabled = fpState.manualWall.length < 3;
+    fpSetStatus(`Точка стены №${fpState.manualWall.length} отмечена. Кликайте по каждому углу контура по порядку, затем «Замкнуть контур стен».`);
+    return;
+  }
+
+  if (fpState.mode === 'window') {
+    fpState.windowDraft.push({ x, y });
+    if (fpState.windowDraft.length === 2) {
+      fpState.windows.push(fpState.windowDraft);
+      fpState.windowDraft = [];
+      fpRedraw();
+      fpSetStatus(`Окно отмечено (всего ${fpState.windows.length}). Кликните ещё 2 точки, чтобы отметить следующее окно, или переключите режим.`);
+    } else {
+      fpRedraw();
+      fpSetStatus('Отмечена 1 точка окна — кликните вторую на том же проёме.');
+    }
+    return;
+  }
+
+  // режим калибровки масштаба
+  if (fpState.calibPoints.length >= 2) fpState.calibPoints = [];
   fpState.calibPoints.push({ x, y });
 
   fpRedraw();
   fpSetStatus(fpState.calibPoints.length === 2
     ? 'Точки отмечены. Введите реальную длину отрезка в метрах и нажмите «Задать масштаб».'
     : 'Отмечена 1 точка — кликните вторую на том же отрезке.');
+}
+
+function fpSetMode(mode) {
+  fpState.mode = mode;
+  document.querySelectorAll('.fp-mode-btn').forEach((btn) => {
+    btn.classList.toggle('is-active', btn.dataset.mode === mode);
+  });
+  const finishBtn = document.getElementById('fp-finish-wall-btn');
+  if (finishBtn) finishBtn.disabled = !(mode === 'wall' && fpState.manualWall.length >= 3);
+  fpRedraw();
+
+  if (!fpState.img) return;
+  if (mode === 'wall') {
+    fpSetStatus('Режим «Стены»: кликайте по каждому углу контура помещения по порядку (жёлтые точки), затем «Замкнуть контур стен».');
+  } else if (mode === 'window') {
+    fpSetStatus('Режим «Окна»: кликните 2 точки на плане, чтобы отметить положение окна (голубой отрезок). Можно отметить несколько окон.');
+  } else {
+    fpSetStatus('Режим «Масштаб»: кликните 2 точки на отрезке с известной длиной.');
+  }
+}
+
+function fpUndoPoint() {
+  if (fpState.mode === 'wall' && fpState.manualWall.length) {
+    fpState.manualWall.pop();
+    document.getElementById('fp-finish-wall-btn').disabled = fpState.manualWall.length < 3;
+  } else if (fpState.mode === 'window') {
+    if (fpState.windowDraft.length) fpState.windowDraft.pop();
+    else if (fpState.windows.length) fpState.windows.pop();
+  } else if (fpState.calibPoints.length) {
+    fpState.calibPoints.pop();
+  }
+  fpRedraw();
+}
+
+function fpFinishWall() {
+  if (fpState.manualWall.length < 3) {
+    fpSetStatus('Отметьте минимум 3 точки контура, прежде чем замкнуть его.');
+    return;
+  }
+  fpState.outer = fpState.manualWall.map((p) => ({ x: p.x, y: p.y }));
+  fpState.outerIsManual = true;
+  fpState.rooms = [];
+  fpEnsureAutoScale();
+  fpRedraw();
+  document.getElementById('fp-apply-btn').disabled = false;
+  document.getElementById('fp-finish-wall-btn').disabled = true;
+  fpSetStatus('Контур стен замкнут вручную — он точно совпадает с планом и подходит для комнат любой формы. Можно отметить окна или сразу нажать «Построить 3D по плану».');
 }
 
 function fpSetScale() {
@@ -379,10 +466,11 @@ function fpDetectWithoutCv() {
     { x: left, y: top }, { x: right, y: top },
     { x: right, y: bottom }, { x: left, y: bottom },
   ];
+  fpState.outerIsManual = false;
   fpState.rooms = [];
   fpRedraw();
   document.getElementById('fp-apply-btn').disabled = false;
-  fpSetStatus('Контур построен в локальном режиме. Он готов для 3D-модели; для большей точности задайте масштаб по известной стене.');
+  fpSetStatus('Контур построен в локальном режиме (прямоугольник по границам плана). Он готов для 3D-модели, но если комната не прямоугольная — обведите стены вручную (кнопка «Стены» выше) для точной формы.');
 }
 
 function fpDetect() {
@@ -448,6 +536,7 @@ function fpDetect() {
 
     candidates.sort((a, b) => b.area - a.area);
     fpState.outer = candidates.length ? candidates[0].pts : null;
+    fpState.outerIsManual = false;
     fpState.rooms = candidates.slice(1, 6).map((c) => c.pts);
   } finally {
     src.delete();
@@ -462,13 +551,13 @@ function fpDetect() {
   fpRedraw();
 
   if (!fpState.outer) {
-    fpSetStatus('Контур не найден автоматически. Попробуйте более чёткий план (контрастные стены на светлом фоне) или задайте масштаб точнее.');
+    fpSetStatus('Контур не найден автоматически — это обычная ситуация для сложных (не прямоугольных) планов. Включите режим «Стены» выше и обведите контур вручную по углам.');
     document.getElementById('fp-apply-btn').disabled = true;
   } else {
     const roomsMsg = fpState.rooms.length
       ? `и ${fpState.rooms.length} внутренних областей`
       : 'только внешний контур';
-    fpSetStatus(`Найден контур помещения ${roomsMsg}. Проверьте синий/зелёный контур и нажмите «Построить 3D по плану».`);
+    fpSetStatus(`Найден контур помещения ${roomsMsg}. Проверьте, что синий контур совпадает со стенами на плане — если нет, обведите стены вручную (режим «Стены»). Иначе нажмите «Построить 3D по плану».`);
     document.getElementById('fp-apply-btn').disabled = false;
   }
 }
@@ -481,7 +570,45 @@ function fpRedraw() {
   ctx.drawImage(fpState.srcCanvas, 0, 0);
 
   fpState.rooms.forEach((r) => fpDrawPolygon(r, '#35e08f', 1.6));
-  if (fpState.outer) fpDrawPolygon(fpState.outer, '#45d9ff', 2.5);
+  // жёлтый контур — стены (вручную или итоговый outer, если построен вручную)
+  if (fpState.outer) {
+    fpDrawPolygon(fpState.outer, fpState.outerIsManual ? '#ffd23f' : '#45d9ff', 2.5);
+  }
+
+  // окна — голубые отрезки поверх стен
+  ctx.strokeStyle = '#45d9ff';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  fpState.windows.forEach(([a, b]) => {
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+  });
+  ctx.lineCap = 'butt';
+
+  // контур стен, который сейчас рисует пользователь (не замкнут)
+  if (fpState.manualWall.length) {
+    ctx.strokeStyle = '#ffd23f';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    fpState.manualWall.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+    ctx.stroke();
+    ctx.fillStyle = '#ffd23f';
+    fpState.manualWall.forEach((p) => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  // точка окна, отмеченная наполовину
+  fpState.windowDraft.forEach((p) => {
+    ctx.fillStyle = '#45d9ff';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+  });
 
   ctx.fillStyle = '#ffb23f';
   fpState.calibPoints.forEach((p) => {
@@ -537,9 +664,10 @@ function fpApplyToTwin() {
 
   const outerM = fpToMeters(fpState.outer, cx, cy);
   const roomsM = fpState.rooms.map((r) => fpToMeters(r, cx, cy));
+  const windowsM = fpState.windows.map(([a, b]) => fpToMeters([a, b], cx, cy));
   const area = fpPolygonArea(outerM);
 
-  window.EcotchiFloorplan = { outer: outerM, rooms: roomsM, area };
+  window.EcotchiFloorplan = { outer: outerM, rooms: roomsM, windows: windowsM, area };
 
   const areaInput = document.getElementById('twin-area');
   if (areaInput) areaInput.value = Math.max(6, Math.round(area));
@@ -555,11 +683,17 @@ function fpClear() {
   fpLoadToken += 1;
   fpReleaseImage();
   fpState.outer = null;
+  fpState.outerIsManual = false;
   fpState.rooms = [];
+  fpState.windows = [];
+  fpState.windowDraft = [];
+  fpState.manualWall = [];
   fpState.calibPoints = [];
   fpState.scale = null;
   fpSetLoading(false);
+  fpSetMode('calib');
 
+  document.getElementById('fp-finish-wall-btn').disabled = true;
   document.getElementById('fp-apply-btn').disabled = true;
   fpDrawPlaceholder();
   fpSetStatus('План сброшен — модель снова строится по площади и типу объекта.');
