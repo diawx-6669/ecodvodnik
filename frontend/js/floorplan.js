@@ -685,7 +685,7 @@ function fpAddCalibRef() {
   fpApplyScaleFromRefs(true);
   fpRedraw();
   fpSetCalibFeedback(
-    `Добавлен отрезок ${fpState.calibRefs.length}: ${fpFormatLengthM(lengthM)}. `
+    `✓ Добавлен отрезок ${fpState.calibRefs.length}: ${fpFormatLengthM(lengthM)}. `
     + 'Можно добавить ещё стены или нажать «Рассчитать масштаб».',
     'ok',
   );
@@ -775,7 +775,7 @@ function fpRenderCalibList() {
     } else {
       summary.dataset.tone = 'ok';
       summary.textContent = `Отрезков: ${fpState.calibRefs.length}, сумма длин: ${fpFormatLengthM(sumM)}`
-        + (fpState.scaleManual ? ' · масштаб задан' : ' · нажмите «Рассчитать масштаб»');
+        + (fpState.scaleManual ? ' · масштаб задан ✓' : ' · нажмите «Рассчитать масштаб»');
     }
   }
 }
@@ -1136,7 +1136,7 @@ function fpUpdateAreaPreview() {
   }
 
   if (!fpState.scaleManual || !fpState.scale) {
-    el.textContent = 'Площадь по контуру: — сначала задайте масштаб по цифрам на чертеже (режим «Масштаб»)';
+    el.textContent = 'Площадь по контуру: — ⚠ сначала задайте масштаб по цифрам на чертеже (режим «Масштаб»)';
     return;
   }
 
@@ -1154,7 +1154,7 @@ function fpUpdateAreaPreview() {
     text += ` · эталон стен: ${refSum.toFixed(1)} м`;
   }
   if (fpHasSelfIntersection(fpState.outer)) {
-    text += ' · контур пересекается — площадь может быть неверной';
+    text += ' · ⚠ контур пересекается — площадь может быть неверной';
   }
   if (Math.abs(resolved - autoArea) > 0.5) {
     text += ` · будет использовано: ${resolved.toFixed(1)} м²`;
