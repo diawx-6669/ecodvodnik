@@ -91,6 +91,7 @@ const api = {
   sendMessage: (message) => apiPost('/assistant/message', { message }),
   lookupAppliance: (payload) => apiPost('/appliances/lookup', payload),
   addReading: (type, value) => apiPost('/readings', { type, value, source: 'manual' }),
+  analyzeMeterPhoto: (imageDataUrl) => apiPost('/readings/photo-analyze', { image: imageDataUrl }),
 
   // --- Аккаунт ---
   register: (payload) => apiPost('/auth/register', payload, { auth: false }),

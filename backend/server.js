@@ -21,7 +21,9 @@ const appliancesRoutes = require('./routes/appliances');
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+// Лимит поднят до 15mb: фото счётчиков/квитанций с телефона в base64 легко
+// превышают дефолтные 100kb express.json().
+app.use(express.json({ limit: '15mb' }));
 
 // API routes
 app.use('/api/auth', authRoutes);

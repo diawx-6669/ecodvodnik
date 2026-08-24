@@ -1,6 +1,7 @@
 const { readDb, writeDb } = require('../data/db');
 const { createReading } = require('../models/Reading');
 const config = require('../config/config');
+const aiService = require('../services/aiService');
 
 // POST /api/readings
 // Принимает показания и от Arduino (по DEVICE_TOKEN), и с формы (ручной ввод).
@@ -85,4 +86,22 @@ function importReadings(req, res) {
   return res.status(201).json({ imported: created.length, skipped });
 }
 
-module.exports = { addReading, listReadings, importReadings };
+// POST /api/readings/photo-analyze
+// Принимает фото счётчика или квитанции (data URL, base64) и возвращает
+// распознанные ИИ данные (тип ресурса, показание, и т.д.) — показание при
+// этом НЕ сохраняется автоматически, пользователь подтверждает его на форме.
+async function analyzePhoto(req, res) {
+  const { image } = req.body;
+  if (!image || typeof image !== 'string') {
+    return res.status(400).json({ error: 'Поле image обязательно (data URL с base64-фото)' });
+  }
+
+  const result = await aiService.analyzeMeterPhoto(image);
+  if (!result.ok) {
+    return res.status(422).json({ error: result.error });
+  }
+
+  return res.json(result.data);
+}
+
+module.exports = { addReading, listReadings, importReadings, analyzePhoto };

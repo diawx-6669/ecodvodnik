@@ -6,5 +6,6 @@ const { optionalAuth } = require('../middleware/auth');
 router.post('/', optionalAuth, readingsController.addReading);
 router.get('/', optionalAuth, readingsController.listReadings);
 router.post('/import-csv', optionalAuth, readingsController.importReadings);
+router.post('/photo-analyze', optionalAuth, readingsController.analyzePhoto);
 
 module.exports = router;

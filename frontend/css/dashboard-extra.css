@@ -122,3 +122,30 @@
 @media (max-width: 700px) {
   .achievements-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
 }
+
+/* --- Фото счётчика/квитанции: загрузка и распознавание --- */
+.reading-photo-block { margin-top: 12px; display: grid; gap: 8px; }
+.reading-photo-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 9px 12px; border-radius: 12px; border: 1px dashed var(--stroke);
+  background: rgba(77,201,255,.06); color: var(--text); font-size: 12.5px;
+  font-weight: 600; cursor: pointer; text-align: center; transition: background .15s, transform .15s;
+}
+.reading-photo-btn:hover { background: rgba(77,201,255,.12); transform: translateY(-1px); }
+.reading-photo-preview-wrap {
+  border-radius: 12px; overflow: hidden; border: 1px solid var(--stroke); max-height: 160px;
+}
+.reading-photo-preview-wrap img { width: 100%; max-height: 160px; object-fit: cover; display: block; }
+.reading-photo-status {
+  font-size: 11.5px; line-height: 1.5; padding: 8px 10px; border-radius: 10px;
+  border: 1px solid var(--stroke); background: rgba(255,255,255,0.03); color: var(--muted);
+}
+.reading-photo-status--loading { color: var(--muted); }
+.reading-photo-status--success { border-color: rgba(52,211,153,.4); color: var(--green); background: rgba(52,211,153,.08); }
+.reading-photo-status--warning { border-color: rgba(250,204,21,.4); color: #facc15; background: rgba(250,204,21,.08); }
+.reading-photo-status--error { border-color: rgba(248,113,113,.4); color: #f87171; background: rgba(248,113,113,.08); }
+.reading-photo-clear-btn {
+  justify-self: start; background: none; border: none; color: var(--muted);
+  font-size: 11px; text-decoration: underline; cursor: pointer; padding: 0;
+}
+.reading-photo-clear-btn:hover { color: var(--text); }

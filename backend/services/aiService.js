@@ -415,4 +415,191 @@ async function llmReply(summary, petState, userMessage, user = null) {
   }
 }
 
-module.exports = { ruleBasedReply, ruleBasedRecommendations, llmReply };
+// ---------------------------------------------------------------------------
+// Распознавание фото счётчика или квитанции через Claude Vision.
+//
+// Пользователь фотографирует показания счётчика (воды/электричества) или
+// квитанцию об оплате — модель должна вытащить оттуда тип ресурса, значение
+// показания и (если это квитанция) сумму/период, а не выдумывать цифры.
+// ---------------------------------------------------------------------------
+
+const METER_ANALYSIS_SYSTEM_PROMPT =
+  'Ты помогаешь распознавать фотографии счётчиков воды/электричества и ' +
+  'квитанций об оплате коммунальных услуг в приложении ЭкоДвойник (Казахстан). ' +
+  'Внимательно посмотри на изображение и определи:\n' +
+  '- document_type: "meter" (сфотографирован сам счётчик с цифрами на циферблате/дисплее) ' +
+  'или "receipt" (квитанция/счёт на оплату) или "unknown" (не удалось разобрать, ' +
+  'плохое качество, или на фото вообще не счётчик и не квитанция).\n' +
+  '- resource_type: "water" или "electricity" — определи по виду счётчика ' +
+  '(водяной счётчик обычно с роликами-цифрами и синей/красной меткой, ' +
+  'электросчётчик — с ЖК/электромеханическим дисплеем кВт·ч) или по тексту ' +
+  'квитанции. Если не уверен — null.\n' +
+  '- value: числовое значение показания счётчика (текущее показание, которое ' +
+  'нужно ввести в приложение). Для квитанции — новое (последнее) показание из неё, ' +
+  'если оно там указано, иначе null. Бери ТОЛЬКО те цифры, которые реально видишь ' +
+  'на фото — никогда не придумывай и не угадывай значение, если оно нечитаемо.\n' +
+  '- unit: "л" для воды или "кВт·ч" для электричества, если применимо, иначе null.\n' +
+  '- cost_kzt: сумма к оплате в тенге, если это квитанция и сумма видна, иначе null.\n' +
+  '- period: период квитанции (например "Март 2026"), если виден, иначе null.\n' +
+  '- confidence: число от 0 до 1 — насколько ты уверен в распознанном value ' +
+  '(0 — совсем не уверен/не разобрал, 1 — цифры чёткие и однозначные).\n' +
+  '- notes: короткий комментарий человеку на русском (1 предложение) — например, ' +
+  'что именно ты увидел, или почему не смог распознать (блики, размытость, ' +
+  'обрезанный кадр и т.д.).\n\n' +
+  'Отвечай СТРОГО в виде одного JSON-объекта без markdown-разметки, без ```, ' +
+  'без пояснений до или после — только сам JSON с полями: ' +
+  'document_type, resource_type, value, unit, cost_kzt, period, confidence, notes.';
+
+const SUPPORTED_IMAGE_MEDIA_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+]);
+
+function parseImageDataUrl(imageDataUrl) {
+  if (typeof imageDataUrl !== 'string') return null;
+  const match = imageDataUrl.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
+  if (!match) return null;
+  const [, mediaType, base64Data] = match;
+  if (!SUPPORTED_IMAGE_MEDIA_TYPES.has(mediaType)) return null;
+  return { mediaType, base64Data };
+}
+
+function extractJsonBlock(text) {
+  if (!text) return null;
+  // Модель иногда всё же оборачивает JSON в ```json ... ``` — на всякий случай снимаем.
+  const cleaned = text.replace(/```json|```/g, '').trim();
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start === -1 || end === -1 || end < start) return null;
+  try {
+    return JSON.parse(cleaned.slice(start, end + 1));
+  } catch (err) {
+    return null;
+  }
+}
+
+// analyzeMeterPhoto(imageDataUrl) -> { ok, data?, error? }
+async function analyzeMeterPhoto(imageDataUrl) {
+  const parsed = parseImageDataUrl(imageDataUrl);
+  if (!parsed) {
+    return {
+      ok: false,
+      error: 'Не удалось прочитать изображение. Поддерживаются JPG, PNG, WEBP, GIF.',
+    };
+  }
+
+  if (!config.anthropicApiKey) {
+    return {
+      ok: false,
+      error:
+        'Распознавание фото недоступно: на сервере не настроен ANTHROPIC_API_KEY. ' +
+        'Введите показание вручную.',
+    };
+  }
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': config.anthropicApiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 500,
+        system: METER_ANALYSIS_SYSTEM_PROMPT,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: parsed.mediaType,
+                  data: parsed.base64Data,
+                },
+              },
+              {
+                type: 'text',
+                text:
+                  'Распознай это изображение (счётчик воды/электричества или квитанция) ' +
+                  'и верни JSON строго по описанной схеме.',
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const errBody = await response.text().catch(() => '');
+      console.error('Anthropic vision API error:', response.status, errBody);
+      return {
+        ok: false,
+        error: 'Сервис распознавания временно недоступен. Попробуйте ещё раз или введите вручную.',
+      };
+    }
+
+    const data = await response.json();
+    const text = (data.content || [])
+      .map((block) => (block.type === 'text' ? block.text : ''))
+      .filter(Boolean)
+      .join('\n');
+
+    const parsedJson = extractJsonBlock(text);
+    if (!parsedJson) {
+      return {
+        ok: false,
+        error: 'Не удалось распознать данные на фото. Попробуйте сделать снимок чётче.',
+      };
+    }
+
+    // Санитизация: не доверяем модели слепо, приводим типы и проверяем разумность.
+    const resourceType = ['water', 'electricity'].includes(parsedJson.resource_type)
+      ? parsedJson.resource_type
+      : null;
+    const numericValue = Number(parsedJson.value);
+    const value = Number.isFinite(numericValue) && numericValue >= 0 && numericValue <= 999999
+      ? numericValue
+      : null;
+    const numericCost = Number(parsedJson.cost_kzt);
+    const costKzt = Number.isFinite(numericCost) && numericCost >= 0 ? numericCost : null;
+    const numericConfidence = Number(parsedJson.confidence);
+    const confidence = Number.isFinite(numericConfidence)
+      ? Math.max(0, Math.min(1, numericConfidence))
+      : 0;
+
+    return {
+      ok: true,
+      data: {
+        documentType: ['meter', 'receipt'].includes(parsedJson.document_type)
+          ? parsedJson.document_type
+          : 'unknown',
+        resourceType,
+        value,
+        unit: typeof parsedJson.unit === 'string' ? parsedJson.unit : null,
+        costKzt,
+        period: typeof parsedJson.period === 'string' ? parsedJson.period : null,
+        confidence,
+        notes: typeof parsedJson.notes === 'string' ? parsedJson.notes : '',
+      },
+    };
+  } catch (err) {
+    console.error('AI vision service error:', err.message);
+    return {
+      ok: false,
+      error: 'Ошибка при обращении к сервису распознавания. Попробуйте позже или введите вручную.',
+    };
+  }
+}
+
+module.exports = {
+  ruleBasedReply,
+  ruleBasedRecommendations,
+  llmReply,
+  analyzeMeterPhoto,
+};
