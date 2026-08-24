@@ -16,6 +16,7 @@ const householdRoutes = require('./routes/household');
 const tipsRoutes = require('./routes/tips');
 const integrationsRoutes = require('./routes/integrations');
 const adminRoutes = require('./routes/admin');
+const appliancesRoutes = require('./routes/appliances');
 
 const app = express();
 
@@ -35,9 +36,10 @@ app.use('/api/household', householdRoutes);
 app.use('/api/tips', tipsRoutes);
 app.use('/api/integrations', integrationsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/appliances', appliancesRoutes);
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'ecodvoinik-backend' });
+  res.json({ status: 'ok', service: 'ecodvodnik-backend' });
 });
 
 // Отдаём фронтенд как статику

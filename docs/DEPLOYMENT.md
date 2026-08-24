@@ -1,4 +1,4 @@
-# 🚀 Deployment Guide for EcoTwin
+# Deployment Guide for EcoTwin
 
 ## Локальное развертывание
 

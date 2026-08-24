@@ -13,7 +13,9 @@ function analyzeMessageContext(userMessage) {
     isPositive: ['спасибо', 'спс', 'благодар', 'молод', 'хорош', 'класс', 'отлич'].some((w) => msg.includes(w)),
     isNegative: ['нет', 'плох', 'ужас', 'ой', 'блин', 'помощь', 'беда'].some((w) => msg.includes(w)),
     isRequest: ['помог', 'совет', 'рекомендац', 'сделай', 'дай'].some((w) => msg.includes(w)),
-    isEmotional: msg.includes('😢') || msg.includes('😭') || msg.includes('😡') || msg.includes('😢'),
+    // Диапазон U+1F600–U+1F64F — эмодзи-смайлы (лица), которыми пользователь
+    // мог выразить сильную эмоцию (плач, злость, испуг и т.п.).
+    isEmotional: /[\u{1F600}-\u{1F64F}]/u.test(msg),
     hasEmoji: /[\u{1F300}-\u{1F9FF}]/u.test(msg),
   };
 }

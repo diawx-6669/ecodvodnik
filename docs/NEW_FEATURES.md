@@ -79,7 +79,7 @@ calculateCost(1000, 'water') // 50,000 тенге (по умолчанию)
 forecastMonthlyUsage(5000, 15) // Прогноз за 30 дней
 
 // Категоризация (низкое/среднее/высокое)
-categorizeUsage(5000, 6000) // { level: 'среднее', emoji: '🟡', ... }
+categorizeUsage(5000, 6000) // { level: 'среднее', color: '#eab308' }
 
 // Рекомендуемые нормы
 getRecommendedUsage('household', 4) // Нормы для семьи из 4 человек

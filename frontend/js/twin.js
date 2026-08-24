@@ -123,6 +123,7 @@ function twinRenderRoomsUI() {
 
     const card = document.createElement('div');
     card.className = 'twin-room-card';
+    card.dataset.roomId = String(room.id);
 
     const head = document.createElement('div');
     head.className = 'twin-room-head';
@@ -138,7 +139,7 @@ function twinRenderRoomsUI() {
     const removeBtn = document.createElement('button');
     removeBtn.type = 'button';
     removeBtn.className = 'twin-room-remove-btn';
-    removeBtn.textContent = '✕';
+    removeBtn.textContent = '×';
     removeBtn.title = 'Удалить комнату';
     removeBtn.addEventListener('click', () => twinRemoveRoom(room.id));
     head.append(dot, nameInput, removeBtn);
@@ -163,7 +164,7 @@ function twinRenderRoomsUI() {
       const rmBtn = document.createElement('button');
       rmBtn.type = 'button';
       rmBtn.className = 'twin-room-device-remove';
-      rmBtn.textContent = '✕';
+      rmBtn.textContent = '×';
       rmBtn.addEventListener('click', () => twinRemoveDeviceFromRoom(room.id, dev.id));
       const right = document.createElement('span');
       right.style.display = 'flex';
@@ -182,26 +183,42 @@ function twinRenderRoomsUI() {
         cmpRow.textContent = cmp.text;
         devList.appendChild(cmpRow);
       }
+      if (dev.lookupSummary) {
+        const lookupRow = document.createElement('div');
+        lookupRow.className = 'twin-room-device-lookup';
+        lookupRow.textContent = dev.lookupSummary;
+        devList.appendChild(lookupRow);
+      }
     });
 
     const form = document.createElement('div');
     form.className = 'twin-room-add-form';
     const nameField = document.createElement('input');
     nameField.type = 'text';
+    nameField.className = 'twin-room-dev-name';
     nameField.placeholder = 'Прибор, напр. Холодильник';
     const modelField = document.createElement('input');
     modelField.type = 'text';
     modelField.placeholder = 'Модель (необязательно), напр. Samsung RB33';
-    modelField.className = 'twin-room-model-field';
+    modelField.className = 'twin-room-model-field twin-room-dev-model';
+    const lookupBtn = document.createElement('button');
+    lookupBtn.type = 'button';
+    lookupBtn.className = 'twin-room-lookup-btn';
+    lookupBtn.textContent = 'Найти модель';
+    lookupBtn.title = 'Найти характеристики модели в интернете и сравнить с вашими данными';
+    const lookupPanel = document.createElement('div');
+    lookupPanel.className = 'twin-lookup-panel hidden';
     const wattsField = document.createElement('input');
     wattsField.type = 'number';
     wattsField.min = '1';
+    wattsField.className = 'twin-room-dev-watts';
     wattsField.placeholder = 'Вт';
     wattsField.value = '100';
     const hoursField = document.createElement('input');
     hoursField.type = 'number';
     hoursField.min = '0.1';
     hoursField.step = '0.1';
+    hoursField.className = 'twin-room-dev-hours';
     hoursField.placeholder = 'ч/день';
     hoursField.value = '1';
     const ratedField = document.createElement('input');
@@ -209,7 +226,7 @@ function twinRenderRoomsUI() {
     ratedField.min = '0';
     ratedField.placeholder = 'Вт по паспорту/квитанции';
     ratedField.title = 'Необязательно: максимальная мощность, указанная на шильдике прибора или в квитанции/у счётчика — для сверки с тем, что введено выше.';
-    ratedField.className = 'twin-room-rated-field';
+    ratedField.className = 'twin-room-rated-field twin-room-dev-rated';
     const addBtn = document.createElement('button');
     addBtn.type = 'button';
     addBtn.className = 'twin-room-add-btn';
@@ -249,22 +266,49 @@ function twinRenderRoomsUI() {
         return;
       }
       errorMsg.classList.add('hidden');
-      twinAddDeviceToRoom(room.id, { name, model: model || null, watts, hours, ratedWatts });
+      twinAddDeviceToRoom(room.id, {
+        name,
+        model: model || null,
+        watts,
+        hours,
+        ratedWatts,
+        lookupSummary: lookupPanel.dataset.summary || null,
+        lookupData: lookupPanel.dataset.lookup ? JSON.parse(lookupPanel.dataset.lookup) : null,
+      });
+      nameField.value = '';
+      modelField.value = '';
+      wattsField.value = '100';
+      hoursField.value = '1';
+      ratedField.value = '';
+      lookupPanel.classList.add('hidden');
+      lookupPanel.innerHTML = '';
+      lookupPanel.dataset.summary = '';
+      lookupPanel.dataset.lookup = '';
     };
     addBtn.addEventListener('click', submit);
+    lookupBtn.addEventListener('click', () => {
+      twinLookupAppliance({
+        nameField,
+        modelField,
+        wattsField,
+        hoursField,
+        ratedField,
+        lookupBtn,
+        lookupPanel,
+      });
+    });
     [nameField, modelField, wattsField, hoursField, ratedField].forEach((el) => {
       el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
     });
-    form.append(nameField, modelField, wattsField, hoursField, ratedField, addBtn);
+    form.append(nameField, modelField, lookupBtn, wattsField, hoursField, ratedField, addBtn);
 
-    card.append(head, devList, form, errorMsg);
+    card.append(head, devList, form, lookupPanel, errorMsg);
     list.appendChild(card);
   });
 }
 
 function twinBuildDevicesFromRooms() {
   const devices = [];
-  let paletteIdx = 0;
   twinRoomsState.rooms.forEach((room, roomIdx) => {
     if (!room.devices.length) return;
     const roomName = room.name.trim() || `Комната ${roomIdx + 1}`;
@@ -278,14 +322,235 @@ function twinBuildDevicesFromRooms() {
         hoursPerDay: dev.hours,
         essential: false,
         efficient: false,
-        color: TWIN_ROOM_PALETTE[paletteIdx % TWIN_ROOM_PALETTE.length],
+        color: TWIN_ROOM_PALETTE[roomIdx % TWIN_ROOM_PALETTE.length],
         roomIndex: roomIdx,
         roomName,
       });
-      paletteIdx += 1;
     });
   });
   return devices;
+}
+
+/** Перед генерацией подхватывает прибор из незавершённой формы (если имя заполнено). */
+function twinFlushPendingDevices() {
+  const pending = [];
+  twinRoomsState.rooms.forEach((room) => {
+    const card = document.querySelector(`.twin-room-card[data-room-id="${room.id}"]`);
+    if (!card) return;
+    const name = card.querySelector('.twin-room-dev-name')?.value.trim();
+    if (!name) return;
+    const model = card.querySelector('.twin-room-dev-model')?.value.trim() || null;
+    const watts = Number(String(card.querySelector('.twin-room-dev-watts')?.value || '').replace(',', '.'));
+    const hours = Number(String(card.querySelector('.twin-room-dev-hours')?.value || '').replace(',', '.'));
+    const ratedRaw = String(card.querySelector('.twin-room-dev-rated')?.value || '').replace(',', '.').trim();
+    const ratedWatts = ratedRaw === '' ? null : Number(ratedRaw);
+    if (!watts || watts <= 0 || !hours || hours <= 0) return;
+    if (ratedWatts != null && (Number.isNaN(ratedWatts) || ratedWatts < 0)) return;
+
+    const lookupPanel = card.querySelector('.twin-lookup-panel');
+    pending.push({
+      roomId: room.id,
+      device: {
+        name,
+        model,
+        watts,
+        hours,
+        ratedWatts,
+        lookupSummary: lookupPanel?.dataset.summary || null,
+        lookupData: lookupPanel?.dataset.lookup ? JSON.parse(lookupPanel.dataset.lookup) : null,
+      },
+    });
+  });
+
+  pending.forEach(({ roomId, device }) => {
+    const room = twinRoomsState.rooms.find((r) => r.id === roomId);
+    if (!room) return;
+    room.devices.push({ id: twinRoomsState.nextDeviceId++, ...device });
+  });
+  if (pending.length) twinRenderRoomsUI();
+  return pending.length;
+}
+
+function twinSetGenerateStatus(text, level = 'info') {
+  const el = document.getElementById('twin-generate-status');
+  if (!el) return;
+  el.textContent = text || '';
+  el.className = `twin-generate-status${text ? ` twin-generate-status-${level}` : ''}`;
+}
+
+function twinHasRoomSetup() {
+  return twinRoomsState.rooms.some((r) => r.name.trim() || r.devices.length);
+}
+
+// ---------- поиск характеристик прибора по модели (AI + сравнение) ----------
+
+async function twinLookupAppliance({ nameField, modelField, wattsField, hoursField, ratedField, lookupBtn, lookupPanel }) {
+  const name = nameField.value.trim();
+  const model = modelField.value.trim();
+  if (!name && !model) {
+    twinRenderLookupPanel(lookupPanel, { error: 'Введите название прибора или модель.' });
+    return;
+  }
+
+  lookupBtn.disabled = true;
+  lookupBtn.textContent = '…';
+  twinRenderLookupPanel(lookupPanel, { loading: true });
+
+  const watts = Number(String(wattsField.value).replace(',', '.')) || null;
+  const hours = Number(String(hoursField.value).replace(',', '.')) || null;
+  const ratedRaw = String(ratedField.value).replace(',', '.').trim();
+  const ratedWatts = ratedRaw === '' ? null : Number(ratedRaw);
+
+  try {
+    const data = await api.lookupAppliance({
+      name,
+      model,
+      userWatts: watts,
+      userHoursPerDay: hours,
+      ratedWatts,
+    });
+
+    twinRenderLookupPanel(lookupPanel, { data, wattsField, hoursField, ratedField });
+    lookupPanel.dataset.summary = data.summary || '';
+    lookupPanel.dataset.lookup = JSON.stringify(data);
+  } catch (err) {
+    twinRenderLookupPanel(lookupPanel, { error: err.message || 'Ошибка сети. Проверьте подключение и попробуйте снова.' });
+  } finally {
+    lookupBtn.disabled = false;
+    lookupBtn.textContent = 'Найти модель';
+  }
+}
+
+function twinRenderLookupPanel(panel, { loading, error, data, wattsField, hoursField, ratedField }) {
+  panel.classList.remove('hidden');
+  panel.innerHTML = '';
+
+  if (loading) {
+    panel.className = 'twin-lookup-panel twin-lookup-loading';
+    panel.textContent = 'Ищем характеристики модели и сравниваем с вашими данными…';
+    return;
+  }
+
+  if (error) {
+    panel.className = 'twin-lookup-panel twin-lookup-error';
+    panel.textContent = error;
+    return;
+  }
+
+  panel.className = 'twin-lookup-panel';
+
+  const { specs, comparison, source, confidence, aiEnabled, summary } = data;
+  const sourceLabel = source === 'llm'
+    ? 'AI (интернет-знания)'
+    : source === 'catalog'
+    ? 'Справочник'
+    : 'Типовые значения';
+
+  const head = document.createElement('div');
+  head.className = 'twin-lookup-head';
+  head.innerHTML = `<strong>${specs.brand || ''} ${specs.model || ''}</strong>`
+    + `<span class="twin-lookup-source">${sourceLabel}${confidence ? ` · ${confidence}` : ''}</span>`;
+
+  const specsGrid = document.createElement('div');
+  specsGrid.className = 'twin-lookup-specs';
+  const specItems = [];
+  if (specs.energyClass && specs.energyClass !== '—') {
+    specItems.push(`<span>Класс: <b>${specs.energyClass}</b></span>`);
+  }
+  if (specs.ratedWatts) specItems.push(`<span>Мощность: <b>${specs.ratedWatts} Вт</b></span>`);
+  if (specs.annualKwh) specItems.push(`<span>~${specs.annualKwh} кВт·ч/год</span>`);
+  if (specs.typicalHoursPerDay) specItems.push(`<span>~${specs.typicalHoursPerDay} ч/сут</span>`);
+  specsGrid.innerHTML = specItems.join('');
+
+  panel.appendChild(head);
+  if (specItems.length) panel.appendChild(specsGrid);
+
+  if (specs.description) {
+    const desc = document.createElement('p');
+    desc.className = 'twin-lookup-desc';
+    desc.textContent = specs.description;
+    panel.appendChild(desc);
+  }
+
+  if (specs.workloadFactors && specs.workloadFactors.length) {
+    const wlTitle = document.createElement('div');
+    wlTitle.className = 'twin-lookup-wl-title';
+    wlTitle.textContent = 'Потребление при разных нагрузках:';
+    panel.appendChild(wlTitle);
+    const wlList = document.createElement('ul');
+    wlList.className = 'twin-lookup-wl-list';
+    specs.workloadFactors.forEach((wf) => {
+      const li = document.createElement('li');
+      li.textContent = `${wf.condition}: ~${wf.consumptionKwh} кВт·ч (${wf.unit})`;
+      wlList.appendChild(li);
+    });
+    panel.appendChild(wlList);
+  }
+
+  const compareBlock = document.createElement('div');
+  compareBlock.className = 'twin-lookup-compare';
+  const compareLines = [];
+  if (comparison.modelVsSpec && comparison.modelVsSpec.text) {
+    compareLines.push({ text: comparison.modelVsSpec.text, level: comparison.modelVsSpec.level });
+  }
+  if (comparison.ratedVsSpec && comparison.ratedVsSpec.text) {
+    compareLines.push({ text: comparison.ratedVsSpec.text, level: comparison.ratedVsSpec.level });
+  }
+  if (comparison.modelVsSpecDaily && comparison.modelVsSpecDaily.text) {
+    compareLines.push({ text: comparison.modelVsSpecDaily.text, level: comparison.modelVsSpecDaily.level });
+  }
+  if (comparison.userReadings && comparison.userReadings.text) {
+    compareLines.push({ text: comparison.userReadings.text, level: comparison.userReadings.level });
+  }
+  compareLines.forEach(({ text, level }) => {
+    const row = document.createElement('div');
+    row.className = `twin-lookup-compare-row twin-lookup-compare-${level || 'neutral'}`;
+    row.textContent = text;
+    compareBlock.appendChild(row);
+  });
+  if (compareLines.length) panel.appendChild(compareBlock);
+
+  if (!aiEnabled && source === 'fallback') {
+    const hint = document.createElement('div');
+    hint.className = 'twin-lookup-hint';
+    hint.textContent = 'Для точного поиска по модели задайте ANTHROPIC_API_KEY на сервере.';
+    panel.appendChild(hint);
+  }
+
+  const actions = document.createElement('div');
+  actions.className = 'twin-lookup-actions';
+  if (specs.ratedWatts && ratedField) {
+    const applyRated = document.createElement('button');
+    applyRated.type = 'button';
+    applyRated.className = 'twin-lookup-apply-btn';
+    applyRated.textContent = `Подставить ${specs.ratedWatts} Вт (паспорт)`;
+    applyRated.addEventListener('click', () => { ratedField.value = specs.ratedWatts; });
+    actions.appendChild(applyRated);
+  }
+  if (specs.ratedWatts && wattsField) {
+    const applyWatts = document.createElement('button');
+    applyWatts.type = 'button';
+    applyWatts.className = 'twin-lookup-apply-btn';
+    applyWatts.textContent = `Подставить ${specs.ratedWatts} Вт в модель`;
+    applyWatts.addEventListener('click', () => { wattsField.value = specs.ratedWatts; });
+    actions.appendChild(applyWatts);
+  }
+  if (specs.typicalHoursPerDay && hoursField) {
+    const applyHours = document.createElement('button');
+    applyHours.type = 'button';
+    applyHours.className = 'twin-lookup-apply-btn';
+    applyHours.textContent = `Подставить ${specs.typicalHoursPerDay} ч/сут`;
+    applyHours.addEventListener('click', () => { hoursField.value = specs.typicalHoursPerDay; });
+    actions.appendChild(applyHours);
+  }
+  if (actions.childNodes.length) panel.appendChild(actions);
+
+  if (summary) {
+    const sumEl = document.createElement('p');
+    sumEl.className = 'twin-lookup-summary';
+    sumEl.textContent = summary;
+    panel.appendChild(sumEl);
+  }
 }
 
 // ---------- сверка введённой мощности с паспортом прибора/квитанцией ----------
@@ -301,18 +566,18 @@ function twinCompareRatedWatts(modelWatts, ratedWatts) {
   if (absPct <= 15) {
     return {
       level: 'ok',
-      text: `✓ Совпадает с паспортом/квитанцией (${ratedWatts} Вт), расхождение ${absPct.toFixed(0)}%.`,
+      text: `Совпадает с паспортом/квитанцией (${ratedWatts} Вт), расхождение ${absPct.toFixed(0)}%.`,
     };
   }
   if (diff > 0) {
     return {
       level: 'warn',
-      text: `⚠ В модели ${modelWatts} Вт, а по паспорту/квитанции — ${ratedWatts} Вт (на ${absPct.toFixed(0)}% меньше). Возможно, прибор изношен или указана не пиковая мощность — проверьте цифры.`,
+      text: `Внимание: в модели ${modelWatts} Вт, а по паспорту/квитанции — ${ratedWatts} Вт (на ${absPct.toFixed(0)}% меньше). Возможно, прибор изношен или указана не пиковая мощность — проверьте цифры.`,
     };
   }
   return {
     level: 'warn',
-    text: `⚠ В модели ${modelWatts} Вт, а по паспорту/квитанции — ${ratedWatts} Вт (на ${absPct.toFixed(0)}% больше). Возможно, прибор потребляет больше заявленного — стоит перепроверить показания.`,
+    text: `Внимание: в модели ${modelWatts} Вт, а по паспорту/квитанции — ${ratedWatts} Вт (на ${absPct.toFixed(0)}% больше). Возможно, прибор потребляет больше заявленного — стоит перепроверить показания.`,
   };
 }
 
@@ -545,20 +810,22 @@ function twinDisposeScene() {
 // иначе — как раньше, одним кругом по всему контуру.
 function twinComputeDevicePositions(devices, footprintSize) {
   const n = devices.length || 1;
-  const roomIndices = [...new Set(devices.map((d) => d.roomIndex).filter((v) => v !== undefined))];
+  const hasRoomBinding = devices.some((d) => d.roomIndex !== undefined);
 
-  if (roomIndices.length <= 1) {
+  if (!hasRoomBinding) {
     const r = footprintSize * 0.32;
+    if (n === 1) return [{ x: 0, z: 0 }];
     return devices.map((_, i) => ({
       x: Math.cos((i / n) * Math.PI * 2) * r,
       z: Math.sin((i / n) * Math.PI * 2) * r,
     }));
   }
 
+  const roomIndices = [...new Set(devices.map((d) => d.roomIndex))];
   const cols = Math.ceil(Math.sqrt(roomIndices.length));
   const rows = Math.ceil(roomIndices.length / cols);
-  const cellW = footprintSize / cols;
-  const cellH = footprintSize / rows;
+  const cellW = footprintSize * 0.85 / cols;
+  const cellH = footprintSize * 0.85 / rows;
 
   const roomDeviceCounters = new Map();
   return devices.map((dev) => {
@@ -568,10 +835,10 @@ function twinComputeDevicePositions(devices, footprintSize) {
     const cx = (col - (cols - 1) / 2) * cellW;
     const cz = (row - (rows - 1) / 2) * cellH;
 
-    const count = (roomDeviceCounters.get(dev.roomIndex) || 0);
+    const count = roomDeviceCounters.get(dev.roomIndex) || 0;
     roomDeviceCounters.set(dev.roomIndex, count + 1);
     const roomDeviceCount = devices.filter((d) => d.roomIndex === dev.roomIndex).length;
-    const clusterR = Math.min(cellW, cellH) * 0.28;
+    const clusterR = Math.min(cellW, cellH) * (roomDeviceCount > 1 ? 0.22 : 0);
     const angle = (count / Math.max(1, roomDeviceCount)) * Math.PI * 2;
 
     return {
@@ -815,7 +1082,22 @@ function twinGenerate() {
   const wrap = document.getElementById('twin-scene-wrap');
   if (!wrap) return;
 
+  twinFlushPendingDevices();
   const roomDevices = twinBuildDevicesFromRooms();
+
+  if (twinHasRoomSetup() && roomDevices.length === 0) {
+    twinSetGenerateStatus(
+      'Заполните название прибора и нажмите «+ Добавить прибор» (или оставьте поле с названием — оно подхватится при генерации, если указаны Вт и часы).',
+      'warn',
+    );
+    return;
+  }
+
+  twinSetGenerateStatus(
+    roomDevices.length
+      ? `Модель по вашим комнатам: ${roomDevices.length} прибор(ов).`
+      : 'Типовой набор приборов — комнаты не заполнены.',
+  );
 
   if (typeof THREE === 'undefined') {
     const type = document.getElementById('twin-type').value;

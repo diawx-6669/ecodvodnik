@@ -36,9 +36,18 @@ function getHistory(req, res) {
   const db = readDb();
   const period = ['day', 'week', 'month'].includes(req.query.period) ? req.query.period : 'day';
 
-  const readings = req.user
-    ? db.readings.filter((r) => !r.userId || r.userId === req.user.id)
-    : db.readings.filter((r) => !r.userId);
+  // Учитываем семейный аккаунт так же, как в getSummary — иначе график
+  // истории показывал бы только личные показания, а не общие семейные.
+  let readings;
+  if (req.user) {
+    const household = req.user.householdId
+      ? db.households.find((h) => h.id === req.user.householdId)
+      : null;
+    const memberIds = household ? new Set(household.memberIds) : new Set([req.user.id]);
+    readings = db.readings.filter((r) => !r.userId || memberIds.has(r.userId));
+  } else {
+    readings = db.readings.filter((r) => !r.userId);
+  }
 
   const history = historyService.buildHistory(readings, period);
   return res.json(history);

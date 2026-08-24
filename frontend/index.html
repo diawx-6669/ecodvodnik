@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="css/dashboard-extra.css" />
   <link rel="stylesheet" href="css/goals.css" />
   <link rel="stylesheet" href="css/twin.css" />
-  <link rel="stylesheet" href="css/floorplan.css" />
+  <link rel="stylesheet" href="css/floorplan.css?v=20260823c" />
   <link rel="stylesheet" href="css/address-map.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <link rel="stylesheet" href="css/sun-schedule.css" />
@@ -476,13 +476,23 @@
             <input type="file" id="fp-file" class="fp-file-input" accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp" />
           </label>
           <div class="fp-calib">
-            <span>Длина отмеченного отрезка, м</span>
-            <input type="number" id="fp-calib-dist" min="0.1" step="0.1" placeholder="напр. 4.2" />
-            <button type="button" id="fp-set-scale-btn" class="fp-btn">Задать масштаб</button>
+            <span>Длина отрезка на плане</span>
+            <input type="number" id="fp-calib-dist" min="0.1" step="any" placeholder="400 или 4.0" />
+            <select id="fp-calib-unit" class="fp-calib-unit" aria-label="Единица длины">
+              <option value="cm" selected>см (как на чертеже)</option>
+              <option value="m">метры</option>
+            </select>
+            <button type="button" id="fp-set-scale-btn" class="fp-btn">Добавить отрезок</button>
+            <button type="button" id="fp-apply-scale-btn" class="fp-btn fp-btn-primary">Рассчитать масштаб</button>
           </div>
           <button type="button" id="fp-detect-btn" class="fp-btn">Распознать автоматически</button>
           <button type="button" id="fp-apply-btn" class="fp-btn fp-btn-primary" disabled>Построить 3D по плану</button>
           <button type="button" id="fp-clear-btn" class="fp-btn fp-btn-ghost">Сбросить план</button>
+        </div>
+
+        <div class="fp-calib-panel">
+          <div class="fp-calib-summary" id="fp-calib-summary">Шаг 1: режим «Масштаб» → кликните 2 точки по стене с цифрой на чертеже.</div>
+          <div class="fp-calib-list" id="fp-calib-list"></div>
         </div>
 
         <div class="fp-controls fp-mode-controls">
@@ -497,7 +507,23 @@
             </button>
           </div>
           <button type="button" id="fp-undo-point-btn" class="fp-btn fp-btn-ghost">Отменить точку</button>
+          <button type="button" id="fp-new-wall-seg-btn" class="fp-btn">Новый отрезок стены</button>
+          <button type="button" id="fp-connect-btn" class="fp-btn">Соединить соседние точки</button>
           <button type="button" id="fp-finish-wall-btn" class="fp-btn" disabled>Замкнуть контур стен</button>
+        </div>
+
+        <div class="fp-area-tools">
+          <div class="fp-area-preview" id="fp-area-preview">Площадь по контуру: —</div>
+          <details class="fp-area-manual">
+            <summary>Площадь вручную (Г-образная / сложная форма)</summary>
+            <p class="fp-area-manual-hint">Добавьте прямоугольные секции (например, две части буквы «Г»). Сумма секций подставится вместо авто-расчёта.</p>
+            <div class="fp-dim-list" id="fp-dim-list"></div>
+            <button type="button" id="fp-add-dim-btn" class="fp-btn fp-btn-ghost">+ Добавить секцию (длина × ширина)</button>
+            <label class="fp-manual-area-row">
+              <span>Или итоговая площадь, м²</span>
+              <input type="number" id="fp-manual-area" min="1" step="0.1" placeholder="напр. 24" />
+            </label>
+          </details>
         </div>
 
         <div class="fp-body" id="fp-drop-zone">
@@ -511,10 +537,9 @@
           <div class="fp-side">
             <ol class="fp-steps">
               <li>Загрузите JPG/PNG/WEBP или перетащите файл на превью.</li>
-              <li>Кликните 2 точки на отрезке с известной длиной (например, стена) и укажите её в метрах → «Задать масштаб».</li>
-              <li>«Распознать автоматически» — подходит для простых прямоугольных планов на контрастном фоне.</li>
-              <li>Если контур не совпал или комната сложной формы (буквой Г/П и т.п.) — включите режим «Стены» и кликните все углы контура по порядку, затем «Замкнуть контур стен». Режимом «Окна» можно отметить окна парой точек на стене — они лягут голубыми отрезками.</li>
-              <li>«Построить 3D по плану» — подставит реальную форму в модель ниже.</li>
+              <li>Режим «Масштаб»: на каждой стене с цифрой — 2 точки, введите длину (400 → «см»), «Добавить отрезок». 2–4 стены → «Рассчитать масштаб».</li>
+              <li>Режим «Стены» — отрезки контура; «Окна» — проёмы; «Соединить соседние точки».</li>
+              <li>Проверьте строку площади: периметр ≈ 20 м, площадь ≈ 24 м² для вашего плана.</li>
             </ol>
             <div class="fp-status" id="fp-status">Загрузите изображение плана, чтобы начать.</div>
           </div>
@@ -541,6 +566,7 @@
         <div class="twin-field twin-field-btn">
           <label>&nbsp;</label>
           <button type="button" id="twin-generate-btn" class="twin-generate-btn">Сгенерировать модель</button>
+          <p class="twin-generate-status" id="twin-generate-status"></p>
         </div>
       </div>
 
@@ -552,7 +578,7 @@
         <div class="twin-side">
           <div class="twin-rooms">
             <h3>Комнаты и приборы <span class="pill pill-sm">по комнатам</span></h3>
-            <p class="twin-rooms-hint">Впишите названия комнат и оборудование, которое в них расходует энергию — модель расставит приборы по своим комнатам, а не одной кучей по кругу. Если не заполнять — модель подберёт типовой набор приборов сама.</p>
+            <p class="twin-rooms-hint">Сначала нажмите «+ Добавить прибор» в комнате (или оставьте форму заполненной — при генерации прибор подхватится автоматически). Затем «Сгенерировать модель». Кнопка «Найти модель» ищет характеристики в интернете. Если комнаты не заполнять — подставится типовой набор.</p>
             <div class="twin-rooms-list" id="twin-rooms-list"></div>
             <button type="button" id="twin-add-room-btn" class="fp-btn fp-btn-ghost">+ Добавить комнату</button>
           </div>
@@ -815,8 +841,8 @@
   <script src="js/pwa.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.9.0/dist/opencv.js" defer></script>
-  <script src="js/floorplan.js" defer></script>
-  <script src="js/twin.js" defer></script>
+  <script src="js/floorplan.js?v=20260823c" defer></script>
+  <script src="js/twin.js?v=20260823d" defer></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="js/address-map.js" defer></script>
   <script src="js/sun-schedule.js"></script>

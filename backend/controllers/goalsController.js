@@ -97,8 +97,8 @@ function getGoalProgress(req, res) {
       isExceeded: currentUsage > goal.targetValue,
       percentageOver: Math.max(
         0,
-        (((currentUsage - goal.targetValue) / goal.targetValue) * 100).toFixed(1)
-      ),
+        ((currentUsage - goal.targetValue) / goal.targetValue) * 100
+      ).toFixed(1),
     };
   });
 

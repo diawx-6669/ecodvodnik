@@ -1,6 +1,6 @@
-# 📋 Project Summary - August 20, 2026
+# Project Summary - August 20, 2026
 
-## ✨ Добавлено: система целей потребления, уведомлений и экспорта данных
+## Добавлено: система целей потребления, уведомлений и экспорта данных
 
 Комплексное расширение функциональности для управления потреблением ресурсов.
 
@@ -45,7 +45,7 @@
 - Все новые функции работают с JWT аутентификацией
 - Полная приватность данных между пользователями
 
-## ✅ Добавлено: тесты backend + CI
+## Добавлено: тесты backend + CI
 
 - `backend/tests/` — 20 автотестов на Jest + Supertest: health-check,
   регистрация/вход/`/me` (валидация email, длины пароля, дубликатов
@@ -60,7 +60,7 @@
 - Исправлено: `package-lock.json` был в `.gitignore`, из-за чего `npm ci`
   в CI не смог бы найти lock-файл — теперь он коммитится.
 
-## 🤖 Питомец становится умнее!
+## Питомец становится умнее!
 
 Значительное расширение функциональности питомца-ассистента.
 
@@ -91,46 +91,46 @@
 
 ---
 
-# 📋 Project Summary - August 19, 2026
+# Project Summary - August 19, 2026
 
 ## Что добавлено за сегодня
 
 ### Конфигурационные файлы
-- ✅ `.env.example` - пример переменных окружения
-- ✅ `.editorconfig` - единые правила форматирования
-- ✅ `.eslintrc.json` - конфигурация ESLint
-- ✅ `.prettierrc.json` - конфигурация Prettier
-- ✅ `.npmrc` - конфигурация npm
-- ✅ `.gitignore` - обновленный список игнорируемых файлов
-- ✅ `arduino/.gitignore` - специфичный для Arduino
+- `.env.example` - пример переменных окружения
+- `.editorconfig` - единые правила форматирования
+- `.eslintrc.json` - конфигурация ESLint
+- `.prettierrc.json` - конфигурация Prettier
+- `.npmrc` - конфигурация npm
+- `.gitignore` - обновленный список игнорируемых файлов
+- `arduino/.gitignore` - специфичный для Arduino
 
 ### Инструменты разработки
-- ✅ `Makefile` - быстрые команды для разработки
-- ✅ `setup.sh` - автоматическая установка окружения
-- ✅ `docker-compose.yml` - контейнеризация
-- ✅ `Dockerfile.backend` - Docker образ для backend
+- `Makefile` - быстрые команды для разработки
+- `setup.sh` - автоматическая установка окружения
+- `docker-compose.yml` - контейнеризация
+- `Dockerfile.backend` - Docker образ для backend
 
 ### CI/CD & Automation
-- ✅ `.github/workflows/ci.yml` - GitHub Actions pipeline
+- `.github/workflows/ci.yml` - GitHub Actions pipeline
   - Проверка на Node.js 18 и 20
   - ESLint проверка
   - Проверка запуска сервера
   - Docker build
 
 ### Документация
-- ✅ `README.md` - расширенный с информацией о разработке
-- ✅ `CONTRIBUTING.md` - гайд по контрибьютингу
-- ✅ `LICENSE` - MIT лицензия
-- ✅ `backend/DEVELOPMENT.md` - гайд разработки backend
-- ✅ `frontend/DEVELOPMENT.md` - гайд разработки frontend
-- ✅ `docs/DEPLOYMENT.md` - гайд развертывания
+- `README.md` - расширенный с информацией о разработке
+- `CONTRIBUTING.md` - гайд по контрибьютингу
+- `LICENSE` - MIT лицензия
+- `backend/DEVELOPMENT.md` - гайд разработки backend
+- `frontend/DEVELOPMENT.md` - гайд разработки frontend
+- `docs/DEPLOYMENT.md` - гайд развертывания
 
 ### Тестирование
-- ✅ `EcoTwin-API.postman_collection.json` - Postman коллекция
+- `EcoTwin-API.postman_collection.json` - Postman коллекция
 
 ### Backend улучшения
-- ✅ Добавлены npm скрипты: lint, format, test
-- ✅ Добавлены ESLint и Prettier в devDependencies
+- Добавлены npm скрипты: lint, format, test
+- Добавлены ESLint и Prettier в devDependencies
 
 ## Всего коммитов: 11
 
@@ -170,12 +170,12 @@ make docker-up       # Запустить в Docker
 ## Структура для production-ready
 
 Проект теперь имеет:
-- ✅ Proper code quality tools (ESLint, Prettier)
-- ✅ CI/CD pipeline (GitHub Actions)
-- ✅ Docker support для легкого деплоя
-- ✅ Comprehensive documentation
-- ✅ API testing setup (Postman)
-- ✅ Development helper scripts и Make commands
+- Proper code quality tools (ESLint, Prettier)
+- CI/CD pipeline (GitHub Actions)
+- Docker support для легкого деплоя
+- Comprehensive documentation
+- API testing setup (Postman)
+- Development helper scripts и Make commands
 
 ## Следующие шаги
 
@@ -187,4 +187,4 @@ make docker-up       # Запустить в Docker
 
 ---
 
-Project is ready for team collaboration and production deployment! 🚀
+Project is ready for team collaboration and production deployment!
