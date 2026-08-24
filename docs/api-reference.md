@@ -11,8 +11,8 @@
 {
   "type": "water",           // "water" | "electricity"
   "value": 12.5,
-  "source": "manual",        // "manual" | "arduino" | "csv_import"
-  "token": "..."             // обязателен только если source = "arduino"
+  "source": "manual",        // "manual" | "device" | "csv_import"
+  "token": "..."             // обязателен только если source = "device"
 }
 ```
 
@@ -29,6 +29,36 @@
   ]
 }
 ```
+
+### `POST /readings/photo-analyze`
+Распознаёт фото счётчика воды/электричества или квитанции через Claude Vision.
+Показание при этом НЕ сохраняется — эндпоинт только возвращает распознанные
+данные, сохранение делается отдельным `POST /readings` после подтверждения
+пользователем.
+
+```json
+// Запрос
+{
+  "image": "data:image/jpeg;base64,..."
+}
+```
+
+```json
+// Ответ (200)
+{
+  "documentType": "meter",        // "meter" | "receipt" | "unknown"
+  "resourceType": "water",        // "water" | "electricity" | null
+  "value": 1234.5,                // распознанное показание или null
+  "unit": "л",
+  "costKzt": null,                // сумма к оплате, если это квитанция
+  "period": null,                 // период квитанции, если виден
+  "confidence": 0.87,             // 0..1
+  "notes": "Чёткое фото счётчика воды, цифры хорошо видны."
+}
+```
+
+Если `ANTHROPIC_API_KEY` не настроен на сервере или фото не удалось разобрать,
+возвращается `422` с полем `error` — понятным сообщением для показа пользователю.
 
 ## Analytics (аналитика)
 
@@ -48,14 +78,14 @@
 ```
 
 ### `GET /analytics/device-status`
-Показывает, "на связи" ли реальное устройство (Arduino) прямо сейчас —
-по времени последнего показания с `source: "arduino"`. Используется на
+Показывает, "на связи" ли реальное устройство (счётчик/датчик) прямо сейчас —
+по времени последнего показания с `source: "device"`. Используется на
 фронтенде для живого индикатора " датчик на связи".
 
 ```json
 {
   "connected": true,
-  "lastReading": { "type": "water", "value": 1.0, "timestamp": "...", "source": "arduino" },
+  "lastReading": { "type": "water", "value": 1.0, "timestamp": "...", "source": "device" },
   "secondsAgo": 12,
   "totalReadingsFromDevice": 47
 }

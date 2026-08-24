@@ -1,6 +1,6 @@
 // Структура одного показания.
 // type: 'water' | 'electricity'
-// source: 'arduino' | 'manual' | 'csv_import'
+// source: 'device' | 'manual' | 'csv_import'
 // value: число (литры для воды, кВт·ч для электричества) за период, либо накопительно
 
 function createReading({ type, value, source = 'manual', unit, timestamp }) {

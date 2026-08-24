@@ -39,17 +39,17 @@ describe('POST /api/readings', () => {
     expect(res.status).toBe(400);
   });
 
-  it('rejects an arduino reading with a wrong device token', async () => {
+  it('rejects a device reading with a wrong device token', async () => {
     const res = await request(app)
       .post('/api/readings')
-      .send({ type: 'water', value: 10, source: 'arduino', token: 'wrong-token' });
+      .send({ type: 'water', value: 10, source: 'device', token: 'wrong-token' });
     expect(res.status).toBe(401);
   });
 
-  it('accepts an arduino reading with the correct device token', async () => {
+  it('accepts a device reading with the correct device token', async () => {
     const res = await request(app)
       .post('/api/readings')
-      .send({ type: 'water', value: 10, source: 'arduino', token: process.env.DEVICE_TOKEN });
+      .send({ type: 'water', value: 10, source: 'device', token: process.env.DEVICE_TOKEN });
     expect(res.status).toBe(201);
   });
 });

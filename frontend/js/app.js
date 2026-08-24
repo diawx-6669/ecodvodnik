@@ -1,5 +1,5 @@
 // Главная логика фронтенда: загрузка данных, обновление дашборда, чат с питомцем,
-// живой статус подключённого устройства (Arduino) и имя питомца.
+// живой статус подключённого устройства/счётчика и имя питомца.
 
 async function loadDashboard() {
   try {
@@ -66,7 +66,7 @@ async function loadChatHistory() {
   }
 }
 
-// --- Живой статус устройства (Arduino) ---
+// --- Живой статус устройства ---
 
 function formatSecondsAgo(seconds) {
   if (seconds < 60) return `${seconds} сек назад`;
@@ -85,7 +85,7 @@ async function loadDeviceStatus() {
 
     if (!status.lastReading) {
       dot.className = 'device-dot device-dot--none';
-      text.textContent = 'Arduino ещё не подключался — используются ручные/демо-данные';
+      text.textContent = 'Устройство ещё не подключалось — используются ручные/демо-данные';
       return;
     }
 
@@ -192,7 +192,7 @@ function initDashboard() {
 
   if (!dashboardIntervalsStarted) {
     dashboardIntervalsStarted = true;
-    // Автообновление дашборда раз в 30 секунд (например, чтобы видеть данные с Arduino)
+    // Автообновление дашборда раз в 30 секунд (например, чтобы видеть данные с устройства)
     setInterval(loadDashboard, 30000);
     // Статус устройства обновляем чаще — это живой индикатор связи с железом
     setInterval(loadDeviceStatus, 10000);

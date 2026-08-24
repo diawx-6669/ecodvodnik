@@ -37,7 +37,7 @@ function exportToCSV(req, res) {
     r.type === 'water' ? 'Вода' : 'Электричество',
     r.value,
     r.unit === 'liters' ? 'л' : 'кВт·ч',
-    r.source === 'arduino' ? 'Arduino' : r.source === 'csv_import' ? 'CSV импорт' : 'Ручной ввод',
+    r.source === 'device' ? 'Устройство' : r.source === 'csv_import' ? 'CSV импорт' : 'Ручной ввод',
   ]);
 
   // Добавляем итоговую строку

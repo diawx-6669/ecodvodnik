@@ -4,7 +4,8 @@ const config = require('../config/config');
 const aiService = require('../services/aiService');
 
 // POST /api/readings
-// Принимает показания и от Arduino (по DEVICE_TOKEN), и с формы (ручной ввод).
+// Принимает показания и от подключённого устройства/счётчика (по DEVICE_TOKEN),
+// и с формы (ручной ввод).
 function addReading(req, res) {
   const { type, value, source, token, unit, timestamp } = req.body;
 
@@ -25,7 +26,7 @@ function addReading(req, res) {
   }
 
   // Если запрос пришёл от устройства — простая проверка токена
-  if (source === 'arduino' && token !== config.deviceToken) {
+  if (source === 'device' && token !== config.deviceToken) {
     return res.status(401).json({ error: 'Неверный device token' });
   }
 
@@ -47,7 +48,7 @@ function listReadings(req, res) {
   const { type, limit } = req.query;
 
   let readings = db.readings;
-  // Показания без владельца (Arduino/демо) видны всем как общая демо-лента.
+  // Показания без владельца (устройство/демо) видны всем как общая демо-лента.
   // Показания конкретного аккаунта видит только он сам — гостю чужие
   // приватные данные (например, показания школы) не показываются.
   readings = req.user
