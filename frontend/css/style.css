@@ -726,14 +726,6 @@ html { scroll-behavior: smooth; }
 }
 .auth-error.show { display: block; }
 
-.auth-guest {
-  text-align: center; margin-top: 18px; font-size: 13px; color: var(--muted);
-}
-.auth-guest button {
-  background: none; border: none; color: var(--aqua); cursor: pointer; font-weight: 700;
-  font-family: inherit; font-size: 13px; text-decoration: underline; padding: 0;
-}
-
 .hidden { display: none !important; }
 
 @media (max-width: 440px) {

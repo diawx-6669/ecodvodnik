@@ -131,15 +131,6 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
   }
 });
 
-// --- Гостевой доступ (демо без аккаунта) ---
-document.getElementById('guest-btn').addEventListener('click', () => {
-  setToken(null);
-  appAuth.user = null;
-  appAuth.isGuest = true;
-  localStorage.setItem(GUEST_FLAG_KEY, '1');
-  onAuthReady();
-});
-
 // --- Выход ---
 document.getElementById('logout-btn').addEventListener('click', () => {
   setToken(null);
@@ -176,9 +167,10 @@ async function bootstrapAuth() {
     }
   }
   if (localStorage.getItem(GUEST_FLAG_KEY)) {
-    appAuth.isGuest = true;
-    onAuthReady();
-    return;
+    // Гостевой вход убран из интерфейса, но у людей, кто раньше заходил
+    // как гость, флаг мог остаться в localStorage — подчищаем, чтобы
+    // при следующей загрузке их встречал экран входа/регистрации.
+    localStorage.removeItem(GUEST_FLAG_KEY);
   }
   showAuthScreen();
 }
