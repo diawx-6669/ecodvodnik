@@ -15,6 +15,7 @@ const fpState = {
   rooms: [],
   windows: [],
   windowDraft: [],
+  devicePoints: [],
   mode: 'calib',
   wallSegments: [],
   currentWallSegment: [],
@@ -257,6 +258,7 @@ function fpApplyLoadedImage(source, fileName, sizeMb = 0) {
   fpState.rooms = [];
   fpState.windows = [];
   fpState.windowDraft = [];
+  fpState.devicePoints = [];
   fpState.wallSegments = [];
   fpState.currentWallSegment = [];
   fpSetMode('calib');
@@ -351,6 +353,18 @@ function fpOnCanvasClick(e) {
     return;
   }
 
+  if (fpState.mode === 'device') {
+    const label = window.prompt(
+      `Название прибора для точки №${fpState.devicePoints.length + 1} (например «Холодильник» или «Стиральная машина»):`,
+      ''
+    );
+    if (label === null) return; // отмена
+    fpState.devicePoints.push({ x, y, label: label.trim() || `Прибор ${fpState.devicePoints.length + 1}` });
+    fpRedraw();
+    fpSetStatus(`Отмечена точка прибора «${fpState.devicePoints[fpState.devicePoints.length - 1].label}» (всего ${fpState.devicePoints.length}). Кликните ещё точку или переключите режим.`);
+    return;
+  }
+
   if (fpState.calibDraft.length >= 2) fpState.calibDraft = [];
   fpState.calibDraft.push({ x, y });
 
@@ -374,6 +388,8 @@ function fpSetMode(mode) {
     fpSetStatus('Режим «Стены»: отметьте точки одного отрезка стены. Перед проёмом окна — «Новый отрезок стены»; окна — режим «Окна».');
   } else if (mode === 'window') {
     fpSetStatus('Режим «Окна»: 2 точки на проёме (голубой отрезок). Окна соединяют соседние отрезки стен при сборке контура.');
+  } else if (mode === 'device') {
+    fpSetStatus('Режим «Приборы»: кликните на плане место, где реально стоит прибор (например, угол кухни у розетки) — впишите название во всплывающем окне. Затем в панели «Комнаты и приборы» привяжите к этой точке нужный прибор, чтобы в 3D он встал именно туда, а не в центр комнаты.');
   } else {
     fpSetStatus('Режим «Масштаб»: кликните 2 точки на стене с размером на чертеже → введите длину → «Добавить отрезок». Лучше 2–4 стены, затем «Рассчитать масштаб».');
   }
@@ -390,6 +406,8 @@ function fpUndoPoint() {
   } else if (fpState.mode === 'window') {
     if (fpState.windowDraft.length) fpState.windowDraft.pop();
     else if (fpState.windows.length) fpState.windows.pop();
+  } else if (fpState.mode === 'device') {
+    fpState.devicePoints.pop();
   } else if (fpState.mode === 'calib') {
     if (fpState.calibDraft.length) fpState.calibDraft.pop();
     else if (fpState.calibRefs.length) {
@@ -998,6 +1016,25 @@ function fpRedraw() {
     ctx.fill();
   });
 
+  fpState.devicePoints.forEach((p, i) => {
+    ctx.fillStyle = '#ff6b81';
+    ctx.strokeStyle = '#1c0a10';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(i + 1), p.x, p.y);
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ff6b81';
+    ctx.fillText(p.label, p.x + 10, p.y - 10);
+  });
+
   ctx.fillStyle = '#ffb23f';
   fpState.calibRefs.forEach((ref) => {
     ctx.beginPath();
@@ -1176,10 +1213,16 @@ function fpApplyToTwin() {
   const outerM = fpToMeters(fpState.outer, cx, cy);
   const roomsM = fpState.rooms.map((r) => fpToMeters(r, cx, cy));
   const windowsM = fpState.windows.map(([a, b]) => fpToMeters([a, b], cx, cy));
+  const devicePointsM = fpToMeters(fpState.devicePoints, cx, cy).map((p, i) => ({
+    x: p.x,
+    z: p.z,
+    label: fpState.devicePoints[i].label,
+  }));
   const area = fpResolveAreaM2(outerM);
   const peri = fpPolygonPerimeter(outerM);
 
-  window.EcotchiFloorplan = { outer: outerM, rooms: roomsM, windows: windowsM, area };
+  window.EcotchiFloorplan = { outer: outerM, rooms: roomsM, windows: windowsM, devicePoints: devicePointsM, area };
+  window.dispatchEvent(new CustomEvent('ecotchi:floorplan-applied'));
 
   const areaInput = document.getElementById('twin-area');
   if (areaInput) areaInput.value = Math.max(6, Math.round(area));
@@ -1199,6 +1242,7 @@ function fpClear() {
   fpState.rooms = [];
   fpState.windows = [];
   fpState.windowDraft = [];
+  fpState.devicePoints = [];
   fpState.wallSegments = [];
   fpState.currentWallSegment = [];
   fpState.calibDraft = [];

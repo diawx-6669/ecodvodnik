@@ -2,7 +2,7 @@ require('dotenv').config();
 
 module.exports = {
   port: process.env.PORT || 3000,
-  anthropicApiKey: process.env.ANTHROPIC_API_KEY || null,
+  geminiApiKey: process.env.GEMINI_API_KEY || null,
   deviceToken: process.env.DEVICE_TOKEN || 'change_me_please',
 
   // Секрет для подписи JWT-токенов авторизации. В проде — обязательно

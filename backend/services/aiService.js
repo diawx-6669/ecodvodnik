@@ -353,12 +353,15 @@ function ruleBasedRecommendations(summary) {
 }
 
 // ---------------------------------------------------------------------------
-// Опциональный вызов реального LLM (Anthropic API), если задан ключ.
+// Опциональный вызов реального LLM (Gemini API от Google), если задан ключ.
 // Если ключа нет — используем rule-based заглушку выше.
 // ---------------------------------------------------------------------------
 
+const GEMINI_TEXT_MODEL = 'gemini-flash-latest';
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+
 async function llmReply(summary, petState, userMessage, user = null) {
-  if (!config.anthropicApiKey) {
+  if (!config.geminiApiKey) {
     return ruleBasedReply(summary, petState, userMessage, user);
   }
 
@@ -382,29 +385,41 @@ async function llmReply(summary, petState, userMessage, user = null) {
       petState.mood +
       '.';
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': config.anthropicApiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 300,
-        system: systemPrompt,
-        messages: [
-          {
-            role: 'user',
-            content: userMessage || 'Расскажи, как у нас дела с ресурсами на этой неделе?',
-          },
-        ],
-      }),
-    });
+    const response = await fetch(
+      `${GEMINI_API_BASE}/${GEMINI_TEXT_MODEL}:generateContent`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': config.geminiApiKey,
+        },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  text: userMessage || 'Расскажи, как у нас дела с ресурсами на этой неделе?',
+                },
+              ],
+            },
+          ],
+          generationConfig: { maxOutputTokens: 300 },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errBody = await response.text().catch(() => '');
+      console.error('Gemini API error:', response.status, errBody);
+      return ruleBasedReply(summary, petState, userMessage, user);
+    }
 
     const data = await response.json();
-    const text = (data.content || [])
-      .map((block) => (block.type === 'text' ? block.text : ''))
+    const text = (data.candidates || [])
+      .flatMap((c) => (c.content && c.content.parts) || [])
+      .map((part) => part.text || '')
       .filter(Boolean)
       .join('\n');
 
@@ -490,54 +505,52 @@ async function analyzeMeterPhoto(imageDataUrl) {
     };
   }
 
-  if (!config.anthropicApiKey) {
+  if (!config.geminiApiKey) {
     return {
       ok: false,
       error:
-        'Распознавание фото недоступно: на сервере не настроен ANTHROPIC_API_KEY. ' +
+        'Распознавание фото недоступно: на сервере не настроен GEMINI_API_KEY. ' +
         'Введите показание вручную.',
     };
   }
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': config.anthropicApiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 500,
-        system: METER_ANALYSIS_SYSTEM_PROMPT,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'image',
-                source: {
-                  type: 'base64',
-                  media_type: parsed.mediaType,
-                  data: parsed.base64Data,
+    const response = await fetch(
+      `${GEMINI_API_BASE}/${GEMINI_TEXT_MODEL}:generateContent`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': config.geminiApiKey,
+        },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: METER_ANALYSIS_SYSTEM_PROMPT }] },
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  inlineData: {
+                    mimeType: parsed.mediaType,
+                    data: parsed.base64Data,
+                  },
                 },
-              },
-              {
-                type: 'text',
-                text:
-                  'Распознай это изображение (счётчик воды/электричества или квитанция) ' +
-                  'и верни JSON строго по описанной схеме.',
-              },
-            ],
-          },
-        ],
-      }),
-    });
+                {
+                  text:
+                    'Распознай это изображение (счётчик воды/электричества или квитанция) ' +
+                    'и верни JSON строго по описанной схеме.',
+                },
+              ],
+            },
+          ],
+          generationConfig: { maxOutputTokens: 500 },
+        }),
+      }
+    );
 
     if (!response.ok) {
       const errBody = await response.text().catch(() => '');
-      console.error('Anthropic vision API error:', response.status, errBody);
+      console.error('Gemini vision API error:', response.status, errBody);
       return {
         ok: false,
         error: 'Сервис распознавания временно недоступен. Попробуйте ещё раз или введите вручную.',
@@ -545,8 +558,9 @@ async function analyzeMeterPhoto(imageDataUrl) {
     }
 
     const data = await response.json();
-    const text = (data.content || [])
-      .map((block) => (block.type === 'text' ? block.text : ''))
+    const text = (data.candidates || [])
+      .flatMap((c) => (c.content && c.content.parts) || [])
+      .map((part) => part.text || '')
       .filter(Boolean)
       .join('\n');
 

@@ -77,6 +77,10 @@ function twinInit() {
 
   window.addEventListener('resize', twinOnResize);
 
+  // Когда план применён (появились/изменились точки приборов) — перерисовываем
+  // панель комнат, чтобы в выпадающем списке появились новые точки на плане.
+  window.addEventListener('ecotchi:floorplan-applied', () => twinRenderRoomsUI());
+
   const addRoomBtn = document.getElementById('twin-add-room-btn');
   if (addRoomBtn) {
     addRoomBtn.addEventListener('click', () => {
@@ -188,6 +192,36 @@ function twinRenderRoomsUI() {
         lookupRow.className = 'twin-room-device-lookup';
         lookupRow.textContent = dev.lookupSummary;
         devList.appendChild(lookupRow);
+      }
+
+      // Если в редакторе плана отмечены точки приборов — даём привязать
+      // конкретный прибор к конкретной точке на плане, чтобы в 3D он встал
+      // именно там (а не в центре комнаты/ячейки автоматически).
+      const planPoints = window.EcotchiFloorplan && window.EcotchiFloorplan.devicePoints;
+      if (planPoints && planPoints.length) {
+        const planRow = document.createElement('div');
+        planRow.className = 'twin-room-device-planpoint';
+        const planLabel = document.createElement('span');
+        planLabel.textContent = 'Место на плане:';
+        const planSelect = document.createElement('select');
+        planSelect.className = 'twin-room-device-planpoint-select';
+        const noneOpt = document.createElement('option');
+        noneOpt.value = '';
+        noneOpt.textContent = '— авто-расстановка —';
+        planSelect.appendChild(noneOpt);
+        planPoints.forEach((pt, idx) => {
+          const opt = document.createElement('option');
+          opt.value = String(idx);
+          opt.textContent = `${idx + 1}. ${pt.label}`;
+          if (dev.planPointIndex === idx) opt.selected = true;
+          planSelect.appendChild(opt);
+        });
+        planSelect.addEventListener('change', () => {
+          const val = planSelect.value;
+          dev.planPointIndex = val === '' ? null : Number(val);
+        });
+        planRow.append(planLabel, planSelect);
+        devList.appendChild(planRow);
       }
     });
 
@@ -325,6 +359,7 @@ function twinBuildDevicesFromRooms() {
         color: TWIN_ROOM_PALETTE[roomIdx % TWIN_ROOM_PALETTE.length],
         roomIndex: roomIdx,
         roomName,
+        planPointIndex: dev.planPointIndex != null ? dev.planPointIndex : null,
       });
     });
   });
@@ -513,7 +548,7 @@ function twinRenderLookupPanel(panel, { loading, error, data, wattsField, hoursF
   if (!aiEnabled && source === 'fallback') {
     const hint = document.createElement('div');
     hint.className = 'twin-lookup-hint';
-    hint.textContent = 'Для точного поиска по модели задайте ANTHROPIC_API_KEY на сервере.';
+    hint.textContent = 'Для точного поиска по модели задайте GEMINI_API_KEY на сервере.';
     panel.appendChild(hint);
   }
 
@@ -812,40 +847,62 @@ function twinComputeDevicePositions(devices, footprintSize) {
   const n = devices.length || 1;
   const hasRoomBinding = devices.some((d) => d.roomIndex !== undefined);
 
-  if (!hasRoomBinding) {
-    const r = footprintSize * 0.32;
-    if (n === 1) return [{ x: 0, z: 0 }];
-    return devices.map((_, i) => ({
-      x: Math.cos((i / n) * Math.PI * 2) * r,
-      z: Math.sin((i / n) * Math.PI * 2) * r,
-    }));
+  // Приборы, для которых пользователь в редакторе плана явно отметил точку
+  // ("Комнаты и приборы" → "Место на плане") — ставим их точно в эти
+  // реальные координаты, а не в автоматически рассчитанный центр
+  // комнаты/ячейки. Остальные приборы по-прежнему распределяются старым
+  // алгоритмом (по кругу или по ячейкам комнат).
+  const planPoints = window.EcotchiFloorplan && window.EcotchiFloorplan.devicePoints;
+  const pinnedPositions = new Map(); // index in devices -> {x, z}
+  if (planPoints && planPoints.length) {
+    devices.forEach((dev, i) => {
+      if (dev.planPointIndex != null && planPoints[dev.planPointIndex]) {
+        const pt = planPoints[dev.planPointIndex];
+        pinnedPositions.set(i, { x: pt.x, z: pt.z });
+      }
+    });
   }
 
-  const roomIndices = [...new Set(devices.map((d) => d.roomIndex))];
-  const cols = Math.ceil(Math.sqrt(roomIndices.length));
-  const rows = Math.ceil(roomIndices.length / cols);
-  const cellW = footprintSize * 0.85 / cols;
-  const cellH = footprintSize * 0.85 / rows;
+  const fallback = (() => {
+    if (!hasRoomBinding) {
+      const r = footprintSize * 0.32;
+      if (n === 1) return [{ x: 0, z: 0 }];
+      return devices.map((_, i) => ({
+        x: Math.cos((i / n) * Math.PI * 2) * r,
+        z: Math.sin((i / n) * Math.PI * 2) * r,
+      }));
+    }
 
-  const roomDeviceCounters = new Map();
-  return devices.map((dev) => {
-    const slot = roomIndices.indexOf(dev.roomIndex);
-    const col = slot % cols;
-    const row = Math.floor(slot / cols);
-    const cx = (col - (cols - 1) / 2) * cellW;
-    const cz = (row - (rows - 1) / 2) * cellH;
+    const roomIndices = [...new Set(devices.map((d) => d.roomIndex))];
+    const cols = Math.ceil(Math.sqrt(roomIndices.length));
+    const rows = Math.ceil(roomIndices.length / cols);
+    const cellW = footprintSize * 0.85 / cols;
+    const cellH = footprintSize * 0.85 / rows;
 
-    const count = roomDeviceCounters.get(dev.roomIndex) || 0;
-    roomDeviceCounters.set(dev.roomIndex, count + 1);
-    const roomDeviceCount = devices.filter((d) => d.roomIndex === dev.roomIndex).length;
-    const clusterR = Math.min(cellW, cellH) * (roomDeviceCount > 1 ? 0.22 : 0);
-    const angle = (count / Math.max(1, roomDeviceCount)) * Math.PI * 2;
+    const roomDeviceCounters = new Map();
+    return devices.map((dev) => {
+      const slot = roomIndices.indexOf(dev.roomIndex);
+      const col = slot % cols;
+      const row = Math.floor(slot / cols);
+      const cx = (col - (cols - 1) / 2) * cellW;
+      const cz = (row - (rows - 1) / 2) * cellH;
 
-    return {
-      x: cx + (roomDeviceCount > 1 ? Math.cos(angle) * clusterR : 0),
-      z: cz + (roomDeviceCount > 1 ? Math.sin(angle) * clusterR : 0),
-    };
-  });
+      const count = roomDeviceCounters.get(dev.roomIndex) || 0;
+      roomDeviceCounters.set(dev.roomIndex, count + 1);
+      const roomDeviceCount = devices.filter((d) => d.roomIndex === dev.roomIndex).length;
+      const clusterR = Math.min(cellW, cellH) * (roomDeviceCount > 1 ? 0.22 : 0);
+      const angle = (count / Math.max(1, roomDeviceCount)) * Math.PI * 2;
+
+      return {
+        x: cx + (roomDeviceCount > 1 ? Math.cos(angle) * clusterR : 0),
+        z: cz + (roomDeviceCount > 1 ? Math.sin(angle) * clusterR : 0),
+      };
+    });
+  })();
+
+  if (!pinnedPositions.size) return fallback;
+
+  return devices.map((_, i) => pinnedPositions.get(i) || fallback[i]);
 }
 
 function twinBuildScene(areaM2) {

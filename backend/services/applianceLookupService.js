@@ -1,5 +1,8 @@
 const config = require('../config/config');
 
+const GEMINI_TEXT_MODEL = 'gemini-flash-latest';
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+
 // Небольшой локальный справочник популярных моделей — работает без интернета/API.
 const KNOWN_MODELS = {
   'samsung rb33': {
@@ -173,24 +176,32 @@ async function llmLookup(name, model) {
 
   const userPrompt = `Прибор: ${name || 'не указано'}. Модель: ${model || 'не указана'}. Найди энергохарактеристики.`;
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': config.anthropicApiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 800,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userPrompt }],
-    }),
-  });
+  const response = await fetch(
+    `${GEMINI_API_BASE}/${GEMINI_TEXT_MODEL}:generateContent`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': config.geminiApiKey,
+      },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+        generationConfig: { maxOutputTokens: 800 },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errBody = await response.text().catch(() => '');
+    console.error('Gemini API error (appliance lookup):', response.status, errBody);
+    return null;
+  }
 
   const data = await response.json();
-  const text = (data.content || [])
-    .map((block) => (block.type === 'text' ? block.text : ''))
+  const text = (data.candidates || [])
+    .flatMap((c) => (c.content && c.content.parts) || [])
+    .map((part) => part.text || '')
     .filter(Boolean)
     .join('\n');
 
@@ -316,7 +327,7 @@ async function lookupAppliance({ name, model, userWatts, userHoursPerDay, ratedW
   }
 
   let specs = null;
-  if (config.anthropicApiKey && trimmedModel) {
+  if (config.geminiApiKey && trimmedModel) {
     try {
       specs = await llmLookup(trimmedName, trimmedModel);
     } catch (err) {
@@ -351,7 +362,7 @@ async function lookupAppliance({ name, model, userWatts, userHoursPerDay, ratedW
     },
     comparison,
     summary: buildSummary(specs, comparison),
-    aiEnabled: !!config.anthropicApiKey,
+    aiEnabled: !!config.geminiApiKey,
   };
 }
 
