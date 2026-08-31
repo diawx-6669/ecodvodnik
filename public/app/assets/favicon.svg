@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="drop" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#45d9ff"/>
+      <stop offset="100%" stop-color="#35e08f"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8ce7ff"/>
+      <stop offset="100%" stop-color="#35e08f"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="16" fill="#0c1614"/>
+
+  <!-- лист-антенна: эко-часть питомца -->
+  <path d="M32 8c6 2 8 8 4 14-6-1-10-8-4-14Z" fill="url(#leaf)"/>
+
+  <!-- тело питомца: капля воды -->
+  <path d="M32 14C22 28 16 36 16 44a16 16 0 0 0 32 0c0-8-6-16-16-30Z" fill="url(#drop)"/>
+
+  <!-- глаза -->
+  <circle cx="26" cy="42" r="2.8" fill="#04120c"/>
+  <circle cx="38" cy="42" r="2.8" fill="#04120c"/>
+
+  <!-- пульс вместо улыбки: живой AI-мониторинг -->
+  <path d="M20 50h6l3-6 4 10 3-6h8" stroke="#04120c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

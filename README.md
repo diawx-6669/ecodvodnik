@@ -1,112 +1,29 @@
-# Экотчи (Ecotchi)
+# Welcome to your Lovable project
 
-AI-платформа для мониторинга потребления воды и электроэнергии с "живым"
-цифровым питомцем-ассистентом. Проект для трека **EcoFin** хакатона
-**Future Minds Hackathon 2026**.
+This project was built with [Lovable](https://lovable.dev).
 
-Питомец реагирует на данные с подключённых устройств/счётчиков, на данные,
-введённые вручную, а также на фото счётчиков и квитанций (распознаются AI),
-даёт персональные AI-рекомендации по экономии ресурсов и показывает, сколько
-денег и ресурсов сэкономил пользователь.
+## Build with Lovable
 
-Сайт поддерживает регистрацию и вход в аккаунт (email + пароль, JWT).
-Аудитория — не только жилые дома, но и **школы** и **малый бизнес**:
-при регистрации пользователь выбирает тип аккаунта и его размер (человек в
-семье / учеников / сотрудников), а бэкенд считает персональные нормативы
-потребления под конкретный тип и хранит показания и историю чата отдельно
-для каждого аккаунта. Без регистрации доступен гостевой демо-режим.
+Open your project in the [Lovable editor](https://lovable.dev) and keep building.
 
----
+- **Ship faster**: describe what you want to build and Lovable handles the code.
+- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
+- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
 
-## Структура проекта
+## Development
 
-```
-ecodvoinik/
-├── backend/            # Node.js/Express API сервер
-│   ├── config/         # Настройки, тарифы, переменные окружения
-│   ├── routes/         # Маршруты API
-│   ├── controllers/    # Обработчики запросов
-│   ├── services/       # Бизнес-логика (AI, аналитика, состояние питомца)
-│   ├── models/         # Модели данных
-│   └── data/           # Хранилище (JSON "база данных")
-├── frontend/           # Веб-интерфейс (HTML/CSS/JS)
-│   ├── css/
-│   ├── js/
-│   └── assets/pet/     # Изображения/состояния питомца
-├── data/                # Синтетические демо-данные (CSV)
-├── scripts/             # Вспомогательные скрипты (генерация демо-данных)
-└── docs/                 # Документация проекта
-```
+Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
 
-## Быстрый старт
-
-### 1. Backend
-
-```bash
-cd backend
-npm install
+```sh
+git clone <this-repository-url>
+cd <repository-name>
+npm i
 npm run dev
 ```
 
-Сервер поднимется на `http://localhost:3000` и будет отдавать фронтенд
-и API одновременно.
+## Built with
 
-Запустить тесты (Jest + Supertest, 20 тестов — auth, readings, health):
-
-```bash
-cd backend
-npm test
-```
-
-### 2. Frontend
-
-Отдельно поднимать не нужно — backend раздаёт статику из папки `frontend/`.
-Просто откройте `http://localhost:3000` в браузере после запуска сервера.
-
-### 3. Демо-данные (без реального железа)
-
-```bash
-cd scripts
-pip install -r requirements.txt
-python3 generate_sample_data.py
-```
-
-Скрипт создаст `data/sample_consumption.csv` с синтетической историей
-потребления — можно импортировать через API для демонстрации без реальных
-счётчиков.
-
-### 4. Фото счётчика или квитанции
-
-На дашборде, в блоке «Новое показание», есть загрузка фото счётчика или
-квитанции — снимок отправляется на backend, который через Claude Vision
-распознаёт тип ресурса (вода/электричество), значение показания, а для
-квитанции ещё и сумму/период. Распознанные данные подставляются в форму,
-но не сохраняются автоматически — пользователь проверяет их и подтверждает.
-Для работы нужен `ANTHROPIC_API_KEY` в `backend/.env`; без ключа функция
-возвращает понятную ошибку и предлагает ввести показание вручную.
-
-## Переменные окружения
-
-Создайте `backend/.env` (см. `backend/.env.example`):
-
-```
-PORT=3000
-ANTHROPIC_API_KEY=your_key_here     # опционально, для реальных AI-ответов питомца
-JWT_SECRET=change_me_to_random      # обязательно для прода — секрет для входа/регистрации
-```
-
-Без ключа `ANTHROPIC_API_KEY` ассистент работает на встроенной rule-based
-логике (заглушка), чтобы демо работало даже без интернета/ключа API.
-`JWT_SECRET` для локальной демонстрации на хакатоне можно оставить
-значением по умолчанию из `.env.example`, но перед реальным продом его
-обязательно нужно заменить на длинную случайную строку.
-
-## Документация
-
-- `docs/architecture.md` — архитектура системы
-- `docs/api-reference.md` — описание API-эндпоинтов
-- `docs/pitch-notes.md` — заметки для питч-дека
-
-## Хакатон
-
-Future Minds Hackathon 2026 · Трек EcoFin
+- TanStack Start
+- TypeScript
+- React
+- Tailwind CSS

@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Экотчи — живой AI-питомец по ресурсам</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Sora:wght@600;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/theme.css" />
+  <link rel="stylesheet" href="css/dashboard-extra.css" />
+  <link rel="stylesheet" href="css/goals.css" />
+  <link rel="stylesheet" href="css/twin.css" />
+  <link rel="stylesheet" href="css/floorplan.css?v=20260823c" />
+  <link rel="stylesheet" href="css/address-map.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="css/sun-schedule.css" />
+  <link rel="stylesheet" href="css/profile.css" />
+  <link rel="stylesheet" href="css/dashboard-redesign.css" />
+  <link rel="stylesheet" href="css/premium.css?v=1" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0b1512" />
+  <script>
+    // Применяем сохранённую тему ДО отрисовки страницы, чтобы не было
+    // мигания светлым/тёмным при загрузке (полная логика — в js/theme.js).
+    (function () {
+      try {
+        var t = localStorage.getItem('ecodvoinik_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div class="aurora" aria-hidden="true">
+    <span class="blob b1"></span>
+    <span class="blob b2"></span>
+    <span class="blob b3"></span>
+    <span class="veil"></span>
+    <span class="beam"></span>
+    <span class="waves"></span>
+    <span class="sparks" id="bg-sparks"></span>
+    <span class="grid"></span>
+  </div>
+
+  <!-- ===================== Экран входа / регистрации ===================== -->
+  <div id="auth-screen" class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-head">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+            <path d="M8 8c-1.4-2.2-.7-4.7 1.4-5.8 1.1 2.2.7 4.7-1.4 5.8Z" fill="currentColor" opacity="0.9"/>
+            <path d="M16 8c1.4-2.2.7-4.7-1.4-5.8-1.1 2.2-.7 4.7 1.4 5.8Z" fill="currentColor" opacity="0.9"/>
+            <circle cx="12" cy="13" r="7" fill="currentColor" opacity="0.9"/>
+            <circle cx="9.6" cy="12.3" r="1" fill="#04120c"/>
+            <circle cx="14.4" cy="12.3" r="1" fill="#04120c"/>
+            <path d="M9.5 15.3c1 1 4 1 5 0" stroke="#04120c" stroke-width="1" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="auth-title">Эко<b style="color:var(--green)">тчи</b></span>
+      </div>
+      <p class="auth-sub">AI-питомец следит за водой и светом. Дом, школа, бизнес.</p>
+
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" data-tab="login">Вход</button>
+        <button type="button" class="auth-tab" data-tab="register">Регистрация</button>
+      </div>
+
+      <div id="auth-error" class="auth-error"></div>
+
+      <!-- Форма входа -->
+      <form id="login-form" class="auth-form">
+        <input type="email" id="login-email" placeholder="Email" autocomplete="email" required />
+        <input type="password" id="login-password" placeholder="Пароль" autocomplete="current-password" required />
+        <button type="submit" class="auth-submit">Войти</button>
+      </form>
+
+      <!-- Форма регистрации -->
+      <form id="register-form" class="auth-form hidden">
+        <input type="text" id="register-name" placeholder="Ваше имя" autocomplete="name" required />
+        <input type="email" id="register-email" placeholder="Email" autocomplete="email" required />
+        <input type="password" id="register-password" placeholder="Пароль (мин. 6 символов)" autocomplete="new-password" required />
+
+        <label class="field-label">Кто вы?</label>
+        <div class="audience-select" id="audience-select">
+          <div class="audience-option active" data-type="household">
+            Дом
+          </div>
+          <div class="audience-option" data-type="school">
+            Школа
+          </div>
+          <div class="audience-option" data-type="business">
+            Бизнес
+          </div>
+        </div>
+        <input type="hidden" id="register-type" value="household" />
+
+        <label class="field-label" id="units-label">Сколько человек в семье?</label>
+        <input type="number" id="register-units" min="1" value="1" required />
+
+        <input type="text" id="register-org" placeholder="Название школы/компании (необязательно)" class="hidden" />
+
+        <button type="submit" class="auth-submit">Создать аккаунт</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== Основное приложение ===================== -->
+  <div id="app-root" class="hidden">
+  <div class="app-header">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+          <path d="M8 8c-1.4-2.2-.7-4.7 1.4-5.8 1.1 2.2.7 4.7-1.4 5.8Z" fill="currentColor" opacity="0.9"/>
+          <path d="M16 8c1.4-2.2.7-4.7-1.4-5.8-1.1 2.2-.7 4.7 1.4 5.8Z" fill="currentColor" opacity="0.9"/>
+          <circle cx="12" cy="13" r="7" fill="currentColor" opacity="0.9"/>
+          <circle cx="9.6" cy="12.3" r="1" fill="#04120c"/>
+          <circle cx="14.4" cy="12.3" r="1" fill="#04120c"/>
+          <path d="M9.5 15.3c1 1 4 1 5 0" stroke="#04120c" stroke-width="1" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span class="brand-text">Эко<b>тчи</b></span>
+    </div>
+    <div class="tagline">Экономия воды и электричества</div>
+    <div class="live-badge"><i></i> <span>питомец онлайн</span></div>
+    <button type="button" class="theme-toggle" id="theme-toggle-btn" title="Сменить тему">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none"><path d="M20 14.5a8 8 0 1 1-10.5-10.5 7 7 0 0 0 10.5 10.5Z" fill="currentColor"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><path d="M12 2v2.4M12 19.6V22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2 12h2.4M19.6 12H22M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="notif-wrap">
+      <button type="button" class="theme-toggle" id="notif-bell" title="Уведомления">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3a5 5 0 0 0-5 5v3.2c0 .6-.2 1.2-.6 1.7L5 15.5c-.7.9-.1 2.2 1 2.2h12c1.1 0 1.7-1.3 1-2.2l-1.4-2.6a2.7 2.7 0 0 1-.6-1.7V8a5 5 0 0 0-5-5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.5 20a2.6 2.6 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span class="notif-badge hidden" id="notif-badge">0</span>
+      </button>
+      <div class="notif-dropdown" id="notif-dropdown">
+        <div class="notif-dropdown-head">Уведомления</div>
+        <div id="notif-list" class="notif-list"></div>
+        <div class="notif-empty" id="notif-empty">Пока всё спокойно — уведомлений нет.</div>
+      </div>
+    </div>
+    <div id="account-chip" class="account-chip hidden" role="button" tabindex="0" title="Открыть профиль">
+      <span class="account-avatar" id="account-avatar">Г</span>
+      <span class="account-info">
+        <span class="account-name" id="account-name">Гость</span>
+        <span class="account-type" id="account-type">демо-режим</span>
+      </span>
+      <button type="button" class="account-logout" id="logout-btn" title="Выйти" aria-label="Выйти">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <nav class="site-nav" id="site-nav" aria-label="Разделы сайта">
+    <div class="site-nav-inner">
+      <a href="#pet-panel" class="site-nav-link" data-nav-target="pet-panel">Питомец</a>
+      <a href="#dashboard-panel" class="site-nav-link" data-nav-target="dashboard-panel">Сводка</a>
+      <a href="#recommendations-section" class="site-nav-link" data-nav-target="recommendations-section">Рекомендации</a>
+      <a href="#tips-section" class="site-nav-link" data-nav-target="tips-section">Советы</a>
+      <a href="#history-panel" class="site-nav-link" data-nav-target="history-panel">История и графики</a>
+      <a href="#achievements-panel" class="site-nav-link" data-nav-target="achievements-panel">Достижения</a>
+      <a href="#twin-panel" class="site-nav-link" data-nav-target="twin-panel">3D-двойник</a>
+      <a href="#sun-panel" class="site-nav-link" data-nav-target="sun-panel">Свет по солнцу</a>
+      <a href="#new-reading-block" class="site-nav-link" data-nav-target="new-reading-block">Показание / Фото</a>
+    </div>
+  </nav>
+  </div>
+
+  <main class="layout">
+    <!-- Питомец -->
+    <section class="panel pet-panel" id="pet-panel">
+      <div class="pet-stage">
+        <div class="pet-aura" aria-hidden="true"></div>
+        <div class="pet-particles" id="pet-particles" aria-hidden="true"></div>
+        <div id="pet-avatar" class="pet-avatar" data-mood="neutral">
+          <svg viewBox="0 0 220 220" class="pet-svg" aria-hidden="true">
+            <defs>
+              <radialGradient id="petBodyGradient" cx="36%" cy="22%" r="86%">
+                <stop offset="0%" stop-color="#ffffff" />
+                <stop offset="22%" stop-color="var(--pet-light)" />
+                <stop offset="62%" stop-color="var(--pet-main)" />
+                <stop offset="100%" stop-color="var(--pet-accent)" />
+              </radialGradient>
+              <linearGradient id="petLeafGradient" x1="0" y1="0" x2="0.3" y2="1">
+                <stop offset="0%" stop-color="var(--pet-light)" />
+                <stop offset="100%" stop-color="var(--pet-accent)" />
+              </linearGradient>
+              <radialGradient id="petGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="var(--pet-main)" stop-opacity="0.5" />
+                <stop offset="100%" stop-color="var(--pet-main)" stop-opacity="0" />
+              </radialGradient>
+              <radialGradient id="petBelly" cx="50%" cy="70%" r="62%">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.75" />
+                <stop offset="70%" stop-color="var(--pet-light)" stop-opacity="0.35" />
+                <stop offset="100%" stop-color="var(--pet-light)" stop-opacity="0" />
+              </radialGradient>
+              <linearGradient id="petRim" x1="0" y1="1" x2="0.2" y2="0">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85" />
+                <stop offset="45%" stop-color="#ffffff" stop-opacity="0.12" />
+                <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+              </linearGradient>
+              <radialGradient id="eyeSclera" cx="50%" cy="26%" r="74%">
+                <stop offset="0%" stop-color="#ffffff" />
+                <stop offset="60%" stop-color="#eef7f4" />
+                <stop offset="100%" stop-color="#b6cfc9" />
+              </radialGradient>
+              <radialGradient id="eyeIris" cx="40%" cy="30%" r="76%">
+                <stop offset="0%" stop-color="#7defe6" />
+                <stop offset="42%" stop-color="#22909a" />
+                <stop offset="78%" stop-color="#0d3b45" />
+                <stop offset="100%" stop-color="#061c22" />
+              </radialGradient>
+              <radialGradient id="eyeDepth" cx="50%" cy="14%" r="86%">
+                <stop offset="0%" stop-color="#07231f" stop-opacity="0.55" />
+                <stop offset="50%" stop-color="#07231f" stop-opacity="0.1" />
+                <stop offset="100%" stop-color="#07231f" stop-opacity="0" />
+              </radialGradient>
+              <filter id="eyeBlur" x="-60%" y="-60%" width="220%" height="220%">
+                <feGaussianBlur stdDeviation="2" />
+              </filter>
+              <filter id="petSoft" x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur stdDeviation="6" />
+              </filter>
+              <filter id="petBloom" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="4" result="b" />
+                <feMerge>
+                  <feMergeNode in="b" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+              <clipPath id="petBodyClip">
+                <ellipse cx="110" cy="124" rx="67" ry="63" />
+              </clipPath>
+            </defs>
+
+            <circle cx="110" cy="112" r="96" fill="url(#petGlow)" class="pet-halo" />
+            <ellipse cx="110" cy="197" rx="50" ry="8" fill="#03110d" opacity="0.28" filter="url(#petSoft)" />
+
+            <!-- круги под питомцем -->
+            <g class="pet-rings" fill="none" stroke="var(--pet-light)">
+              <ellipse cx="110" cy="197" rx="44" ry="7" stroke-width="1.6" opacity="0.28" />
+              <ellipse cx="110" cy="197" rx="60" ry="10" stroke-width="1.2" opacity="0.14" />
+            </g>
+
+            <!-- хвостик-росток -->
+            <g class="pet-tail">
+              <path d="M 158 142 C 188 140 196 118 190 100" fill="none" stroke="var(--pet-accent)" stroke-width="6.5" stroke-linecap="round" />
+              <path d="M 190 98 C 178 92 176 78 188 72 C 200 78 200 92 190 98 Z" fill="url(#petLeafGradient)" />
+              <path d="M 190 97 L 188 74" stroke="var(--pet-light)" stroke-width="1.4" opacity="0.7" />
+            </g>
+
+            <!-- росток на голове -->
+            <g class="pet-ears">
+              <path d="M 110 66 C 108 54 106 44 108 34" fill="none" stroke="var(--pet-accent)" stroke-width="4.6" stroke-linecap="round" />
+              <path d="M 108 44 C 92 42 82 30 88 18 C 104 20 112 32 108 44 Z" fill="url(#petLeafGradient)" />
+              <path d="M 110 40 C 126 36 136 24 130 13 C 115 16 107 28 110 40 Z" fill="url(#petLeafGradient)" opacity="0.95" />
+              <path d="M 107 43 C 98 38 92 30 89 21" stroke="var(--pet-light)" stroke-width="1.3" fill="none" opacity="0.7" />
+              <path d="M 110 39 C 118 34 124 26 128 17" stroke="var(--pet-light)" stroke-width="1.3" fill="none" opacity="0.6" />
+              <circle cx="108" cy="30" r="2.6" fill="#ffffff" opacity="0.9" filter="url(#petBloom)" />
+            </g>
+
+            <!-- ручки -->
+            <g class="pet-arms">
+              <ellipse cx="47" cy="140" rx="12" ry="17" fill="url(#petBodyGradient)" transform="rotate(18 47 140)" opacity="0.95" />
+              <ellipse cx="173" cy="140" rx="12" ry="17" fill="url(#petBodyGradient)" transform="rotate(-18 173 140)" opacity="0.95" />
+            </g>
+
+            <!-- тело -->
+            <g class="pet-body">
+              <ellipse cx="110" cy="124" rx="67" ry="63" fill="url(#petBodyGradient)" />
+              <g clip-path="url(#petBodyClip)">
+                <ellipse cx="110" cy="152" rx="46" ry="40" fill="url(#petBelly)" />
+                <ellipse cx="110" cy="188" rx="66" ry="26" fill="url(#petRim)" opacity="0.5" />
+                <ellipse cx="80" cy="88" rx="20" ry="12" fill="#fff" opacity="0.55" transform="rotate(-26 80 88)" />
+                <ellipse cx="96" cy="80" rx="6" ry="4" fill="#fff" opacity="0.7" transform="rotate(-26 96 80)" />
+                <ellipse cx="146" cy="104" rx="7" ry="16" fill="#fff" opacity="0.16" transform="rotate(14 146 104)" />
+              </g>
+              <ellipse cx="110" cy="124" rx="67" ry="63" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.35" />
+            </g>
+
+            <!-- лапки -->
+            <g class="pet-feet">
+              <ellipse cx="90" cy="184" rx="16" ry="9" fill="var(--pet-accent)" opacity="0.55" />
+              <ellipse cx="130" cy="184" rx="16" ry="9" fill="var(--pet-accent)" opacity="0.55" />
+            </g>
+
+            <!-- щёчки -->
+            <ellipse class="pet-cheek" cx="74" cy="150" rx="12" ry="8" fill="var(--pet-cheek)" opacity="0.65" filter="url(#petSoft)" />
+            <ellipse class="pet-cheek" cx="146" cy="150" rx="12" ry="8" fill="var(--pet-cheek)" opacity="0.65" filter="url(#petSoft)" />
+
+            <!-- глаза (рендерятся из pet.js) -->
+            <g id="pet-eyes" class="pet-eyes"></g>
+
+            <!-- рот -->
+            <path id="pet-mouth" d="M 98 156 Q 110 165 122 156" fill="none" stroke="#1d3b35" stroke-width="3.4" stroke-linecap="round" />
+
+            <!-- капелька/искра настроения -->
+            <g id="pet-emote" class="pet-emote"></g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="pet-name">
+        <span id="pet-name-text">Эко</span>
+        <button id="rename-pet-btn" class="rename-icon-btn" type="button" title="Переименовать питомца" aria-label="Переименовать питомца">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none">
+            <path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8L17.3 5.5a2 2 0 0 0-2.8 0L4 16v4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+            <path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="1.7" />
+          </svg>
+        </button>
+        <span class="pet-chip" id="pet-mood-label">Настроение: нейтральное</span>
+      </div>
+
+      <div class="pet-level-wrap">
+        <div class="pet-level">LVL <span id="pet-level">1</span></div>
+        <div class="pet-bar"><span id="pet-bar-fill"></span></div>
+      </div>
+      <div class="pet-stage-chip" id="pet-stage-label">Стадия: семечко</div>
+
+      <div class="chat-box">
+        <div id="chat-messages" class="chat-messages"></div>
+        <form id="chat-form" class="chat-form">
+          <input type="text" id="chat-input" placeholder="Спроси, куда уходят ресурсы..." autocomplete="off" />
+          <button type="submit" class="send-btn" aria-label="Отправить">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none">
+              <path d="M4 12l16-8-6.5 8L20 20 4 12Z" fill="currentColor" />
+            </svg>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Дашборд -->
+    <section class="panel dashboard-panel" id="dashboard-panel">
+      <div class="panel-head">
+        <h2>Сводка за неделю</h2>
+        <span class="pill">в реальном времени</span>
+      </div>
+
+      <div class="device-status" id="device-status">
+        <span class="device-dot" id="device-dot"></span>
+        <span id="device-status-text">Проверяю связь с датчиками...</span>
+      </div>
+
+      <div class="cards">
+        <div class="card water">
+          <div class="card-title">Вода</div>
+          <div class="card-value" id="water-total">— л</div>
+          <div class="card-sub" id="water-cost">— ₸</div>
+          <div class="card-trend" id="water-trend">—</div>
+        </div>
+        <div class="card energy">
+          <div class="card-title">Электричество</div>
+          <div class="card-value" id="electricity-total">— кВт·ч</div>
+          <div class="card-sub" id="electricity-cost">— ₸</div>
+          <div class="card-trend" id="electricity-trend">—</div>
+        </div>
+        <div class="card highlight">
+          <div class="card-title">Итого за неделю</div>
+          <div class="card-value" id="total-cost">— ₸</div>
+          <div class="card-sub">тарифы РК</div>
+        </div>
+      </div>
+
+      <div class="dashboard-workspace">
+        <div class="dashboard-insights">
+          <div id="anomalies" class="anomalies"></div>
+
+          <div id="recommendations-section" class="anchor-section dashboard-module">
+            <h3>Рекомендации</h3>
+            <div id="recommendations" class="recommendations"></div>
+          </div>
+
+          <div id="tips-section" class="anchor-section dashboard-module">
+            <h3>Советы по экономии</h3>
+            <div id="tips-list" class="tips-list"></div>
+          </div>
+        </div>
+
+        <aside class="dashboard-actions" aria-label="Быстрые действия">
+          <section class="quick-action-card" id="new-reading-block">
+            <h3>Новое показание</h3>
+            <p>Ручной ввод, если датчика нет.</p>
+            <form id="reading-form" class="reading-form">
+              <select id="reading-type">
+                <option value="water">Вода (литры)</option>
+                <option value="electricity">Электричество (кВт·ч)</option>
+              </select>
+              <input type="number" id="reading-value" placeholder="Значение" step="0.01" required />
+              <button type="submit">Добавить</button>
+            </form>
+
+            <div class="reading-photo-block">
+              <label for="reading-photo-input" class="reading-photo-btn">
+                📷 Загрузить фото счётчика или квитанции
+              </label>
+              <input type="file" id="reading-photo-input" accept="image/jpeg,image/png,image/webp,image/gif" hidden />
+              <div id="reading-photo-preview-wrap" class="reading-photo-preview-wrap" hidden>
+                <img id="reading-photo-preview" alt="Превью фото" />
+              </div>
+              <div id="reading-photo-status" class="reading-photo-status" hidden></div>
+              <button type="button" id="reading-photo-clear-btn" class="reading-photo-clear-btn" hidden>
+                Убрать фото
+              </button>
+            </div>
+          </section>
+
+          <div class="goals-section">
+            <div class="goals-header">
+              <h3>Цели на месяц</h3>
+            </div>
+            <form class="goal-input-form" onsubmit="event.preventDefault(); setNewGoal();">
+              <select id="goal-type">
+                <option value="water">Вода (л/мес)</option>
+                <option value="electricity">Электричество (кВт·ч/мес)</option>
+              </select>
+              <input type="number" id="goal-value" placeholder="Целевое значение" min="1" step="1" required />
+              <button type="submit" class="btn-set-goal">Установить цель</button>
+            </form>
+            <div id="goals-container"></div>
+          </div>
+
+          <div class="export-section">
+            <div class="export-header">
+              <h3>Экспорт данных</h3>
+            </div>
+            <div class="export-controls">
+              <input type="date" id="export-start-date" />
+              <input type="date" id="export-end-date" />
+              <select id="export-type">
+                <option value="">Вода и электричество</option>
+                <option value="water">Только вода</option>
+                <option value="electricity">Только электричество</option>
+              </select>
+              <button type="button" onclick="exportDataAsCSV()">Скачать CSV</button>
+            </div>
+            <div id="summary-container"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- История и графики -->
+    <section class="panel history-panel" id="history-panel">
+      <div class="panel-head">
+        <h2>История и графики</h2>
+        <div class="history-tabs">
+          <button type="button" class="history-tab active" data-period="day">Дни</button>
+          <button type="button" class="history-tab" data-period="week">Недели</button>
+          <button type="button" class="history-tab" data-period="month">Месяцы</button>
+        </div>
+      </div>
+      <canvas id="history-canvas" class="history-canvas"></canvas>
+      <div id="history-totals" class="history-legend"></div>
+    </section>
+
+    <!-- Достижения -->
+    <section class="panel achievements-panel hidden" id="achievements-panel">
+      <div class="panel-head">
+        <h2>Достижения</h2>
+        <span class="pill" id="achievements-progress">0 из 0</span>
+      </div>
+      <div class="achievements-grid" id="achievements-grid"></div>
+    </section>
+
+    <!-- 3D-двойник помещения -->
+    <section class="panel twin-panel" id="twin-panel">
+      <div class="panel-head">
+        <h2>3D-двойник</h2>
+        <span class="pill">AI-расстановка приборов</span>
+      </div>
+
+      <div class="fp-panel">
+        <div class="fp-head">
+          <h3>План по фото <span class="pill pill-sm">бета</span></h3>
+          <p class="fp-hint">Загрузите план или фото сверху: JPG/PNG/WEBP, до 4096 px.</p>
+        </div>
+
+        <div class="fp-controls">
+          <label class="fp-file-btn">
+            Выбрать план (фото/скан)
+            <input type="file" id="fp-file" class="fp-file-input" accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp" />
+          </label>
+          <div class="fp-calib">
+            <span>Длина отрезка на плане</span>
+            <input type="number" id="fp-calib-dist" min="0.1" step="any" placeholder="400 или 4.0" />
+            <select id="fp-calib-unit" class="fp-calib-unit" aria-label="Единица длины">
+              <option value="cm" selected>см (как на чертеже)</option>
+              <option value="m">метры</option>
+            </select>
+            <button type="button" id="fp-set-scale-btn" class="fp-btn">Добавить отрезок</button>
+            <button type="button" id="fp-apply-scale-btn" class="fp-btn fp-btn-primary">Рассчитать масштаб</button>
+          </div>
+          <button type="button" id="fp-detect-btn" class="fp-btn">Распознать автоматически</button>
+          <button type="button" id="fp-apply-btn" class="fp-btn fp-btn-primary" disabled>Построить 3D по плану</button>
+          <button type="button" id="fp-clear-btn" class="fp-btn fp-btn-ghost">Сбросить план</button>
+        </div>
+
+        <div class="fp-calib-panel">
+          <div class="fp-calib-summary" id="fp-calib-summary">Шаг 1: режим «Масштаб» → кликните 2 точки по стене с цифрой на чертеже.</div>
+          <div class="fp-calib-list" id="fp-calib-list"></div>
+        </div>
+
+        <div class="fp-controls fp-mode-controls">
+          <span class="fp-mode-label">Ручная обводка (если авто-контур не совпал с планом или комната не прямоугольная):</span>
+          <div class="fp-mode-group" role="group" aria-label="Режим рисования">
+            <button type="button" id="fp-mode-calib" class="fp-mode-btn is-active" data-mode="calib">Масштаб</button>
+            <button type="button" id="fp-mode-wall" class="fp-mode-btn" data-mode="wall">
+              <span class="fp-mode-dot fp-dot-wall"></span> Стены (жёлтый)
+            </button>
+            <button type="button" id="fp-mode-window" class="fp-mode-btn" data-mode="window">
+              <span class="fp-mode-dot fp-dot-window"></span> Окна (голубой)
+            </button>
+            <button type="button" id="fp-mode-device" class="fp-mode-btn" data-mode="device">
+              <span class="fp-mode-dot fp-dot-device"></span> Приборы (розовый)
+            </button>
+          </div>
+          <button type="button" id="fp-undo-point-btn" class="fp-btn fp-btn-ghost">Отменить точку</button>
+          <button type="button" id="fp-new-wall-seg-btn" class="fp-btn">Новый отрезок стены</button>
+          <button type="button" id="fp-connect-btn" class="fp-btn">Соединить соседние точки</button>
+          <button type="button" id="fp-finish-wall-btn" class="fp-btn" disabled>Замкнуть контур стен</button>
+        </div>
+
+        <div class="fp-area-tools">
+          <div class="fp-area-preview" id="fp-area-preview">Площадь по контуру: —</div>
+          <details class="fp-area-manual">
+            <summary>Площадь вручную (Г-образная / сложная форма)</summary>
+            <p class="fp-area-manual-hint">Добавьте секции — их сумма заменит авто-расчёт.</p>
+            <div class="fp-dim-list" id="fp-dim-list"></div>
+            <button type="button" id="fp-add-dim-btn" class="fp-btn fp-btn-ghost">+ Добавить секцию (длина × ширина)</button>
+            <label class="fp-manual-area-row">
+              <span>Или итоговая площадь, м²</span>
+              <input type="number" id="fp-manual-area" min="1" step="0.1" placeholder="напр. 24" />
+            </label>
+          </details>
+        </div>
+
+        <div class="fp-body" id="fp-drop-zone">
+          <div class="fp-canvas-wrap">
+            <canvas id="fp-canvas" class="fp-canvas"></canvas>
+            <div class="fp-canvas-empty" id="fp-canvas-empty">
+              <span>Выберите файл или перетащите план сюда</span>
+              <small>JPG, PNG или WEBP</small>
+            </div>
+          </div>
+          <div class="fp-side">
+            <ol class="fp-steps">
+              <li>Загрузите JPG/PNG/WEBP или перетащите файл на превью.</li>
+              <li>Режим «Масштаб»: на каждой стене с цифрой — 2 точки, введите длину (400 → «см»), «Добавить отрезок». 2–4 стены → «Рассчитать масштаб».</li>
+              <li>Режим «Стены» — отрезки контура; «Окна» — проёмы; «Соединить соседние точки».</li>
+              <li>Режим «Приборы» (по желанию): отметьте на плане, где реально стоит каждый прибор, — впишите название. Затем в панели «Комнаты и приборы» привяжите прибор к этой точке, и в 3D-модели он встанет туда, а не в центр комнаты.</li>
+              <li>Проверьте строку площади: периметр ≈ 20 м, площадь ≈ 24 м² для вашего плана.</li>
+            </ol>
+            <div class="fp-status" id="fp-status">Загрузите изображение плана, чтобы начать.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="twin-setup">
+        <div class="twin-field">
+          <label for="twin-type">Тип объекта</label>
+          <select id="twin-type">
+            <option value="household">Квартира / дом</option>
+            <option value="school">Школа</option>
+            <option value="business">Малое предприятие</option>
+          </select>
+        </div>
+        <div class="twin-field">
+          <label for="twin-area">Площадь, м²</label>
+          <input type="number" id="twin-area" value="60" min="6" step="1" />
+        </div>
+        <div class="twin-field">
+          <label id="twin-units-label" for="twin-units">Жильцов</label>
+          <input type="number" id="twin-units" value="4" min="1" step="1" />
+        </div>
+        <div class="twin-field twin-field-btn">
+          <label>&nbsp;</label>
+          <button type="button" id="twin-generate-btn" class="twin-generate-btn">Сгенерировать модель</button>
+          <p class="twin-generate-status" id="twin-generate-status"></p>
+        </div>
+      </div>
+
+      <div class="twin-body">
+        <div class="twin-scene-wrap" id="twin-scene-wrap">
+          <div class="twin-scene-empty">Нажмите «Сгенерировать модель»</div>
+        </div>
+
+        <div class="twin-side">
+          <div class="twin-rooms">
+            <h3>Комнаты и приборы <span class="pill pill-sm">по комнатам</span></h3>
+            <p class="twin-rooms-hint">Добавьте приборы → «Сгенерировать модель». Пусто — возьмём типовой набор.</p>
+            <div class="twin-rooms-list" id="twin-rooms-list"></div>
+            <button type="button" id="twin-add-room-btn" class="fp-btn fp-btn-ghost">+ Добавить комнату</button>
+          </div>
+
+          <div class="twin-devices">
+            <h3>Приборы в модели</h3>
+            <div class="twin-device-list" id="twin-device-list"></div>
+          </div>
+
+          <div class="twin-compare">
+            <h3>Модель vs реальные данные</h3>
+            <div class="twin-compare-row">
+              <span class="twin-compare-label">Модель</span>
+              <div class="twin-bar-track"><span class="twin-bar-fill model" id="twin-bar-model"></span></div>
+              <span class="twin-compare-value" id="twin-value-model">—</span>
+            </div>
+            <div class="twin-compare-row">
+              <span class="twin-compare-label">Реальность</span>
+              <div class="twin-bar-track"><span class="twin-bar-fill real" id="twin-bar-real"></span></div>
+              <span class="twin-compare-value" id="twin-value-real">—</span>
+            </div>
+            <div class="twin-compare-note" id="twin-compare-note"></div>
+          </div>
+
+          <div class="twin-forecast">
+            <h3>Прогноз экономии</h3>
+            <div class="twin-slider-row">
+              <span style="font-size:12.5px;color:var(--muted)">Заменить приборы, %</span>
+              <input type="range" id="twin-slider" min="0" max="100" value="50" />
+              <span class="twin-slider-value" id="twin-slider-value">50%</span>
+            </div>
+            <svg class="twin-chart" id="twin-chart"></svg>
+            <div class="twin-ai-note" id="twin-ai-note"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Свет по солнцу ===================== -->
+    <section class="panel sun-panel" id="sun-panel">
+      <div class="panel-head">
+        <h2>Свет по солнцу</h2>
+        <span class="pill">дневной свет по комнатам</span>
+      </div>
+
+      <div class="am-panel">
+        <div class="am-head">
+          <h3>Адрес объекта на карте мира <span class="pill pill-sm">OpenStreetMap</span></h3>
+          <p class="am-hint">Отметьте дом на карте — получим координаты и, если есть, реальный контур здания.</p>
+        </div>
+
+        <div class="am-controls">
+          <button type="button" id="am-use-btn" class="fp-btn fp-btn-primary" disabled>Построить 3D по этому зданию</button>
+          <button type="button" id="am-clear-btn" class="fp-btn fp-btn-ghost">Сбросить точку</button>
+        </div>
+
+        <div id="am-map" class="am-map"></div>
+        <div class="am-status" id="am-status">Кликните по карте или перетащите метку, чтобы выбрать дом.</div>
+      </div>
+
+      <div class="sun-top">
+        <p class="sun-hint-main">Считаем солнце по комнатам: когда хватает дневного света, а когда нужна лампа.</p>
+        <ol class="sun-steps">
+          <li>Отметьте дом на карте выше — или впишите координаты вручную.</li>
+          <li>Нажмите «+ Добавить комнату» и укажите, куда выходит окно этой комнаты (север, юг и т.д.).</li>
+          <li>Ниже появится цветная шкала на сутки: жёлтый — прямой солнечный свет, голубой — рассеянный дневной свет, тёмный — нужен искусственный свет. Дату можно менять полем справа.</li>
+        </ol>
+        <div class="sun-top-controls">
+          <label>Дата <input type="date" id="sun-date" /></label>
+          <button type="button" id="sun-add-room-btn" class="sun-btn">+ Добавить комнату</button>
+        </div>
+      </div>
+
+      <div class="sun-empty" id="sun-empty">Пока нет ни одной комнаты — добавьте первую, чтобы построить график солнца.</div>
+      <div class="sun-room-list" id="sun-room-list"></div>
+    </section>
+
+  </main>
+
+  <footer class="footer">Future Minds Hackathon 2026 · Трек EcoFin · MVP</footer>
+  </div>
+
+
+  <!-- ===================== Профиль пользователя ===================== -->
+  <div id="profile-modal" class="profile-modal" aria-hidden="true">
+    <div class="profile-backdrop" id="profile-backdrop"></div>
+    <div class="profile-sheet" role="dialog" aria-modal="true" aria-label="Профиль">
+      <button type="button" class="profile-close" id="profile-close" aria-label="Закрыть">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
+          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+
+      <div class="profile-head">
+        <span class="profile-avatar-big" id="profile-avatar">U</span>
+        <div>
+          <h2 id="profile-name">Пользователь</h2>
+          <span class="profile-role" id="profile-role">обычный аккаунт</span>
+        </div>
+      </div>
+
+      <div class="profile-block">
+        <h3>О вас</h3>
+        <div id="profile-rows"></div>
+      </div>
+
+      <div class="profile-note hidden" id="profile-guest-note">
+        Вы в демо-режиме без аккаунта. Смена пароля и секретный код доступны
+        только зарегистрированным пользователям.
+      </div>
+
+      <div class="profile-block hidden" id="password-section">
+        <h3>Смена пароля</h3>
+        <form class="profile-form" id="password-form">
+          <input type="password" id="current-password" placeholder="Текущий пароль" autocomplete="current-password" required />
+          <input type="password" id="new-password" placeholder="Новый пароль (мин. 6 символов)" autocomplete="new-password" required />
+          <input type="password" id="repeat-password" placeholder="Повторите новый пароль" autocomplete="new-password" required />
+          <button type="submit" class="profile-btn">Обновить пароль</button>
+          <div class="profile-msg" id="password-msg"></div>
+        </form>
+      </div>
+
+      <div class="profile-block hidden" id="admin-code-section">
+        <h3>Секретный код</h3>
+        <p class="profile-block-hint">Введите код — откроются функции администратора.</p>
+        <form class="profile-form" id="admin-code-form">
+          <input type="password" id="admin-code-input" placeholder="Секретный код" autocomplete="off" required />
+          <button type="submit" class="profile-btn">Активировать</button>
+          <div class="profile-msg" id="admin-code-msg"></div>
+        </form>
+      </div>
+
+      <div class="profile-block hidden" id="admin-section">
+        <h3>Админ · облик питомца</h3>
+        <p class="profile-block-hint">Предпросмотр эмоций питомца. Данные не меняются.</p>
+        <div class="admin-mood-list" id="admin-mood-list"></div>
+        <div class="admin-preview-bar">
+          <span id="admin-preview-state">Показано настоящее настроение по данным</span>
+          <button type="button" class="profile-btn ghost" id="admin-preview-reset">Вернуть настоящее</button>
+        </div>
+      </div>
+
+      <div class="profile-note hidden" id="admin-locked-note">
+        Функции администратора закрыты: просмотр всех эмоций питомца доступен
+        только по секретному коду.
+      </div>
+
+      <!-- Семейный / организационный аккаунт (текст подставляется по типу аккаунта в household.js) -->
+      <div class="profile-block hidden" id="household-section">
+        <h3 id="household-title">Семейный аккаунт</h3>
+        <p class="profile-block-hint" id="household-hint">Общий дом — общая сводка и один питомец.</p>
+
+        <div id="household-none">
+          <form class="profile-form" id="household-create-form">
+            <input type="text" id="household-name-input" placeholder="Название (например, «Наша семья»)" />
+            <button type="submit" class="profile-btn" id="household-create-btn">Создать домохозяйство</button>
+          </form>
+          <form class="profile-form" id="household-join-form" style="margin-top:10px;">
+            <input type="text" id="household-code-input" placeholder="Код приглашения" required />
+            <button type="submit" class="profile-btn ghost">Присоединиться по коду</button>
+          </form>
+        </div>
+
+        <div id="household-active" class="hidden">
+          <div class="profile-row">
+            <span class="profile-row-label">Название</span>
+            <span class="profile-row-value" id="household-name"></span>
+          </div>
+          <div class="profile-row">
+            <span class="profile-row-label">Код приглашения</span>
+            <span class="profile-row-value" id="household-code"></span>
+          </div>
+          <div id="household-members"></div>
+          <button type="button" class="profile-btn ghost" id="household-leave-btn" style="margin-top:10px;">Покинуть домохозяйство</button>
+        </div>
+        <div class="profile-msg" id="household-msg"></div>
+      </div>
+
+      <!-- Интеграция с реальными счётчиками / умным домом -->
+      <div class="profile-block hidden" id="integrations-section">
+        <h3>Реальные счётчики</h3>
+        <p class="profile-block-hint">Универсальный webhook: любой шлюз или скрипт шлёт показания по одному протоколу.</p>
+
+        <div id="integration-not-connected">
+          <button type="button" class="profile-btn" id="integration-issue-btn">Создать API-ключ</button>
+        </div>
+
+        <div id="integration-key-block" class="hidden">
+          <div class="profile-row">
+            <span class="profile-row-label">API-ключ</span>
+            <span class="profile-row-value" id="integration-api-key" style="word-break:break-all;"></span>
+          </div>
+          <div class="profile-row">
+            <span class="profile-row-label">Webhook URL</span>
+            <span class="profile-row-value" id="integration-webhook-url" style="word-break:break-all;"></span>
+          </div>
+        </div>
+
+        <div id="integration-connected" class="hidden">
+          <div class="profile-row">
+            <span class="profile-row-label">Показаний от устройства</span>
+            <span class="profile-row-value" id="integration-readings-count">0</span>
+          </div>
+          <div class="profile-row">
+            <span class="profile-row-label">Последнее показание</span>
+            <span class="profile-row-value" id="integration-last-reading">—</span>
+          </div>
+          <button type="button" class="profile-btn ghost" id="integration-revoke-btn" style="margin-top:10px;">Отозвать ключ</button>
+        </div>
+      </div>
+
+      <!-- Расширенная админка -->
+      <div class="profile-block hidden" id="admin-extras-section">
+        <h3>Глобальная статистика</h3>
+        <div class="admin-stat-grid" id="admin-stats-grid"></div>
+
+        <h3 style="margin-top:18px;">Пользователи</h3>
+        <div id="admin-users-list" class="admin-users-list"></div>
+
+        <h3 style="margin-top:18px;">Пороги аномалий</h3>
+        <form class="profile-form" id="admin-settings-form">
+          <label class="field-label">Рост расхода за неделю, % (аномалия)</label>
+          <input type="number" id="admin-anomaly-threshold" min="1" step="1" required />
+          <label class="field-label">Превышение норматива, % (аномалия)</label>
+          <input type="number" id="admin-benchmark-threshold" min="1" step="1" required />
+          <button type="submit" class="profile-btn">Сохранить настройки</button>
+          <div class="profile-msg" id="admin-settings-msg"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/pet.js"></script>
+  <script src="js/chart.js"></script>
+  <script src="js/consumption-utils.js"></script>
+  <script src="js/analytics-advanced.js"></script>
+  <script src="js/history-chart.js"></script>
+  <script src="js/achievements.js"></script>
+  <script src="js/tips.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/household.js"></script>
+  <script src="js/integrations.js"></script>
+  <script src="js/goals-api.js"></script>
+  <script src="js/goals-ui.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/photo-reading.js"></script>
+  <script src="js/profile.js"></script>
+  <script src="js/admin-panel.js"></script>
+  <script src="js/pwa.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.9.0/dist/opencv.js" defer></script>
+  <script src="js/floorplan.js?v=20260823c" defer></script>
+  <script src="js/twin.js?v=20260823d" defer></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="js/address-map.js" defer></script>
+  <script src="js/sun-schedule.js"></script>
+</body>
+</html>
