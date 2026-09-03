@@ -1,0 +1,85 @@
+/* ==== Коллекция питомцев: картинка вместо SVG + выбор облика ==== */
+.pet-avatar .pet-svg { display: none !important; }
+
+.pet-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  transform-origin: 50% 70%;
+  animation: pet-img-breath 4.6s ease-in-out infinite;
+  filter: drop-shadow(0 18px 34px color-mix(in srgb, var(--pet-skin-tint, #34e0a1) 45%, transparent));
+  transition: filter 0.8s ease, transform 0.9s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes pet-img-breath {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-6px) scale(1.025); }
+}
+.pet-avatar[data-mood="happy"] .pet-img    { filter: drop-shadow(0 18px 34px color-mix(in srgb, var(--pet-skin-tint, #34e0a1) 60%, transparent)) saturate(1.15) brightness(1.06); }
+.pet-avatar[data-mood="tired"] .pet-img    { filter: drop-shadow(0 12px 24px rgba(159,179,174,.3)) saturate(0.5) brightness(0.92); }
+.pet-avatar[data-mood="sad"] .pet-img      { filter: drop-shadow(0 12px 26px rgba(143,163,196,.35)) saturate(0.6) brightness(0.95); }
+.pet-avatar[data-mood="worried"] .pet-img  { filter: drop-shadow(0 16px 30px rgba(255,207,92,.4)) saturate(0.95); }
+.pet-avatar[data-mood="angry"] .pet-img    { filter: drop-shadow(0 14px 30px rgba(255,90,77,.5)) saturate(1.4) brightness(1.02); }
+.pet-avatar[data-mood="sick"] .pet-img     { filter: drop-shadow(0 12px 26px rgba(143,217,138,.35)) saturate(0.8) brightness(0.95); }
+.pet-avatar.pet-turned .pet-img { animation: pet-img-breath 4.6s ease-in-out infinite, pet-turn-away 11s ease-in-out infinite; }
+
+/* Выбор питомца */
+.pet-skin-picker {
+  margin: 14px auto 4px;
+  width: 100%;
+  max-width: 640px;
+  padding: 12px 14px 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+}
+.pet-skin-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.pet-skin-title { font-weight: 800; font-size: 0.95rem; letter-spacing: 0.2px; }
+.pet-skin-current { font-size: 0.8rem; opacity: 0.75; }
+.pet-skin-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  gap: 8px;
+}
+.pet-skin-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px 6px;
+  border-radius: 14px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: inherit;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+  transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+.pet-skin-card img {
+  width: 100%;
+  max-width: 60px;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 12px color-mix(in srgb, var(--tint) 45%, transparent));
+}
+.pet-skin-card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--tint) 55%, transparent); }
+.pet-skin-card.is-active {
+  border-color: var(--tint);
+  background: color-mix(in srgb, var(--tint) 16%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--tint) 45%, transparent), 0 10px 26px color-mix(in srgb, var(--tint) 25%, transparent);
+}
+@media (max-width: 560px) {
+  .pet-skin-row { grid-template-columns: repeat(3, 1fr); }
+}
