@@ -2,6 +2,7 @@
 // Каждый смотрит прямо на хозяина. Выбор сохраняется в localStorage.
 
 const PET_SKINS = [
+  { id: 'symbiote', name: 'Симбиот', desc: 'Живой хранитель ресурсов с меняющимися эмоциями', file: 'assets/pet/pet-symbiote-calm.png', tint: '#38e0d1', moods: { angry: 'assets/pet/pet-symbiote-angry.png' } },
   { id: 'eco',    name: 'Эко',    desc: 'Симбиот листа — базовый хранитель дома', file: 'assets/pet/pet-eco.png',    tint: '#34e0a1' },
   { id: 'robo',   name: 'Робо',   desc: 'Робот-помощник — следит за электричеством', file: 'assets/pet/pet-robo.png',   tint: '#41c8ff' },
   { id: 'dog',    name: 'Бадди',  desc: 'Собачка — напоминает о привычках', file: 'assets/pet/pet-dog.png',    tint: '#7ee2a8' },
@@ -14,6 +15,7 @@ const PET_SKINS = [
 ];
 
 const PET_SKIN_KEY = 'ecotwin_pet_skin';
+const PET_PICKER_HIDDEN_KEY = 'ecotwin_pet_picker_hidden';
 
 function getPetSkinId() {
   try {
@@ -40,12 +42,22 @@ function ensurePetImage() {
   return img;
 }
 
+function getSkinMoodFile(skin, mood) {
+  return skin.moods?.[mood] || skin.file;
+}
+
+function applyPetSkinMood(mood) {
+  const img = document.querySelector('#pet-avatar .pet-img');
+  const skin = getPetSkin();
+  if (img) img.src = getSkinMoodFile(skin, mood);
+}
+
 function applyPetSkin(id, { save = true } = {}) {
   const skin = getPetSkin(id);
   const avatar = document.getElementById('pet-avatar');
   const img = ensurePetImage();
   if (img) {
-    img.src = skin.file;
+    img.src = getSkinMoodFile(skin, window.petMoodApi?.current?.() || 'neutral');
     img.alt = `Питомец ${skin.name}`;
   }
   if (avatar) {
@@ -83,7 +95,10 @@ function buildPetSkinPicker() {
   wrap.innerHTML = `
     <div class="pet-skin-head">
       <span class="pet-skin-title">Выбери питомца</span>
-      <span class="pet-skin-current"><b id="pet-skin-name"></b> — <span id="pet-skin-desc"></span></span>
+      <span class="pet-skin-actions">
+        <span class="pet-skin-current"><b id="pet-skin-name"></b> — <span id="pet-skin-desc"></span></span>
+        <button type="button" class="pet-picker-toggle" id="pet-picker-toggle" aria-expanded="true">Скрыть меню</button>
+      </span>
     </div>
     <div class="pet-skin-row">
       ${PET_SKINS.map((s) => `
@@ -98,12 +113,24 @@ function buildPetSkinPicker() {
   wrap.querySelectorAll('.pet-skin-card').forEach((btn) => {
     btn.addEventListener('click', () => applyPetSkin(btn.dataset.skinId));
   });
+
+  const toggle = wrap.querySelector('#pet-picker-toggle');
+  const setPickerHidden = (hidden) => {
+    wrap.classList.toggle('is-collapsed', hidden);
+    toggle.textContent = hidden ? 'Выбрать питомца' : 'Скрыть меню';
+    toggle.setAttribute('aria-expanded', hidden ? 'false' : 'true');
+    try { localStorage.setItem(PET_PICKER_HIDDEN_KEY, hidden ? '1' : '0'); } catch (_) {}
+  };
+  try { setPickerHidden(localStorage.getItem(PET_PICKER_HIDDEN_KEY) === '1'); } catch (_) {}
+  toggle.addEventListener('click', () => setPickerHidden(!wrap.classList.contains('is-collapsed')));
 }
 
 function initPetSkins() {
   buildPetSkinPicker();
   applyPetSkin(getPetSkinId(), { save: false });
 }
+
+window.applyPetSkinMood = applyPetSkinMood;
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initPetSkins);
