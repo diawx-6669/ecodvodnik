@@ -1,5 +1,6 @@
-// Живой питомец «Эко»: следит за курсором, мигает, дышит, реагирует на
-// прикосновения и меняет мимику/цвет/частицы в зависимости от настроения.
+// Живой питомец-симбиот «Эко»: смотрит прямо на хозяина (глаза и корпус
+// доворачиваются к курсору), дышит, реагирует на прикосновения и меняет
+// мимику/цвет/щупальца в зависимости от настроения.
 
 const MOOD_LABELS = {
   happy: 'Настроение: отличное',
@@ -12,130 +13,105 @@ const MOOD_LABELS = {
   sick: 'Настроение: болеет',
 };
 
-// Питомец, которому плохо, отворачивается от хозяина
-const TURN_AWAY_MOODS = ['sad', 'angry', 'sick'];
+// Питомцу плохо — он отворачивается от хозяина
+const TURN_AWAY_MOODS = ['sad', 'sick'];
 
+// Рот: у симбиота он почти не читается, кроме злости (там включается пасть)
 const MOUTH_PATHS = {
-  happy: 'M 96 156 Q 110 174 124 156 Q 110 162 96 156',
-  neutral: 'M 100 157 Q 110 165 120 157',
-  surprised: 'M 110 158 m -6 0 a 6 7 0 1 0 12 0 a 6 7 0 1 0 -12 0',
-  worried: 'M 100 162 Q 110 155 120 162',
-  tired: 'M 99 160 Q 110 158 121 160',
-  sad: 'M 100 166 Q 110 152 120 166',
-  angry: 'M 98 165 Q 110 150 122 165 Q 110 158 98 165',
-  sick: 'M 100 163 Q 105 168 110 163 Q 115 168 120 163',
+  happy: 'M 96 160 Q 110 172 124 160',
+  neutral: 'M 100 160 Q 110 166 120 160',
+  surprised: 'M 104 160 Q 110 170 116 160 Q 110 164 104 160',
+  worried: 'M 100 164 Q 110 158 120 164',
+  tired: 'M 100 162 Q 110 160 120 162',
+  sad: 'M 100 168 Q 110 156 120 168',
+  angry: '',
+  sick: 'M 100 164 Q 105 169 110 164 Q 115 169 120 164',
 };
+
+// Оскал симбиота: клыки и разорванная пасть — только для злости
+const ANGRY_MAW = `
+  <g class="maw-group">
+    <path d="M 76 148 C 92 138 128 138 144 148 C 136 180 84 180 76 148 Z" fill="#0a0205" stroke="var(--pet-deep)" stroke-width="1.6" />
+    <path d="M 79 149 L 84 160 L 89 149 L 95 162 L 101 149 L 107 163 L 113 149 L 119 163 L 125 149 L 131 161 L 136 149 L 141 158 L 144 148 L 76 148 Z" fill="#fff6f2" />
+    <path d="M 82 170 L 86 159 L 91 170 L 97 158 L 103 170 L 110 157 L 117 170 L 123 158 L 129 170 L 134 159 L 138 168 C 124 178 96 178 82 170 Z" fill="#f4e6e0" />
+    <path d="M 76 148 C 92 140 128 140 144 148" fill="none" stroke="var(--pet-light)" stroke-width="1.8" opacity="0.55" />
+    <path d="M 72 146 C 62 140 60 130 65 124" fill="none" stroke="var(--pet-accent)" stroke-width="3" stroke-linecap="round" opacity="0.85" />
+    <path d="M 148 146 C 158 140 160 130 155 124" fill="none" stroke="var(--pet-accent)" stroke-width="3" stroke-linecap="round" opacity="0.85" />
+    <path d="M 90 176 C 100 182 120 182 130 176" fill="none" stroke="#0a0205" stroke-width="2" opacity="0.6" />
+  </g>`;
 
 const EMOTES = {
-  happy: '<circle cx="168" cy="60" r="4" fill="var(--pet-light)"/><circle cx="180" cy="48" r="2.6" fill="var(--pet-light)"/><path d="M 156 44 l 3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3 z" fill="var(--pet-light)"/>',
+  happy: '<circle cx="176" cy="52" r="4" fill="var(--pet-light)"/><circle cx="188" cy="40" r="2.6" fill="var(--pet-light)"/><path d="M 164 36 l 3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3 z" fill="var(--pet-light)"/>',
   neutral: '',
-  surprised: '<path d="M 158 38 l 4 8 8 2 -6 6 1 8 -7 -4 -7 4 1 -8 -6 -6 8 -2 z" fill="#ffe08a"/><circle cx="180" cy="66" r="2.4" fill="#ffe08a"/>',
-  worried: '<circle cx="166" cy="58" r="3.2" fill="#ffd98a"/><path d="M 170 40 v 12" stroke="#ffd98a" stroke-width="3.4" stroke-linecap="round"/><circle cx="170" cy="58" r="2" fill="#ffd98a"/>',
-  tired: '<path d="M 158 50 q 10 6 20 0" stroke="#9fb3ae" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.85"/><path d="M 162 62 q 8 5 16 0" stroke="#9fb3ae" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.6"/>',
-  sad: '<path d="M 141 142 q 5 10 0 14 q -5 -4 0 -14 z" fill="#9fd8ff"/>',
-  angry: '<path d="M 160 46 q 12 -6 20 2 q -12 0 -20 -2 z" fill="#ff8f8f"/><path d="M 164 62 q 12 -6 20 2 q -12 0 -20 -2 z" fill="#ff8f8f" opacity="0.8"/><path d="M 176 26 v 12" stroke="#ff8f8f" stroke-width="3.6" stroke-linecap="round"/><circle cx="176" cy="45" r="2.2" fill="#ff8f8f"/>',
-  sick: '<path d="M 154 44 q 8 -10 18 -4 q -8 2 -18 4 z" fill="#8fd98a" opacity="0.85"/><circle cx="184" cy="52" r="3" fill="#8fd98a" opacity="0.7"/><circle cx="190" cy="64" r="2" fill="#8fd98a" opacity="0.5"/>',
+  surprised: '<path d="M 166 30 l 4 8 8 2 -6 6 1 8 -7 -4 -7 4 1 -8 -6 -6 8 -2 z" fill="#ffe08a"/><circle cx="188" cy="58" r="2.4" fill="#ffe08a"/>',
+  worried: '<circle cx="174" cy="50" r="3.2" fill="#ffd98a"/><path d="M 178 32 v 12" stroke="#ffd98a" stroke-width="3.4" stroke-linecap="round"/><circle cx="178" cy="50" r="2" fill="#ffd98a"/>',
+  tired: '<path d="M 166 42 q 10 6 20 0" stroke="#9fb3ae" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.85"/><path d="M 170 54 q 8 5 16 0" stroke="#9fb3ae" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.6"/>',
+  sad: '<path d="M 74 150 q 5 12 0 16 q -5 -4 0 -16 z" fill="#9fd8ff"/>',
+  angry: '<path d="M 168 38 q 12 -6 20 2 q -12 0 -20 -2 z" fill="#ff8f8f"/><path d="M 172 54 q 12 -6 20 2 q -12 0 -20 -2 z" fill="#ff8f8f" opacity="0.8"/><path d="M 184 18 v 12" stroke="#ff8f8f" stroke-width="3.6" stroke-linecap="round"/><circle cx="184" cy="37" r="2.2" fill="#ff8f8f"/>',
+  sick: '<path d="M 162 36 q 8 -10 18 -4 q -8 2 -18 4 z" fill="#8fd98a" opacity="0.85"/><circle cx="192" cy="44" r="3" fill="#8fd98a" opacity="0.7"/><circle cx="198" cy="56" r="2" fill="#8fd98a" opacity="0.5"/>',
 };
-
 
 let petMood = 'neutral';
 // Настоящее настроение по данным потребления (предпросмотр админа его не меняет)
 let realPetMood = 'neutral';
-let pupils = [];
 let lastPointer = { x: 0, y: 0 };
+
+// Глаза симбиота: сплошные однотонные «капли» без зрачков.
+// Форма левого глаза задаётся в координатах SVG, правый — зеркальная копия.
+const EYE_SHAPES = {
+  neutral: 'M 100 122 C 92 104 68 96 56 106 C 48 114 58 132 76 136 C 90 139 99 132 100 122 Z',
+  happy: 'M 100 128 C 92 110 68 104 56 114 C 50 121 60 130 76 132 C 89 133 98 133 100 128 Z',
+  surprised: 'M 102 124 C 94 100 66 92 54 104 C 44 115 56 138 76 140 C 92 141 102 134 102 124 Z',
+  worried: 'M 100 116 C 90 104 66 104 56 116 C 51 124 62 132 78 130 C 91 128 99 124 100 116 Z',
+  tired: 'M 100 124 C 92 116 68 112 57 120 C 52 125 60 130 76 130 C 90 130 99 129 100 124 Z',
+  sad: 'M 100 114 C 90 106 66 110 57 122 C 53 129 64 133 79 130 C 91 127 99 121 100 114 Z',
+  angry: 'M 103 136 C 94 118 70 98 57 104 C 50 108 60 128 78 138 C 91 144 101 142 103 136 Z',
+  sick: 'M 100 124 C 92 110 68 104 57 114 C 51 121 60 132 76 134 C 90 136 99 131 100 124 Z',
+};
 
 function renderEyes(mood) {
   const eyes = document.getElementById('pet-eyes');
   if (!eyes) return;
+  const shape = EYE_SHAPES[mood] || EYE_SHAPES.neutral;
 
-  // Большие «живые» глаза: впадина, объёмная радужка, отражённый свет и блики
-  const eye = (cx, cy, rx = 13, ry = 14.5) => `
-    <g class="eye">
-      <ellipse cx="${cx}" cy="${cy + 2}" rx="${rx + 4}" ry="${ry + 3.5}" fill="#0b211f" opacity="0.18" filter="url(#eyeBlur)" />
-      <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#eyeSclera)" />
-      <circle class="pupil" cx="${cx}" cy="${cy + 1}" r="${rx * 0.72}" fill="url(#eyeIris)" />
-      <circle class="pupil" cx="${cx}" cy="${cy + 1.5}" r="${rx * 0.34}" fill="#04100f" />
-      <ellipse class="pupil" cx="${cx}" cy="${cy + 1 + rx * 0.45}" rx="${rx * 0.52}" ry="${rx * 0.24}" fill="#8ff0e6" opacity="0.4" />
-      <circle class="pupil-shine" cx="${cx - rx * 0.3}" cy="${cy - ry * 0.34}" r="${rx * 0.28}" fill="#fff" />
-      <circle class="pupil-shine" cx="${cx + rx * 0.36}" cy="${cy + ry * 0.3}" r="${rx * 0.13}" fill="#fff" opacity="0.7" />
-      <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#eyeDepth)" />
-      <path d="M ${cx - rx} ${cy - ry * 0.5} Q ${cx} ${cy - ry * 1.25} ${cx + rx} ${cy - ry * 0.5}"
-            fill="none" stroke="#1d3b35" stroke-width="2.6" stroke-linecap="round" opacity="0.45" />
-      <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="#1d3b35" stroke-width="1" opacity="0.22" />
+  // Тёмная глазница + сплошная светящаяся заливка + мокрый блик по краю
+  const eyeMarkup = (transform) => `
+    <g transform="${transform}">
+      <path d="${shape}" fill="var(--pet-deep)" opacity="0.85" transform="translate(0 2.5) scale(1.06) translate(-6 -8)" filter="url(#petSoft)" />
+      <path d="${shape}" fill="url(#petEyeFill)" filter="url(#petBloom)" />
+      <path d="${shape}" fill="none" stroke="var(--pet-deep)" stroke-width="2" opacity="0.6" />
+      <path d="${shape}" fill="#ffffff" opacity="0.22" transform="translate(-2 -3) scale(0.86) translate(14 18)" />
     </g>`;
 
-  if (mood === 'happy') {
-    eyes.innerHTML = `
-      ${eye(88, 132, 13, 12)}
-      ${eye(132, 132, 13, 12)}
-      <path d="M 76 116 Q 88 109 100 115" fill="none" stroke="#1d3b35" stroke-width="3" stroke-linecap="round" opacity="0.6" />
-      <path d="M 120 115 Q 132 109 144 116" fill="none" stroke="#1d3b35" stroke-width="3" stroke-linecap="round" opacity="0.6" />`;
-  } else if (mood === 'sad') {
-    eyes.innerHTML = `
-      ${eye(88, 134, 11, 9.5)}
-      ${eye(132, 134, 11, 9.5)}
-      <path d="M 77 120 Q 88 115 99 119" fill="none" stroke="#1d3b35" stroke-width="3" stroke-linecap="round" opacity="0.75" />
-      <path d="M 121 119 Q 132 115 143 120" fill="none" stroke="#1d3b35" stroke-width="3" stroke-linecap="round" opacity="0.75" />`;
-  } else if (mood === 'angry') {
-    eyes.innerHTML = `
-      ${eye(88, 133, 12, 10)}
-      ${eye(132, 133, 12, 10)}
-      <path d="M 74 116 L 100 124" stroke="#4a1717" stroke-width="4.4" stroke-linecap="round" />
-      <path d="M 146 116 L 120 124" stroke="#4a1717" stroke-width="4.4" stroke-linecap="round" />`;
-  } else if (mood === 'surprised') {
-    eyes.innerHTML = `
-      ${eye(88, 130, 15, 16)}
-      ${eye(132, 130, 15, 16)}`;
-  } else if (mood === 'tired') {
-    eyes.innerHTML = `
-      ${eye(88, 136, 12, 6)}
-      ${eye(132, 136, 12, 6)}
-      <path d="M 76 128 L 100 128" stroke="#1d3b35" stroke-width="3" stroke-linecap="round" opacity="0.5" />
-      <path d="M 120 128 L 144 128" stroke="#1d3b35" stroke-width="3" stroke-linecap="round" opacity="0.5" />`;
-  } else if (mood === 'sick') {
-    eyes.innerHTML = `
-      ${eye(88, 134, 11, 10)}
-      ${eye(132, 134, 11, 10)}
-      <path d="M 76 122 Q 88 128 100 122" fill="none" stroke="#8fd98a" stroke-width="2.6" stroke-linecap="round" opacity="0.75" />
-      <path d="M 120 122 Q 132 128 144 122" fill="none" stroke="#8fd98a" stroke-width="2.6" stroke-linecap="round" opacity="0.75" />`;
-  } else {
-    eyes.innerHTML = `
-      ${eye(88, 132)}
-      ${eye(132, 132)}
-      ${mood === 'worried' ? `
-      <path d="M 76 114 Q 88 108 100 114" fill="none" stroke="#1d3b35" stroke-width="3.2" stroke-linecap="round" opacity="0.7" />
-      <path d="M 120 114 Q 132 108 144 114" fill="none" stroke="#1d3b35" stroke-width="3.2" stroke-linecap="round" opacity="0.7" />` : ''}`;
-  }
+  eyes.innerHTML = `
+    ${eyeMarkup('translate(0 0)')}
+    ${eyeMarkup('translate(220 0) scale(-1 1)')}`;
 
-
-  pupils = Array.from(eyes.querySelectorAll('.pupil, .pupil-shine')).map((el) => ({
-    el,
-    cx: parseFloat(el.getAttribute('cx')),
-    cy: parseFloat(el.getAttribute('cy')),
-  }));
-  movePupils(lastPointer.x, lastPointer.y);
+  moveGaze(lastPointer.x, lastPointer.y);
 }
 
-// Взгляд следует за курсором
-function movePupils(clientX, clientY) {
+// Взгляд следует за курсором: глаза и корпус слегка доворачиваются к хозяину
+function moveGaze(clientX, clientY) {
   const avatar = document.getElementById('pet-avatar');
-  if (!avatar || !pupils.length) return;
+  const eyes = document.getElementById('pet-eyes');
+  const body = document.querySelector('.pet-body');
+  if (!avatar || !eyes) return;
   const r = avatar.getBoundingClientRect();
   if (!r.width) return;
   let dx = Math.max(-1, Math.min(1, (clientX - (r.left + r.width / 2)) / (r.width * 0.9)));
   let dy = Math.max(-1, Math.min(1, (clientY - (r.top + r.height / 2)) / (r.height * 0.9)));
-  // Обиженный/злой питомец демонстративно отводит взгляд
-  if (petMood === 'angry') { dx = -1; dy = -0.35; }
-  else if (petMood === 'sad') { dx = Math.min(dx, -0.2); dy = 0.6; }
-  pupils.forEach(({ el, cx, cy }) => {
-    el.setAttribute('cx', (cx + dx * 3.4).toFixed(2));
-    el.setAttribute('cy', (cy + dy * 3).toFixed(2));
-  });
+  // Обиженный питомец демонстративно отводит взгляд, злой — наоборот, впивается
+  if (petMood === 'sad') { dx = Math.min(dx, -0.3); dy = 0.6; }
+  eyes.setAttribute('transform', `translate(${(dx * 5).toFixed(2)} ${(dy * 4).toFixed(2)})`);
+  if (body) body.setAttribute('transform', `translate(${(dx * 2).toFixed(2)} ${(dy * 1.4).toFixed(2)})`);
 }
+
+// Совместимость со старым названием
+const movePupils = moveGaze;
 
 window.addEventListener('pointermove', (e) => {
   lastPointer = { x: e.clientX, y: e.clientY };
-  movePupils(e.clientX, e.clientY);
+  moveGaze(e.clientX, e.clientY);
 });
 
 // Мигание
@@ -187,6 +163,9 @@ function applyPetMood(mood) {
   if (moodLabelEl) moodLabelEl.textContent = MOOD_LABELS[petMood];
   if (mouthEl) mouthEl.setAttribute('d', MOUTH_PATHS[petMood] || MOUTH_PATHS.neutral);
   if (emoteEl) emoteEl.innerHTML = EMOTES[petMood] || '';
+  const mawEl = document.getElementById('pet-maw');
+  if (mawEl) mawEl.innerHTML = petMood === 'angry' ? ANGRY_MAW : '';
+  if (mouthEl) mouthEl.style.opacity = petMood === 'angry' ? '0' : '';
   renderEyes(petMood);
 }
 
