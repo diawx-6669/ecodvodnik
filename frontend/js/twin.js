@@ -11,11 +11,22 @@ const twinState = {
   scene: null,
   camera: null,
   raf: null,
+  // Целевые (куда крутит/тянет пользователь) и текущие (что реально
+  // рисуется) значения — камера плавно "догоняет" цель с затуханием
+  // (как орбитальная камера в Blender/three.js OrbitControls), а не
+  // прыгает мгновенно вслед за мышью.
   rotY: 0.6,
   rotX: 0.5,
+  targetRotY: 0.6,
+  targetRotX: 0.5,
+  zoom: 1,
+  targetZoom: 1,
   dragging: false,
   lastX: 0,
   lastY: 0,
+  autoSpin: false,
+  introT: 0, // 0..1 прогресс "кинематографичного" залёта камеры при генерации
+  camDist: 8,
   devices: [],       // [{ id, name, watts, hoursPerDay, efficient, color, roomIndex, roomName }]
   dailyModelKwh: 0,
   dailyRealKwh: 0,
@@ -827,6 +838,8 @@ function twinDrawChart(labels, values) {
 
 // ---------- 3D-сцена (Three.js) ----------
 function twinDisposeScene() {
+  const toolbar = document.getElementById('twin-scene-toolbar');
+  if (toolbar) toolbar.hidden = true;
   if (twinState.raf) cancelAnimationFrame(twinState.raf);
   twinState.raf = null;
   if (twinState.renderer) {
@@ -921,6 +934,17 @@ function twinBuildScene(areaM2) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(width, height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  // Мягкие тени + киношный тонмаппинг — то, чего не хватало, чтобы вид
+  // ощущался как окно 3D-редактора (Blender/Cycles), а не как плоские
+  // залитые цветом кубики без объёма.
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  if (THREE.ACESFilmicToneMapping) {
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+  }
+  if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;
+  else if ('outputEncoding' in renderer) renderer.outputEncoding = THREE.sRGBEncoding;
   wrap.appendChild(renderer.domElement);
 
   // свет — раньше пол/стены были почти того же тёмного цвета, что и фон,
@@ -928,8 +952,17 @@ function twinBuildScene(areaM2) {
   // верхний/боковой свет и подняли контраст материалов
   scene.add(new THREE.HemisphereLight(0x9fe8c9, 0x0a1410, 0.65));
   scene.add(new THREE.AmbientLight(0xffffff, 0.3));
-  const sun = new THREE.DirectionalLight(0xcdeeff, 1.05);
+  const sun = new THREE.DirectionalLight(0xcdeeff, 1.15);
   sun.position.set(6, 10, 4);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024);
+  sun.shadow.camera.near = 1;
+  sun.shadow.camera.far = 40;
+  sun.shadow.camera.left = -12;
+  sun.shadow.camera.right = 12;
+  sun.shadow.camera.top = 12;
+  sun.shadow.camera.bottom = -12;
+  sun.shadow.bias = -0.0015;
   scene.add(sun);
   const fill = new THREE.DirectionalLight(0x45d9ff, 0.35);
   fill.position.set(-8, 4, -6);
@@ -954,6 +987,7 @@ function twinBuildScene(areaM2) {
     geo.rotateX(Math.PI / 2);
     const mat = new THREE.MeshStandardMaterial({ color: FLOOR_COLOR, roughness: 0.85, metalness: 0.05 });
     floorMesh = new THREE.Mesh(geo, mat);
+    floorMesh.receiveShadow = true;
     scene.add(floorMesh);
 
     // стены — контур здания, вытянутый вверх (раньше для реального плана/адреса
@@ -992,6 +1026,7 @@ function twinBuildScene(areaM2) {
     const geo = new THREE.BoxGeometry(footprintSize, 0.12, footprintSize);
     const mat = new THREE.MeshStandardMaterial({ color: FLOOR_COLOR, roughness: 0.85, metalness: 0.05 });
     floorMesh = new THREE.Mesh(geo, mat);
+    floorMesh.receiveShadow = true;
     scene.add(floorMesh);
 
     // стены — тоже делаем полупрозрачными "стеклянными" коробками, а не
@@ -1044,6 +1079,12 @@ function twinBuildScene(areaM2) {
     });
     const cube = new THREE.Mesh(geo, mat);
     cube.position.set(px, size / 2 + 0.06, pz);
+    cube.castShadow = true;
+    // сохраняем базовую яркость свечения, чтобы в цикле анимации плавно
+    // "дышать" ею синусоидой — иначе приборы выглядят как статичная бижутерия,
+    // а не как работающая техника
+    cube.userData.baseEmissive = mat.emissiveIntensity;
+    cube.userData.pulsePhase = Math.random() * Math.PI * 2;
     deviceGroup.add(cube);
 
     const glowGeo = new THREE.CircleGeometry(size * 1.5, 20);
@@ -1063,40 +1104,145 @@ function twinBuildScene(areaM2) {
   twinState.scene = scene;
   twinState.camera = camera;
   twinState.footprintSize = footprintSize;
+  twinState.camDist = camDist;
+  twinState.deviceGroup = deviceGroup;
+  twinState.clock = new THREE.Clock();
+
+  // "Кинематографичный" залёт камеры при появлении новой модели — начинаем
+  // издалека и сверху и плавно подъезжаем к обычному ракурсу, вместо того
+  // чтобы модель просто мгновенно появлялась целиком.
+  twinState.rotY = twinState.targetRotY;
+  twinState.rotX = Math.min(1.3, twinState.targetRotX + 0.35);
+  twinState.zoom = 1.9;
+  twinState.introT = 0;
 
   twinAttachDragControls(wrap);
+  twinBindSceneToolbar();
 
   const animate = () => {
     twinState.raf = requestAnimationFrame(animate);
-    twinState.camera.position.x = Math.cos(twinState.rotY) * camDist * Math.cos(twinState.rotX);
-    twinState.camera.position.z = Math.sin(twinState.rotY) * camDist * Math.cos(twinState.rotX);
-    twinState.camera.position.y = Math.max(1.5, camDist * Math.sin(twinState.rotX) + camDist * 0.5);
+    const dt = Math.min(0.05, twinState.clock.getDelta());
+
+    if (twinState.autoSpin && !twinState.dragging) twinState.targetRotY += dt * 0.25;
+
+    // Плавное затухание (damping) — камера "догоняет" целевой угол/зум,
+    // а не прыгает мгновенно к позиции мыши, как раньше. Так вращение
+    // ощущается инерционным, как орбитальная камера в 3D-редакторах.
+    const damp = 1 - Math.pow(0.0015, dt);
+    twinState.rotY += (twinState.targetRotY - twinState.rotY) * damp;
+    twinState.rotX += (twinState.targetRotX - twinState.rotX) * damp;
+    twinState.zoom += (twinState.targetZoom - twinState.zoom) * damp;
+
+    // Интро-залёт: первые ~1.1 сек после генерации плавно подтягиваем зум
+    // к целевому значению по кривой ease-out, поверх обычного damping.
+    if (twinState.introT < 1) {
+      twinState.introT = Math.min(1, twinState.introT + dt / 1.1);
+      const eased = 1 - Math.pow(1 - twinState.introT, 3);
+      twinState.zoom = 1.9 + (twinState.targetZoom - 1.9) * eased;
+    }
+
+    const dist = camDist * twinState.zoom;
+    twinState.camera.position.x = Math.cos(twinState.rotY) * dist * Math.cos(twinState.rotX);
+    twinState.camera.position.z = Math.sin(twinState.rotY) * dist * Math.cos(twinState.rotX);
+    twinState.camera.position.y = Math.max(1.5, dist * Math.sin(twinState.rotX) + dist * 0.5);
     twinState.camera.lookAt(0, 0, 0);
+
+    // "Дыхание" индикаторов приборов — мягкая синусоида яркости свечения,
+    // у энергоёмких приборов чуть заметнее, чем у эффективных.
+    const t = performance.now() / 1000;
+    deviceGroup.children.forEach((child) => {
+      if (child.userData && child.userData.baseEmissive != null) {
+        const wave = 0.15 * Math.sin(t * 1.6 + child.userData.pulsePhase);
+        child.material.emissiveIntensity = Math.max(0.05, child.userData.baseEmissive + wave);
+      }
+    });
+
     renderer.render(scene, camera);
   };
   animate();
+}
+
+function twinBindSceneToolbar() {
+  const toolbar = document.getElementById('twin-scene-toolbar');
+  if (toolbar) toolbar.hidden = false;
+
+  const resetBtn = document.getElementById('twin-view-reset-btn');
+  if (resetBtn && !resetBtn.dataset.bound) {
+    resetBtn.dataset.bound = '1';
+    resetBtn.addEventListener('click', () => {
+      twinState.targetRotY = 0.6;
+      twinState.targetRotX = 0.5;
+      twinState.targetZoom = 1;
+    });
+  }
+
+  const spinBtn = document.getElementById('twin-view-spin-btn');
+  if (spinBtn && !spinBtn.dataset.bound) {
+    spinBtn.dataset.bound = '1';
+    spinBtn.addEventListener('click', () => {
+      twinState.autoSpin = !twinState.autoSpin;
+      spinBtn.classList.toggle('is-active', twinState.autoSpin);
+      spinBtn.textContent = twinState.autoSpin ? '⏸ Стоп' : '▶ Вращать';
+    });
+  }
 }
 
 function twinAttachDragControls(wrap) {
   const canvas = wrap.querySelector('canvas');
   if (!canvas) return;
 
-  const onDown = (x, y) => { twinState.dragging = true; twinState.lastX = x; twinState.lastY = y; };
+  const ZOOM_MIN = 0.4;
+  const ZOOM_MAX = 3;
+
+  // Крутим/зумим "цель" (targetRotX/Y/Zoom), а не сам угол камеры напрямую —
+  // цикл animate() в twinBuildScene сам плавно догоняет цель с затуханием,
+  // поэтому вращение и зум ощущаются инерционными, а не дёрганными.
+  const onDown = (x, y) => {
+    twinState.dragging = true;
+    twinState.autoSpin = false;
+    const spinBtn = document.getElementById('twin-view-spin-btn');
+    if (spinBtn) { spinBtn.classList.remove('is-active'); spinBtn.textContent = '▶ Вращать'; }
+    twinState.lastX = x; twinState.lastY = y;
+  };
   const onMove = (x, y) => {
     if (!twinState.dragging) return;
-    twinState.rotY += (x - twinState.lastX) * 0.008;
-    twinState.rotX = Math.max(0.15, Math.min(1.3, twinState.rotX + (y - twinState.lastY) * -0.006));
+    twinState.targetRotY += (x - twinState.lastX) * 0.008;
+    twinState.targetRotX = Math.max(0.15, Math.min(1.3, twinState.targetRotX + (y - twinState.lastY) * -0.006));
     twinState.lastX = x; twinState.lastY = y;
   };
   const onUp = () => { twinState.dragging = false; };
+  const onZoom = (delta) => {
+    twinState.targetZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, twinState.targetZoom + delta));
+  };
 
   canvas.addEventListener('mousedown', (e) => onDown(e.clientX, e.clientY));
   window.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
   window.addEventListener('mouseup', onUp);
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    onZoom(e.deltaY * 0.001);
+  }, { passive: false });
 
-  canvas.addEventListener('touchstart', (e) => { const t = e.touches[0]; onDown(t.clientX, t.clientY); }, { passive: true });
-  canvas.addEventListener('touchmove', (e) => { const t = e.touches[0]; onMove(t.clientX, t.clientY); }, { passive: true });
-  canvas.addEventListener('touchend', onUp);
+  let pinchStartDist = null;
+  canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+      const [a, b] = e.touches;
+      pinchStartDist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+    } else {
+      const t = e.touches[0]; onDown(t.clientX, t.clientY);
+    }
+  }, { passive: true });
+  canvas.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2 && pinchStartDist != null) {
+      const [a, b] = e.touches;
+      const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      onZoom((pinchStartDist - dist) * 0.006);
+      pinchStartDist = dist;
+    } else {
+      const t = e.touches[0]; onMove(t.clientX, t.clientY);
+    }
+  }, { passive: true });
+  canvas.addEventListener('touchend', () => { onUp(); pinchStartDist = null; });
 }
 
 function twinOnResize() {

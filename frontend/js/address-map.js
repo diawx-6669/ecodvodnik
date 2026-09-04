@@ -34,23 +34,92 @@ function amInit() {
   }
 
   const map = L.map(mapEl, { worldCopyJump: true }).setView([AM_DEFAULT_VIEW.lat, AM_DEFAULT_VIEW.lon], AM_DEFAULT_VIEW.zoom);
-  const tileOptions = {
-    maxZoom: 20,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  };
-  const osmLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', tileOptions).addTo(map);
-  let fallbackLayer;
-  let fallbackActivated = false;
-  osmLayer.on('tileerror', () => {
-    if (fallbackActivated) return;
-    fallbackActivated = true;
-    fallbackLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-      ...tileOptions,
-      subdomains: 'abc',
+
+  // Один-единственный провайдер тайлов (обычно tile.openstreetmap.org) на проде
+  // часто отдаёт часть тайлов с ошибкой — сеть хостинга, блокировщики рекламы/
+  // трекеров (многие списки помечают openstreetmap.org как "аналитику") или
+  // просто троттлинг публичного сервера. Раньше при любой ошибке карта один
+  // раз переключалась на единственный резервный слой той же семьи серверов —
+  // если блокировался весь домен *openstreetmap*, резерв не спасал, и часть
+  // карты навсегда оставалась серой клеткой. Теперь пробуем по очереди
+  // несколько независимых провайдеров тайлов и по-настоящему считаем ошибки,
+  // а не переключаемся один раз на первую же осечку.
+  const AM_TILE_PROVIDERS = [
+    {
+      url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      options: { subdomains: 'abcd', maxZoom: 20 },
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    },
+    {
+      url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      options: { maxZoom: 19 },
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    },
+    {
+      url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+      options: { subdomains: 'abc', maxZoom: 20 },
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://hotosm.org/">HOT</a>',
-    }).addTo(map);
-    map.removeLayer(osmLayer);
-  });
+    },
+    {
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+      options: { maxZoom: 19 },
+      attribution: 'Tiles &copy; Esri',
+    },
+  ];
+
+  let providerIndex = 0;
+  let activeLayer = null;
+  let errorCount = 0;
+  let loadedAnyTile = false;
+  let switchTimer = null;
+
+  function amStartProvider(index) {
+    if (index >= AM_TILE_PROVIDERS.length) {
+      // Все известные провайдеры недоступны (скорее всего сеть/блокировщик
+      // режет вообще все внешние тайлы) — переходим на локальный офлайн-режим,
+      // чтобы точку на объекте всё равно можно было выбрать.
+      map.remove();
+      amState.map = null;
+      amRenderOfflineMap(mapEl);
+      amSetStatus('Не удалось загрузить тайлы карты (похоже, блокируется сетью или расширением браузера). Включён локальный режим — кликните по сетке, чтобы выбрать точку.', 'error');
+      return;
+    }
+
+    providerIndex = index;
+    errorCount = 0;
+    loadedAnyTile = false;
+    const cfg = AM_TILE_PROVIDERS[index];
+    const layer = L.tileLayer(cfg.url, { ...cfg.options, attribution: cfg.attribution, crossOrigin: true });
+
+    layer.on('tileload', () => { loadedAnyTile = true; });
+    layer.on('tileerror', () => {
+      errorCount += 1;
+      // Даём провайдеру немного шансов (сеть могла на секунду моргнуть),
+      // но если ошибок много и при этом ни один тайл так и не загрузился —
+      // это не разовый сбой, а недоступный домен целиком, переключаемся дальше.
+      if (errorCount >= 4 && !loadedAnyTile) {
+        clearTimeout(switchTimer);
+        amSwitchProvider(index + 1);
+      }
+    });
+
+    layer.addTo(map);
+    if (activeLayer) map.removeLayer(activeLayer);
+    activeLayer = layer;
+
+    // Подстраховка на случай, если тайлы вообще не приходят (ни успеха, ни
+    // явной ошибки — например, домен режется без ответа) — ждём 5 секунд.
+    clearTimeout(switchTimer);
+    switchTimer = setTimeout(() => {
+      if (!loadedAnyTile) amSwitchProvider(index + 1);
+    }, 5000);
+  }
+
+  function amSwitchProvider(nextIndex) {
+    if (nextIndex === providerIndex + 1 || nextIndex === 0) amStartProvider(nextIndex);
+  }
+
+  amStartProvider(0);
 
   map.on('click', (e) => amSetPoint(e.latlng.lat, e.latlng.lng, { reverseGeocode: true, recenter: false }));
 
@@ -63,6 +132,7 @@ function amInit() {
   window.addEventListener('load', () => map.invalidateSize());
   setTimeout(() => map.invalidateSize(), 300);
   setTimeout(() => map.invalidateSize(), 1200);
+  setTimeout(() => map.invalidateSize(), 2500);
 }
 
 function amBindControls() {

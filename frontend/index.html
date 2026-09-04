@@ -468,8 +468,14 @@
       </div>
 
       <div class="twin-body">
-        <div class="twin-scene-wrap" id="twin-scene-wrap">
-          <div class="twin-scene-empty">Нажмите «Сгенерировать модель»</div>
+        <div class="twin-scene-shell">
+          <div class="twin-scene-wrap" id="twin-scene-wrap">
+            <div class="twin-scene-empty">Нажмите «Сгенерировать модель»</div>
+          </div>
+          <div class="twin-scene-toolbar" id="twin-scene-toolbar" hidden>
+            <button type="button" id="twin-view-reset-btn" class="twin-scene-btn" title="Сбросить вид">⟲ Вид</button>
+            <button type="button" id="twin-view-spin-btn" class="twin-scene-btn" title="Авто-вращение">▶ Вращать</button>
+          </div>
         </div>
 
         <div class="twin-side">
@@ -524,7 +530,10 @@
       <div class="am-panel">
         <div class="am-head">
           <h3>Адрес объекта на карте мира <span class="pill pill-sm">OpenStreetMap</span></h3>
-          <p class="am-hint">Отметьте дом кликом по карте или перетащите метку, чтобы получить точные координаты для расчёта солнца. Если контур здания найдётся в OpenStreetMap, кнопка «Построить 3D по этому зданию» ещё и подставит настоящую форму дома в 3D-двойник.</p>
+          <details class="info-collapse">
+            <summary>Как это работает</summary>
+            <p class="am-hint">Отметьте дом кликом по карте или перетащите метку, чтобы получить точные координаты для расчёта солнца. Если контур здания найдётся в OpenStreetMap, кнопка «Построить 3D по этому зданию» ещё и подставит настоящую форму дома в 3D-двойник.</p>
+          </details>
         </div>
 
         <div class="am-controls">
@@ -537,13 +546,16 @@
       </div>
 
       <div class="sun-top">
-        <p class="sun-hint-main">Рассчитываем движение солнца для каждой комнаты и подсказываем, когда
-          естественного света из окна хватает, а когда стоит включить лампу.</p>
-        <ol class="sun-steps">
-          <li>Отметьте дом на карте выше (клик по карте) — так все комнаты сразу получат координаты, либо впишите широту/долготу вручную в каждой комнате.</li>
-          <li>Нажмите «+ Добавить комнату» и укажите, куда выходит окно этой комнаты (север, юг и т.д.).</li>
-          <li>Ниже появится цветная шкала на сутки: жёлтый — прямой солнечный свет, голубой — рассеянный дневной свет, тёмный — нужен искусственный свет. Дату можно менять полем справа.</li>
-        </ol>
+        <details class="info-collapse">
+          <summary>Как читать этот блок</summary>
+          <p class="sun-hint-main">Рассчитываем движение солнца для каждой комнаты и подсказываем, когда
+            естественного света из окна хватает, а когда стоит включить лампу.</p>
+          <ol class="sun-steps">
+            <li>Отметьте дом на карте выше (клик по карте) — так все комнаты сразу получат координаты, либо впишите широту/долготу вручную в каждой комнате.</li>
+            <li>Нажмите «+ Добавить комнату» и укажите, куда выходит окно этой комнаты (север, юг и т.д.).</li>
+            <li>Ниже появится цветная шкала на сутки: жёлтый — прямой солнечный свет, голубой — рассеянный дневной свет, тёмный — нужен искусственный свет. Дату можно менять полем справа.</li>
+          </ol>
+        </details>
         <div class="sun-top-controls">
           <label>Дата <input type="date" id="sun-date" /></label>
           <button type="button" id="sun-add-room-btn" class="sun-btn">+ Добавить комнату</button>

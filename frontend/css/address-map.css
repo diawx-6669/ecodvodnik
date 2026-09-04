@@ -12,6 +12,36 @@
 .am-head h3::after { content: none; }
 .am-hint { color: var(--muted); font-size: 12.5px; margin-top: 6px; max-width: 640px; line-height: 1.5; }
 
+/* Сворачиваемая подсказка: весь текст остаётся доступным, но не давит на
+   глаза по умолчанию — раскрывается по клику на "Как это работает". */
+.info-collapse { margin-top: 8px; }
+.info-collapse summary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--aqua, #45d9ff);
+  user-select: none;
+  padding: 2px 0;
+}
+.info-collapse summary::-webkit-details-marker { display: none; }
+.info-collapse summary::before {
+  content: '?';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  font-size: 10px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.info-collapse[open] summary { margin-bottom: 6px; }
+.info-collapse[open] summary::before { content: '−'; }
+
 .am-controls {
   display: flex;
   flex-wrap: wrap;
