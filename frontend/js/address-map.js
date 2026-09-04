@@ -34,15 +34,9 @@ function amInit() {
   }
 
   const map = L.map(mapEl, { worldCopyJump: true }).setView([AM_DEFAULT_VIEW.lat, AM_DEFAULT_VIEW.lon], AM_DEFAULT_VIEW.zoom);
-  // Раньше здесь были тёмные тайлы CARTO dark_all — на них видны только тонкие
-  // серые линии дорог на чёрном фоне, и без сильного увеличения понять, что на
-  // карте вообще что-то есть, было почти невозможно. Voyager — те же тайлы OSM,
-  // но с цветной, контрастной отрисовкой (зелень парков, вода, здания), поэтому
-  // карта остаётся читаемой на любом масштабе.
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 20,
-    subdomains: 'abcd',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(map);
 
   map.on('click', (e) => amSetPoint(e.latlng.lat, e.latlng.lng, { reverseGeocode: true, recenter: false }));
