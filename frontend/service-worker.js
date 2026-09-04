@@ -12,7 +12,11 @@
 // "Свет по солнцу" не появлялись на сайте у тестировщика). Теперь стратегия
 // network-first: сначала пробуем сеть и обновляем кэш, а к кэшу обращаемся
 // только как к запасному варианту (офлайн).
-const CACHE_NAME = 'ecodvoinik-shell-v10';
+// v11: добавлены nav.js/pet-skins.js/photo-reading.js/pwa.js — их не было
+// в списке, хотя они подключены в index.html (значит офлайн-режим и PWA-
+// установка открывались без навигации по разделам, без выбора питомца и
+// без загрузки фото показаний). Заодно добавлен css/pet-skins.css.
+const CACHE_NAME = 'ecodvoinik-shell-v11';
 const SHELL_FILES = [
   './',
   './index.html',
@@ -26,10 +30,14 @@ const SHELL_FILES = [
   './css/address-map.css',
   './css/profile.css',
   './css/sun-schedule.css',
+  './css/dashboard-redesign.css',
+  './css/pet-skins.css',
   './js/api.js',
   './js/auth.js',
   './js/theme.js',
+  './js/nav.js',
   './js/pet.js',
+  './js/pet-skins.js',
   './js/chart.js',
   './js/consumption-utils.js',
   './js/analytics-advanced.js',
@@ -42,13 +50,24 @@ const SHELL_FILES = [
   './js/goals-api.js',
   './js/goals-ui.js',
   './js/app.js',
+  './js/photo-reading.js',
   './js/profile.js',
   './js/admin-panel.js',
+  './js/pwa.js',
   './js/floorplan.js',
   './js/twin.js',
   './js/address-map.js',
   './js/sun-schedule.js',
   './assets/favicon.svg',
+  './assets/pet/pet-eco.png',
+  './assets/pet/pet-robo.png',
+  './assets/pet/pet-dog.png',
+  './assets/pet/pet-cat.png',
+  './assets/pet/pet-fox.png',
+  './assets/pet/pet-owl.png',
+  './assets/pet/pet-panda.png',
+  './assets/pet/pet-turtle.png',
+  './assets/pet/pet-rabbit.png',
 ];
 
 self.addEventListener('install', (event) => {

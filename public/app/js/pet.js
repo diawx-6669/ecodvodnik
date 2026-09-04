@@ -183,7 +183,6 @@ function applyPetMood(mood) {
 
   petMood = MOOD_LABELS[mood] ? mood : 'neutral';
   avatar.dataset.mood = petMood;
-  window.applyPetSkinMood?.(petMood);
   avatar.classList.toggle('pet-turned', TURN_AWAY_MOODS.includes(petMood));
   if (moodLabelEl) moodLabelEl.textContent = MOOD_LABELS[petMood];
   if (mouthEl) mouthEl.setAttribute('d', MOUTH_PATHS[petMood] || MOUTH_PATHS.neutral);

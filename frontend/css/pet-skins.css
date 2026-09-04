@@ -17,33 +17,6 @@
   0%, 100% { transform: translateY(0) scale(1); }
   50% { transform: translateY(-6px) scale(1.025); }
 }
-.pet-avatar::after {
-  position: absolute;
-  right: -4px;
-  top: 8px;
-  z-index: 2;
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(5, 23, 18, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
-  font-size: 20px;
-  opacity: 0;
-  transform: scale(0.7) rotate(-12deg);
-  transition: opacity .25s ease, transform .25s ease;
-  pointer-events: none;
-}
-.pet-avatar[data-mood]:not([data-mood="neutral"])::after { opacity: 1; transform: scale(1) rotate(0); }
-.pet-avatar[data-mood="happy"]::after { content: '✦'; color: #d6fff0; }
-.pet-avatar[data-mood="surprised"]::after { content: '!'; color: #ffe08a; font-weight: 900; }
-.pet-avatar[data-mood="worried"]::after { content: '?'; color: #ffd98a; font-weight: 900; }
-.pet-avatar[data-mood="tired"]::after { content: 'z'; color: #cfe0dd; font-weight: 900; }
-.pet-avatar[data-mood="sad"]::after { content: '•'; color: #9fd8ff; font-size: 30px; }
-.pet-avatar[data-mood="angry"]::after { content: '⚡'; color: #ff8f8f; }
-.pet-avatar[data-mood="sick"]::after { content: '✚'; color: #b4f0a8; font-size: 17px; }
 .pet-avatar[data-mood="happy"] .pet-img    { filter: drop-shadow(0 18px 34px color-mix(in srgb, var(--pet-skin-tint, #34e0a1) 60%, transparent)) saturate(1.15) brightness(1.06); }
 .pet-avatar[data-mood="tired"] .pet-img    { filter: drop-shadow(0 12px 24px rgba(159,179,174,.3)) saturate(0.5) brightness(0.92); }
 .pet-avatar[data-mood="sad"] .pet-img      { filter: drop-shadow(0 12px 26px rgba(143,163,196,.35)) saturate(0.6) brightness(0.95); }
@@ -73,9 +46,6 @@
 }
 .pet-skin-title { font-weight: 800; font-size: 0.95rem; letter-spacing: 0.2px; }
 .pet-skin-current { font-size: 0.8rem; opacity: 0.75; }
-.pet-skin-actions { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-.pet-picker-toggle { border: 1px solid rgba(255,255,255,.18); border-radius: 999px; padding: 5px 9px; color: inherit; background: rgba(255,255,255,.06); font: inherit; font-size: .75rem; cursor: pointer; }
-.pet-picker-toggle:hover { border-color: var(--green); background: rgba(52,224,161,.1); }
 .pet-skin-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
@@ -110,8 +80,6 @@
   background: color-mix(in srgb, var(--tint) 16%, transparent);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--tint) 45%, transparent), 0 10px 26px color-mix(in srgb, var(--tint) 25%, transparent);
 }
-.pet-skin-picker.is-collapsed { padding-bottom: 10px; }
-.pet-skin-picker.is-collapsed .pet-skin-row { display: none; }
 @media (max-width: 560px) {
   .pet-skin-row { grid-template-columns: repeat(3, 1fr); }
 }
