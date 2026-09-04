@@ -12,7 +12,7 @@
 // "Свет по солнцу" не появлялись на сайте у тестировщика). Теперь стратегия
 // network-first: сначала пробуем сеть и обновляем кэш, а к кэшу обращаемся
 // только как к запасному варианту (офлайн).
-const CACHE_NAME = 'ecodvoinik-shell-v11';
+const CACHE_NAME = 'ecodvoinik-shell-v12';
 const SHELL_FILES = [
   './',
   './index.html',

@@ -34,10 +34,23 @@ function amInit() {
   }
 
   const map = L.map(mapEl, { worldCopyJump: true }).setView([AM_DEFAULT_VIEW.lat, AM_DEFAULT_VIEW.lon], AM_DEFAULT_VIEW.zoom);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  const tileOptions = {
     maxZoom: 20,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  }).addTo(map);
+  };
+  const osmLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', tileOptions).addTo(map);
+  let fallbackLayer;
+  let fallbackActivated = false;
+  osmLayer.on('tileerror', () => {
+    if (fallbackActivated) return;
+    fallbackActivated = true;
+    fallbackLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      ...tileOptions,
+      subdomains: 'abc',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://hotosm.org/">HOT</a>',
+    }).addTo(map);
+    map.removeLayer(osmLayer);
+  });
 
   map.on('click', (e) => amSetPoint(e.latlng.lat, e.latlng.lng, { reverseGeocode: true, recenter: false }));
 
@@ -49,6 +62,7 @@ function amInit() {
   // только в углу контейнера.
   window.addEventListener('load', () => map.invalidateSize());
   setTimeout(() => map.invalidateSize(), 300);
+  setTimeout(() => map.invalidateSize(), 1200);
 }
 
 function amBindControls() {

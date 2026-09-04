@@ -16,7 +16,7 @@
 // в списке, хотя они подключены в index.html (значит офлайн-режим и PWA-
 // установка открывались без навигации по разделам, без выбора питомца и
 // без загрузки фото показаний). Заодно добавлен css/pet-skins.css.
-const CACHE_NAME = 'ecodvoinik-shell-v12';
+const CACHE_NAME = 'ecodvoinik-shell-v13';
 const SHELL_FILES = [
   './',
   './index.html',
