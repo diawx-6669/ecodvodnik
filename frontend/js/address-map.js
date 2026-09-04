@@ -45,15 +45,21 @@ function amInit() {
   // несколько независимых провайдеров тайлов и по-настоящему считаем ошибки,
   // а не переключаемся один раз на первую же осечку.
   const AM_TILE_PROVIDERS = [
-    {
-      url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      options: { subdomains: 'abcd', maxZoom: 20 },
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    },
+    // CARTO раньше был первым (тёмная тема сайта), но их растровые базовые
+    // карты теперь требуют API-ключ: без ключа сервер отдаёт НЕ ошибку,
+    // а обычную картинку-заглушку "API KEY REQUIRED" — поэтому tileerror
+    // не срабатывал и карта "успешно" показывала мусор вместо тайлов.
+    // Используем только провайдеров, которые действительно бесплатны без
+    // ключа, а тёмный вид получаем CSS-фильтром (см. address-map.css).
     {
       url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       options: { maxZoom: 19 },
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    },
+    {
+      url: 'https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png',
+      options: { maxZoom: 19 },
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, tiles by Wikimedia',
     },
     {
       url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
