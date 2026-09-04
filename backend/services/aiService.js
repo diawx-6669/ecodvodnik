@@ -472,6 +472,9 @@ const SUPPORTED_IMAGE_MEDIA_TYPES = new Set([
   'image/gif',
 ]);
 
+const GROQ_VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
+const GROQ_CHAT_COMPLETIONS_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
 function parseImageDataUrl(imageDataUrl) {
   if (typeof imageDataUrl !== 'string') return null;
   const match = imageDataUrl.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
@@ -505,52 +508,55 @@ async function analyzeMeterPhoto(imageDataUrl) {
     };
   }
 
-  if (!config.geminiApiKey) {
+  if (!config.groqApiKey) {
     return {
       ok: false,
       error:
-        'Распознавание фото недоступно: на сервере не настроен GEMINI_API_KEY. ' +
+        'Распознавание фото недоступно: на сервере не настроен GROQ_API_KEY. ' +
         'Введите показание вручную.',
     };
   }
 
   try {
     const response = await fetch(
-      `${GEMINI_API_BASE}/${GEMINI_TEXT_MODEL}:generateContent`,
+      GROQ_CHAT_COMPLETIONS_URL,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-goog-api-key': config.geminiApiKey,
+          Authorization: `Bearer ${config.groqApiKey}`,
         },
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: METER_ANALYSIS_SYSTEM_PROMPT }] },
-          contents: [
+          model: GROQ_VISION_MODEL,
+          messages: [
+            {
+              role: 'system',
+              content: METER_ANALYSIS_SYSTEM_PROMPT,
+            },
             {
               role: 'user',
-              parts: [
+              content: [
                 {
-                  inlineData: {
-                    mimeType: parsed.mediaType,
-                    data: parsed.base64Data,
-                  },
-                },
-                {
+                  type: 'text',
                   text:
                     'Распознай это изображение (счётчик воды/электричества или квитанция) ' +
                     'и верни JSON строго по описанной схеме.',
                 },
+                {
+                  type: 'image_url',
+                  image_url: { url: imageDataUrl },
+                },
               ],
             },
           ],
-          generationConfig: { maxOutputTokens: 500 },
+          max_tokens: 500,
         }),
       }
     );
 
     if (!response.ok) {
       const errBody = await response.text().catch(() => '');
-      console.error('Gemini vision API error:', response.status, errBody);
+      console.error('Groq vision API error:', response.status, errBody);
       return {
         ok: false,
         error: 'Сервис распознавания временно недоступен. Попробуйте ещё раз или введите вручную.',
@@ -558,11 +564,7 @@ async function analyzeMeterPhoto(imageDataUrl) {
     }
 
     const data = await response.json();
-    const text = (data.candidates || [])
-      .flatMap((c) => (c.content && c.content.parts) || [])
-      .map((part) => part.text || '')
-      .filter(Boolean)
-      .join('\n');
+    const text = data.choices?.[0]?.message?.content || '';
 
     const parsedJson = extractJsonBlock(text);
     if (!parsedJson) {
