@@ -36,25 +36,23 @@ function amInit() {
   const map = L.map(mapEl, { worldCopyJump: true }).setView([AM_DEFAULT_VIEW.lat, AM_DEFAULT_VIEW.lon], AM_DEFAULT_VIEW.zoom);
 
   // Один-единственный провайдер тайлов (обычно tile.openstreetmap.org) на проде
-  // часто отдаёт часть тайлов с ошибкой — сеть хостинга, блокировщики рекламы/
-  // трекеров (многие списки помечают openstreetmap.org как "аналитику") или
-  // просто троттлинг публичного сервера. Раньше при любой ошибке карта один
-  // раз переключалась на единственный резервный слой той же семьи серверов —
-  // если блокировался весь домен *openstreetmap*, резерв не спасал, и часть
-  // карты навсегда оставалась серой клеткой. Теперь пробуем по очереди
-  // несколько независимых провайдеров тайлов и по-настоящему считаем ошибки,
-  // а не переключаемся один раз на первую же осечку.
+  // часто отдаёт лишь ЧАСТЬ тайлов с ошибкой (не все и не ноль) — это типичный
+  // троттлинг публичного сервера OSM для сторонних сайтов: одни запросы
+  // проходят, другие получают 429/б.о., и так без остановки. Раньше карта
+  // переключалась на резервный слой только если НИ ОДНА плитка не загрузилась
+  // вообще — а при частичном сбое (как раз самый частый случай) не
+  // переключалась никогда, и часть карты навсегда оставалась серыми клетками.
+  // Теперь: 1) каждая упавшая плитка сама пробует перезагрузиться ещё раз
+  // (могла быть разовая сетевая ошибка), 2) слой считает ДОЛЮ ошибок среди
+  // всех запросов, а не факт наличия хоть одного успеха, и при высокой доле
+  // ошибок переключается на следующего провайдера целиком.
   const AM_TILE_PROVIDERS = [
-    // CARTO раньше был первым (тёмная тема сайта), но их растровые базовые
-    // карты теперь требуют API-ключ: без ключа сервер отдаёт НЕ ошибку,
-    // а обычную картинку-заглушку "API KEY REQUIRED" — поэтому tileerror
-    // не срабатывал и карта "успешно" показывала мусор вместо тайлов.
-    // Используем только провайдеров, которые действительно бесплатны без
-    // ключа, а тёмный вид получаем CSS-фильтром (см. address-map.css).
+    // ArcGIS/Esri первым — в отличие от tile.openstreetmap.org, этот сервис
+    // рассчитан именно на встраивание в сторонние сайты и не троттлит их.
     {
-      url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
       options: { maxZoom: 19 },
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      attribution: 'Tiles &copy; Esri',
     },
     {
       url: 'https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png',
@@ -67,17 +65,18 @@ function amInit() {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://hotosm.org/">HOT</a>',
     },
     {
-      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+      url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       options: { maxZoom: 19 },
-      attribution: 'Tiles &copy; Esri',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     },
   ];
 
   let providerIndex = 0;
   let activeLayer = null;
-  let errorCount = 0;
-  let loadedAnyTile = false;
+  let loadedCount = 0;
+  let erroredCount = 0;
   let switchTimer = null;
+  let switched = false;
 
   function amStartProvider(index) {
     if (index >= AM_TILE_PROVIDERS.length) {
@@ -92,21 +91,43 @@ function amInit() {
     }
 
     providerIndex = index;
-    errorCount = 0;
-    loadedAnyTile = false;
+    loadedCount = 0;
+    erroredCount = 0;
+    switched = false;
     const cfg = AM_TILE_PROVIDERS[index];
-    const layer = L.tileLayer(cfg.url, { ...cfg.options, attribution: cfg.attribution, crossOrigin: true });
+    const layer = L.tileLayer(cfg.url, { ...cfg.options, attribution: cfg.attribution });
 
-    layer.on('tileload', () => { loadedAnyTile = true; });
-    layer.on('tileerror', () => {
-      errorCount += 1;
-      // Даём провайдеру немного шансов (сеть могла на секунду моргнуть),
-      // но если ошибок много и при этом ни один тайл так и не загрузился —
-      // это не разовый сбой, а недоступный домен целиком, переключаемся дальше.
-      if (errorCount >= 4 && !loadedAnyTile) {
+    function maybeSwitch() {
+      if (switched) return;
+      const total = loadedCount + erroredCount;
+      // Даём минимум 8 запросов на "разгон", и переключаемся, если больше
+      // трети из них так и не загрузились после повторной попытки —
+      // при полном троттлинге доля ошибок обычно намного выше (60-100%),
+      // так что порог в треть не даст переключаться от случайных единичных
+      // сбоев, но поймает именно "дырявый" слой из скриншотов.
+      if (total >= 8 && erroredCount / total > 0.33) {
+        switched = true;
         clearTimeout(switchTimer);
-        amSwitchProvider(index + 1);
+        amStartProvider(index + 1);
       }
+    }
+
+    layer.on('tileload', () => { loadedCount += 1; maybeSwitch(); });
+    layer.on('tileerror', (e) => {
+      const img = e.tile;
+      // Один шанс на повторную загрузку той же плитки — если сервер моргнул
+      // разово, второй запрос обычно проходит и плитка не считается ошибкой.
+      if (img && !img.dataset.amRetried) {
+        img.dataset.amRetried = '1';
+        const src = img.src;
+        setTimeout(() => {
+          img.src = '';
+          img.src = src;
+        }, 500);
+        return;
+      }
+      erroredCount += 1;
+      maybeSwitch();
     });
 
     layer.addTo(map);
@@ -114,15 +135,11 @@ function amInit() {
     activeLayer = layer;
 
     // Подстраховка на случай, если тайлы вообще не приходят (ни успеха, ни
-    // явной ошибки — например, домен режется без ответа) — ждём 5 секунд.
+    // явной ошибки — например, домен режется без ответа) — ждём 6 секунд.
     clearTimeout(switchTimer);
     switchTimer = setTimeout(() => {
-      if (!loadedAnyTile) amSwitchProvider(index + 1);
-    }, 5000);
-  }
-
-  function amSwitchProvider(nextIndex) {
-    if (nextIndex === providerIndex + 1 || nextIndex === 0) amStartProvider(nextIndex);
+      if (!switched && loadedCount === 0) amStartProvider(index + 1);
+    }, 6000);
   }
 
   amStartProvider(0);
