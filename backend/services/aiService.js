@@ -472,7 +472,13 @@ const SUPPORTED_IMAGE_MEDIA_TYPES = new Set([
   'image/gif',
 ]);
 
-const GROQ_VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
+// meta-llama/llama-4-scout-17b-16e-instruct раньше была основной vision-моделью
+// Groq, но сам Groq отключил её (деприкейт с рассылкой пользователям) — любой
+// запрос к ней стабильно отвечал ошибкой, отсюда "Сервис распознавания
+// временно недоступен" даже при правильно настроенном ключе. Актуальная (на
+// момент правки) vision-модель на бесплатном тарифе Groq — qwen/qwen3.6-27b:
+// понимает картинки, до 5 изображений за запрос, поддерживает JSON mode.
+const GROQ_VISION_MODEL = 'qwen/qwen3.6-27b';
 const GROQ_CHAT_COMPLETIONS_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 function parseImageDataUrl(imageDataUrl) {
@@ -549,7 +555,11 @@ async function analyzeMeterPhoto(imageDataUrl) {
               ],
             },
           ],
-          max_tokens: 500,
+          // Groq API (OpenAI-совместимый) в актуальных примерах использует
+          // max_completion_tokens; старое имя max_tokens тоже как правило
+          // принимается, но лучше сразу соответствовать документации.
+          max_completion_tokens: 500,
+          response_format: { type: 'json_object' },
         }),
       }
     );
