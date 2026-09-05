@@ -14,6 +14,7 @@ const PET_SKINS = [
 ];
 
 const PET_SKIN_KEY = 'ecotwin_pet_skin';
+const PET_SKIN_COLLAPSE_KEY = 'ecotwin_pet_skin_collapsed';
 
 function getPetSkinId() {
   try {
@@ -25,6 +26,21 @@ function getPetSkinId() {
 
 function getPetSkin(id) {
   return PET_SKINS.find((s) => s.id === (id || getPetSkinId())) || PET_SKINS[0];
+}
+
+function getPetSkinCollapsed() {
+  try { return localStorage.getItem(PET_SKIN_COLLAPSE_KEY) === '1'; } catch (_) { return false; }
+}
+
+function setPetSkinCollapsed(collapsed) {
+  const row = document.getElementById('pet-skin-row');
+  const toggleBtn = document.getElementById('pet-skin-toggle');
+  if (row) row.classList.toggle('is-collapsed', collapsed);
+  if (toggleBtn) {
+    toggleBtn.textContent = collapsed ? 'Сменить питомца' : 'Скрыть питомцев';
+    toggleBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+  }
+  try { localStorage.setItem(PET_SKIN_COLLAPSE_KEY, collapsed ? '1' : '0'); } catch (_) {}
 }
 
 function ensurePetImage() {
@@ -64,6 +80,10 @@ function applyPetSkin(id, { save = true } = {}) {
   const descEl = document.getElementById('pet-skin-desc');
   if (nameEl) nameEl.textContent = skin.name;
   if (descEl) descEl.textContent = skin.desc;
+  // Выбор сделан вручную (не при первичной загрузке сохранённого скина) —
+  // сворачиваем ряд карточек, чтобы не занимал место; пользователь всегда
+  // может развернуть его снова кнопкой "Сменить питомца".
+  if (save) setPetSkinCollapsed(true);
   // Небольшая реакция на смену облика
   if (avatar) {
     avatar.classList.remove('pet-bounce');
@@ -84,8 +104,9 @@ function buildPetSkinPicker() {
     <div class="pet-skin-head">
       <span class="pet-skin-title">Выбери питомца</span>
       <span class="pet-skin-current"><b id="pet-skin-name"></b> — <span id="pet-skin-desc"></span></span>
+      <button type="button" id="pet-skin-toggle" class="pet-skin-toggle-btn" aria-expanded="true">Скрыть питомцев</button>
     </div>
-    <div class="pet-skin-row">
+    <div class="pet-skin-row" id="pet-skin-row">
       ${PET_SKINS.map((s) => `
         <button type="button" class="pet-skin-card" data-skin-id="${s.id}" style="--tint:${s.tint}" aria-pressed="false" title="${s.desc}">
           <img src="${s.file}" alt="${s.name}" loading="lazy" />
@@ -98,11 +119,24 @@ function buildPetSkinPicker() {
   wrap.querySelectorAll('.pet-skin-card').forEach((btn) => {
     btn.addEventListener('click', () => applyPetSkin(btn.dataset.skinId));
   });
+
+  const toggleBtn = document.getElementById('pet-skin-toggle');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const row = document.getElementById('pet-skin-row');
+      const nowCollapsed = !row.classList.contains('is-collapsed');
+      setPetSkinCollapsed(nowCollapsed);
+    });
+  }
 }
 
 function initPetSkins() {
   buildPetSkinPicker();
   applyPetSkin(getPetSkinId(), { save: false });
+  // Восстанавливаем состояние "свёрнуто/развёрнуто" отдельно от применения
+  // скина (при первой загрузке applyPetSkin вызван с save:false и не должен
+  // сам решать, сворачивать ли список — это личная настройка пользователя).
+  setPetSkinCollapsed(getPetSkinCollapsed());
 }
 
 if (document.readyState === 'loading') {

@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="css/twin.css" />
   <link rel="stylesheet" href="css/floorplan.css?v=20260823c" />
   <link rel="stylesheet" href="css/address-map.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
   <link rel="stylesheet" href="css/sun-schedule.css" />
   <link rel="stylesheet" href="css/profile.css" />
   <link rel="stylesheet" href="css/dashboard-redesign.css" />
@@ -758,7 +758,7 @@
   <script src="js/admin-panel.js"></script>
   <script src="js/pwa.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="vendor/leaflet/leaflet.js"></script>
   <!-- Карта (Leaflet) и её инициализатор идут ДО opencv.js специально:
        opencv.js — это тяжёлая (несколько МБ) WASM-библиотека с jsdelivr, и
        она была объявлена с defer РАНЬШЕ address-map.js/floorplan.js/twin.js.
