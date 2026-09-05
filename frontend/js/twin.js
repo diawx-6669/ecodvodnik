@@ -918,87 +918,104 @@ function twinComputeDevicePositions(devices, footprintSize) {
   return devices.map((_, i) => pinnedPositions.get(i) || fallback[i]);
 }
 
-// ---------- иконки-маркеры приборов в 3D (вместо кубиков) ----------
+// ---------- 3D-силуэты приборов (вместо кубиков и вместо иконок-спрайтов) ----------
+//
+// Раньше приборы рисовались как плоские спрайты с эмодзи на канвасе —
+// выглядело как мутные цветные кружки, потому что цветной эмодзи-шрифт не
+// всегда доступен в браузере/окружении и текст на канвасе просто не
+// рендерился. Заменили на настоящие 3D-мешы из простых примитивов — они не
+// зависят от шрифтов и выглядят как узнаваемые силуэты конкретных приборов
+// (холодильник, стиралка, лампа и т.д.), а не абстрактные значки.
 
-// Подбираем эмодзи по ключевым словам в названии прибора — покрывает и
-// типовые наборы (household/school/business), и то, что пользователь впишет
-// сам вручную в панели "Комнаты и приборы".
-function twinDeviceEmoji(name) {
+function twinDeviceCategory(name) {
   const n = (name || '').toLowerCase();
-  if (n.includes('холодил')) return '🧊';
-  if (n.includes('стират')) return '🌀';
-  if (n.includes('бойлер') || n.includes('водонагрев')) return '🔥';
-  if (n.includes('освещен') || n.includes('лампа') || n.includes('свет')) return '💡';
-  if (n.includes('телевиз') || n.includes(' tv') || n.startsWith('tv')) return '📺';
-  if (n.includes('кондицион')) return '❄️';
-  if (n.includes('микровол')) return '♨️';
-  if (n.includes('ноутбук') || n.includes('пк') || n.includes('компьютер')) return '💻';
-  if (n.includes('проектор')) return '📽️';
-  if (n.includes('сервер') || n.includes('сеть')) return '🖥️';
-  if (n.includes('отоплен') || n.includes('вентиляц')) return '🌡️';
-  if (n.includes('столов') || n.includes('кухон')) return '🍽️';
-  if (n.includes('витрин') || n.includes('вывеск')) return '🪧';
-  if (n.includes('оргтехник') || n.includes('принтер')) return '🖨️';
-  return '⚡';
+  if (n.includes('холодил')) return 'fridge';
+  if (n.includes('стират')) return 'washer';
+  if (n.includes('бойлер') || n.includes('водонагрев')) return 'boiler';
+  if (n.includes('освещен') || n.includes('лампа') || n.includes('свет')) return 'light';
+  if (n.includes('телевиз') || n.includes(' tv') || n.startsWith('tv')) return 'tv';
+  if (n.includes('кондицион')) return 'ac';
+  if (n.includes('микровол')) return 'microwave';
+  if (n.includes('ноутбук') || n.includes('пк') || n.includes('компьютер') || n.includes('проектор') || n.includes('сервер')) return 'computer';
+  return 'generic';
 }
 
-const twinIconTextureCache = new Map();
+// Собирает группу мешей для одного прибора. Возвращает группу с
+// group.userData.pulseMaterial — материалом той детали (лампочка, экран,
+// индикатор), яркость которой потом мягко "дышит" в цикле анимации.
+function twinBuildDeviceModel(dev) {
+  const group = new THREE.Group();
+  const accent = new THREE.Color(dev.color);
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: dev.efficient ? 0xe2ebe6 : 0xcdd6d1, roughness: 0.55, metalness: 0.25,
+  });
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x14231e, roughness: 0.45, metalness: 0.15 });
+  const glowMat = () => new THREE.MeshStandardMaterial({
+    color: accent, emissive: accent, emissiveIntensity: 0.5, roughness: 0.3, metalness: 0.2,
+  });
 
-// Круглая табличка: заливка цветом прибора, эмодзи по центру, тонкое кольцо
-// (зелёное — если прибор уже заменён на энергоэффективный). Кешируем по
-// ключу цвет+иконка+статус, чтобы не перегенерировать канвас на каждый
-// одинаковый прибор в модели.
-function twinMakeDeviceIconTexture(dev) {
-  const emoji = twinDeviceEmoji(dev.name);
-  const key = `${dev.color}|${emoji}|${dev.efficient ? 1 : 0}`;
-  if (twinIconTextureCache.has(key)) return twinIconTextureCache.get(key);
+  let pulseMesh = null;
+  const add = (geo, mat, pos, rot) => {
+    const m = new THREE.Mesh(geo, mat);
+    if (pos) m.position.set(pos[0], pos[1], pos[2]);
+    if (rot) m.rotation.set(rot[0] || 0, rot[1] || 0, rot[2] || 0);
+    m.castShadow = true;
+    m.receiveShadow = true;
+    group.add(m);
+    return m;
+  };
 
-  const S = 128;
-  const canvas = document.createElement('canvas');
-  canvas.width = S; canvas.height = S;
-  const ctx = canvas.getContext('2d');
-  const cx = S / 2, cy = S / 2, r = S / 2 - 8;
+  switch (twinDeviceCategory(dev.name)) {
+    case 'fridge':
+      add(new THREE.BoxGeometry(0.5, 1.15, 0.48), bodyMat, [0, 0.575, 0]);
+      add(new THREE.BoxGeometry(0.52, 0.03, 0.5), darkMat, [0, 0.78, 0]);
+      pulseMesh = add(new THREE.CylinderGeometry(0.02, 0.02, 0.32, 8), glowMat(), [0.22, 0.85, 0.26]);
+      break;
+    case 'washer': {
+      add(new THREE.BoxGeometry(0.55, 0.58, 0.55), bodyMat, [0, 0.29, 0]);
+      add(new THREE.CylinderGeometry(0.17, 0.17, 0.06, 24), darkMat, [0, 0.3, 0.28], [Math.PI / 2, 0, 0]);
+      pulseMesh = add(new THREE.TorusGeometry(0.185, 0.016, 8, 24), glowMat(), [0, 0.3, 0.28], [Math.PI / 2, 0, 0]);
+      break;
+    }
+    case 'boiler':
+      add(new THREE.CylinderGeometry(0.22, 0.22, 1.0, 20), bodyMat, [0, 0.5, 0]);
+      pulseMesh = add(new THREE.CylinderGeometry(0.226, 0.226, 0.08, 20), glowMat(), [0, 0.5, 0]);
+      break;
+    case 'light':
+      add(new THREE.CylinderGeometry(0.02, 0.03, 0.75, 8), darkMat, [0, 0.375, 0]);
+      add(new THREE.CylinderGeometry(0.14, 0.14, 0.02, 16), darkMat, [0, 0.02, 0]);
+      pulseMesh = add(new THREE.SphereGeometry(0.13, 16, 16), glowMat(), [0, 0.82, 0]);
+      pulseMesh.material.emissiveIntensity = 0.9;
+      break;
+    case 'tv':
+      add(new THREE.BoxGeometry(0.06, 0.14, 0.06), darkMat, [0, 0.07, 0]);
+      add(new THREE.BoxGeometry(0.75, 0.02, 0.22), darkMat, [0, 0.145, 0]);
+      add(new THREE.BoxGeometry(0.76, 0.46, 0.02), darkMat, [0, 0.42, -0.045]);
+      pulseMesh = add(new THREE.BoxGeometry(0.72, 0.42, 0.02), glowMat(), [0, 0.42, -0.03]);
+      pulseMesh.material.emissiveIntensity = 0.35;
+      break;
+    case 'ac':
+      add(new THREE.BoxGeometry(0.7, 0.22, 0.22), bodyMat, [0, 0.7, 0]);
+      pulseMesh = add(new THREE.BoxGeometry(0.6, 0.02, 0.02), glowMat(), [0, 0.6, 0.11]);
+      break;
+    case 'microwave':
+      add(new THREE.BoxGeometry(0.5, 0.3, 0.4), bodyMat, [0, 0.15, 0]);
+      add(new THREE.BoxGeometry(0.32, 0.2, 0.02), darkMat, [-0.02, 0.16, 0.2]);
+      pulseMesh = add(new THREE.SphereGeometry(0.022, 8, 8), glowMat(), [0.2, 0.26, 0.21]);
+      break;
+    case 'computer':
+      add(new THREE.BoxGeometry(0.55, 0.03, 0.4), darkMat, [0, 0.03, 0.08]);
+      pulseMesh = add(new THREE.BoxGeometry(0.55, 0.36, 0.02), glowMat(), [0, 0.21, -0.12], [-0.35, 0, 0]);
+      pulseMesh.material.emissiveIntensity = 0.4;
+      break;
+    default:
+      pulseMesh = add(new THREE.IcosahedronGeometry(0.26, 0), glowMat(), [0, 0.26, 0]);
+      break;
+  }
 
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(9, 20, 17, 0.92)';
-  ctx.fill();
-  ctx.lineWidth = 6;
-  ctx.strokeStyle = dev.efficient ? '#35e08f' : dev.color;
-  ctx.stroke();
-  ctx.restore();
-
-  ctx.font = `${Math.round(r * 1.15)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(emoji, cx, cy + 4);
-
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.needsUpdate = true;
-  twinIconTextureCache.set(key, tex);
-  return tex;
-}
-
-const twinAuraTextureCache = new Map();
-
-// Мягкое радиальное свечение позади иконки — именно его прозрачность
-// "дышит" в цикле анимации, создавая ощущение работающего прибора.
-function twinMakeAuraTexture(color) {
-  if (twinAuraTextureCache.has(color)) return twinAuraTextureCache.get(color);
-  const S = 128;
-  const canvas = document.createElement('canvas');
-  canvas.width = S; canvas.height = S;
-  const ctx = canvas.getContext('2d');
-  const grad = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
-  grad.addColorStop(0, color);
-  grad.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, S, S);
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.needsUpdate = true;
-  twinAuraTextureCache.set(color, tex);
-  return tex;
+  group.userData.pulseMaterial = pulseMesh ? pulseMesh.material : null;
+  group.userData.baseEmissive = pulseMesh ? pulseMesh.material.emissiveIntensity : 0;
+  return group;
 }
 
 function twinBuildScene(areaM2) {
@@ -1137,55 +1154,27 @@ function twinBuildScene(areaM2) {
   grid.material.opacity = 0.12;
   scene.add(grid);
 
-  // приборы — вместо однотипных кубиков рисуем "маркеры": пятно на полу,
-  // тонкая ножка и парящая круглая иконка-табличка с эмодзи прибора и его
-  // цветом (сфейсенная к камере, как метки на 3D-картах) — читается сразу,
-  // без подписи мелким текстом, и выглядит аккуратнее плоских кубов.
+  // приборы — настоящие 3D-силуэты (см. twinBuildDeviceModel) плюс лёгкое
+  // пятно-подсветка на полу под каждым, для масштаба и связи с полом.
   const deviceGroup = new THREE.Group();
   const devicePositions = twinComputeDevicePositions(twinState.devices, footprintSize);
 
   twinState.devices.forEach((dev, i) => {
     const { x: px, z: pz } = devicePositions[i];
-    const size = 0.22 + Math.min(0.28, dev.watts / 6000);
-    const markerHeight = 0.55 + size * 0.9;
+    const scale = 0.55 + Math.min(0.6, dev.watts / 3200);
 
-    // пятно-подсветка на полу
-    const glowGeo = new THREE.CircleGeometry(size * 1.6, 24);
+    const glowGeo = new THREE.CircleGeometry(0.32 * scale, 24);
     glowGeo.rotateX(-Math.PI / 2);
-    const glowMat = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(dev.color), transparent: true, opacity: 0.22,
-    });
+    const glowMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(dev.color), transparent: true, opacity: 0.2 });
     const glow = new THREE.Mesh(glowGeo, glowMat);
     glow.position.set(px, 0.015, pz);
     deviceGroup.add(glow);
 
-    // тонкая ножка от пола к иконке — держит маркер "на земле" визуально
-    const stemGeo = new THREE.CylinderGeometry(0.012, 0.012, markerHeight, 6);
-    const stemMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(dev.color), transparent: true, opacity: 0.45 });
-    const stem = new THREE.Mesh(stemGeo, stemMat);
-    stem.position.set(px, markerHeight / 2, pz);
-    deviceGroup.add(stem);
-
-    // мягкая аура позади иконки — именно её яркость "дышит" в цикле анимации
-    const auraTex = twinMakeAuraTexture(dev.color);
-    const auraMat = new THREE.SpriteMaterial({ map: auraTex, transparent: true, depthWrite: false, opacity: dev.efficient ? 0.35 : 0.55 });
-    const aura = new THREE.Sprite(auraMat);
-    aura.scale.set(size * 3.4, size * 3.4, 1);
-    aura.position.set(px, markerHeight, pz);
-    aura.userData.baseOpacity = auraMat.opacity;
-    aura.userData.pulsePhase = Math.random() * Math.PI * 2;
-    aura.userData.isAura = true;
-    deviceGroup.add(aura);
-
-    // сама иконка-табличка
-    const iconTex = twinMakeDeviceIconTexture(dev);
-    const iconMat = new THREE.SpriteMaterial({ map: iconTex, transparent: true, depthWrite: false });
-    const icon = new THREE.Sprite(iconMat);
-    const iconSize = size * 1.9;
-    icon.scale.set(iconSize, iconSize, 1);
-    icon.position.set(px, markerHeight, pz);
-    icon.renderOrder = 1;
-    deviceGroup.add(icon);
+    const model = twinBuildDeviceModel(dev);
+    model.scale.setScalar(scale);
+    model.position.set(px, 0, pz);
+    model.userData.pulsePhase = Math.random() * Math.PI * 2;
+    deviceGroup.add(model);
   });
   scene.add(deviceGroup);
 
@@ -1238,13 +1227,14 @@ function twinBuildScene(areaM2) {
     twinState.camera.position.y = Math.max(1.5, dist * Math.sin(twinState.rotX) + dist * 0.5);
     twinState.camera.lookAt(0, 0, 0);
 
-    // "Дыхание" ауры за иконками приборов — мягкая синусоида прозрачности,
-    // создаёт ощущение работающей техники вместо статичных значков.
+    // "Дыхание" индикаторов приборов (лампочка, экран, светящееся кольцо) —
+    // мягкая синусоида яркости свечения вместо статичных деталей.
     const t = performance.now() / 1000;
     deviceGroup.children.forEach((child) => {
-      if (child.userData && child.userData.isAura) {
+      const mat = child.userData && child.userData.pulseMaterial;
+      if (mat) {
         const wave = 0.18 * Math.sin(t * 1.6 + child.userData.pulsePhase);
-        child.material.opacity = Math.max(0.08, child.userData.baseOpacity + wave);
+        mat.emissiveIntensity = Math.max(0.08, child.userData.baseEmissive + wave);
       }
     });
 

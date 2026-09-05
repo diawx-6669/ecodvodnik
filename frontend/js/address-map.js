@@ -73,10 +73,19 @@ function amInit() {
 
   let providerIndex = 0;
   let activeLayer = null;
-  let loadedCount = 0;
-  let erroredCount = 0;
   let switchTimer = null;
-  let switched = false;
+  // Раньше loaded/errored считались НАКОПИТЕЛЬНО за всю сессию — первый показ
+  // (весь мир) обычно грузится почти без ошибок, и эта "хорошая статистика"
+  // потом маскировала свежие дыры при панорамировании/зуме: доля ошибок
+  // никогда не успевала перевалить порог, хотя на экране прямо сейчас были
+  // дыры. Держим счётчики в объекте, чтобы можно было сбрасывать их per-view
+  // (при каждом новом перемещении карты), а не только per-provider.
+  const tileStats = { loaded: 0, errored: 0, switched: false };
+
+  map.on('movestart zoomstart', () => {
+    tileStats.loaded = 0;
+    tileStats.errored = 0;
+  });
 
   function amStartProvider(index) {
     if (index >= AM_TILE_PROVIDERS.length) {
@@ -91,38 +100,34 @@ function amInit() {
     }
 
     providerIndex = index;
-    loadedCount = 0;
-    erroredCount = 0;
-    switched = false;
+    tileStats.loaded = 0;
+    tileStats.errored = 0;
+    tileStats.switched = false;
     const cfg = AM_TILE_PROVIDERS[index];
     const layer = L.tileLayer(cfg.url, { ...cfg.options, attribution: cfg.attribution });
 
     function maybeSwitch() {
-      if (switched) return;
-      const total = loadedCount + erroredCount;
+      if (tileStats.switched) return;
+      const total = tileStats.loaded + tileStats.errored;
       // Порог держим на удивление низким: реальный публичный тайл-сервер либо
       // отдаёт почти всё (единичные случайные обрывы связи бывают, но редко),
       // либо у него системная проблема — и тогда доля ошибок сразу заметная
       // (десятки процентов), а не "почти всё, кроме одной плитки". Первая же
       // проверка идёт уже при 4 запросах, чтобы не ждать долгого разгона.
-      if (total >= 4 && erroredCount / total > 0.25) {
-        switched = true;
+      if (total >= 4 && tileStats.errored / total > 0.25) {
+        tileStats.switched = true;
         clearTimeout(switchTimer);
         amStartProvider(index + 1);
       }
     }
 
-    // На старте (весь мир, zoom 2) тайлов в кадре мало (~16), и раньше порог
-    // "минимум 8 запросов" мог набираться только после нескольких
-    // панорамирований — а первая же партия тайлов уже показывала дыры (как
-    // на скриншотах) и ничего не переключала. 'load' — событие, которое
-    // Leaflet шлёт, когда ВСЯ текущая видимая партия тайлов отработала
-    // (успех или ошибка) — даёт немедленную проверку сразу после первой
-    // отрисовки, а не только через maybeSwitch() на каждый отдельный тайл.
+    // 'load' — событие, которое Leaflet шлёт, когда ВСЯ текущая видимая
+    // партия тайлов отработала (успех или ошибка) — даёт немедленную
+    // проверку сразу после отрисовки конкретно этого вида карты.
     layer.on('load', maybeSwitch);
-    layer.on('tileload', () => { loadedCount += 1; maybeSwitch(); });
+    layer.on('tileload', () => { tileStats.loaded += 1; maybeSwitch(); });
     layer.on('tileerror', (e) => {
-      erroredCount += 1;
+      tileStats.errored += 1;
       maybeSwitch();
       // Отдельно, "по-тихому" (не влияет на подсчёт ошибок/переключение),
       // пробуем перезагрузить именно эту упавшую плитку разок ещё раз —
@@ -144,7 +149,7 @@ function amInit() {
     // явной ошибки — например, домен режется без ответа) — ждём 6 секунд.
     clearTimeout(switchTimer);
     switchTimer = setTimeout(() => {
-      if (!switched && loadedCount === 0) amStartProvider(index + 1);
+      if (!tileStats.switched && tileStats.loaded === 0) amStartProvider(index + 1);
     }, 6000);
   }
 
