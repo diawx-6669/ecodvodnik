@@ -125,20 +125,46 @@ function amInit() {
     // партия тайлов отработала (успех или ошибка) — даёт немедленную
     // проверку сразу после отрисовки конкретно этого вида карты.
     layer.on('load', maybeSwitch);
-    layer.on('tileload', () => { tileStats.loaded += 1; maybeSwitch(); });
-    layer.on('tileerror', (e) => {
-      tileStats.errored += 1;
+    layer.on('tileload', (e) => {
+      const img = e.tile;
+      if (img.dataset.amResolved) return; // уже посчитан как "завис" по таймауту ниже
+      img.dataset.amResolved = '1';
+      tileStats.loaded += 1;
       maybeSwitch();
+    });
+    layer.on('tileerror', (e) => {
+      const img = e.tile;
+      if (!img.dataset.amResolved) {
+        img.dataset.amResolved = '1';
+        tileStats.errored += 1;
+        maybeSwitch();
+      }
       // Отдельно, "по-тихому" (не влияет на подсчёт ошибок/переключение),
       // пробуем перезагрузить именно эту упавшую плитку разок ещё раз —
       // если сбой был случайным (например, дропнутый TCP-пакет), дыра сама
       // затянется без замены всего слоя целиком.
-      const img = e.tile;
       if (img && !img.dataset.amRetried) {
         img.dataset.amRetried = '1';
         const src = img.src;
         setTimeout(() => { img.src = src; }, 700);
       }
+    });
+    // Часть плиток не грузится И не выдаёт ошибку — запрос просто "висит"
+    // без ответа (сервер держит соединение, не закрывая и не отвечая). Ни
+    // 'tileload', ни 'tileerror' в этом случае не срабатывают вообще, и
+    // такие дыры раньше не ловились никак. 'tileloadstart' фиксирует момент
+    // начала загрузки каждой плитки — если через 4 секунды у неё всё ещё
+    // нет ни успеха, ни ошибки, считаем это зависшим запросом и засчитываем
+    // как ошибку сами.
+    layer.on('tileloadstart', (e) => {
+      const img = e.tile;
+      setTimeout(() => {
+        if (img && !img.dataset.amResolved) {
+          img.dataset.amResolved = '1';
+          tileStats.errored += 1;
+          maybeSwitch();
+        }
+      }, 4000);
     });
 
     layer.addTo(map);
@@ -155,7 +181,15 @@ function amInit() {
 
   amStartProvider(0);
 
-  map.on('click', (e) => amSetPoint(e.latlng.lat, e.latlng.lng, { reverseGeocode: true, recenter: false }));
+  // worldCopyJump позволяет кликать по "повторам" карты за пределами
+  // -180..180 (крутить глобус бесконечно вбок) — Leaflet в этом случае
+  // отдаёт долготу вне стандартного диапазона (напр. 1305.7 вместо реальных
+  // -14.3), и координаты объекта выглядели бы бессмысленно. wrap() приводит
+  // её обратно к обычному диапазону -180..180.
+  map.on('click', (e) => {
+    const wrapped = e.latlng.wrap();
+    amSetPoint(wrapped.lat, wrapped.lng, { reverseGeocode: true, recenter: false });
+  });
 
   amState.map = map;
 
@@ -249,7 +283,7 @@ function amSetPoint(lat, lon, opts) {
     if (!amState.marker) {
       amState.marker = L.marker([lat, lon], { draggable: true }).addTo(map);
       amState.marker.on('dragend', () => {
-        const pos = amState.marker.getLatLng();
+        const pos = amState.marker.getLatLng().wrap();
         amSetPoint(pos.lat, pos.lng, { reverseGeocode: true, recenter: false });
       });
     } else {
