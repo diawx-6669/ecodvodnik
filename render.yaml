@@ -13,3 +13,16 @@ services:
         value: production
       - key: JWT_SECRET
         generateValue: true
+      # ADMIN_CODE и DEVICE_TOKEN раньше не были в этом списке — сервер тогда
+      # тихо использовал захардкоженные в коде значения по умолчанию
+      # ('DIAWX7' и 'change_me_please' из backend/config/config.js). Это
+      # значит, что ЛЮБОЙ человек, открывший исходники проекта (например,
+      # этот же zip-архив), мог ввести код 'DIAWX7' в своём профиле на
+      # ecodvodnik.onrender.com и мгновенно получить права администратора.
+      # generateValue: true заставляет Render сгенерировать свои случайные
+      # секреты при следующем деплое — старый статичный код перестанет
+      # работать.
+      - key: ADMIN_CODE
+        generateValue: true
+      - key: DEVICE_TOKEN
+        generateValue: true

@@ -2,8 +2,14 @@ require('dotenv').config();
 
 module.exports = {
   port: process.env.PORT || 3000,
+  isProduction: process.env.NODE_ENV === 'production',
   geminiApiKey: process.env.GEMINI_API_KEY || null,
   groqApiKey: process.env.GROQ_API_KEY || null,
+  // Значения справа от || — ТОЛЬКО для локальной разработки (чтобы
+  // `npm test`/`npm start` работали сразу, без .env). В проде обязательно
+  // задавайте свои через переменные окружения — см. render.yaml и
+  // предупреждение при старте в server.js, которое ловит как раз случай,
+  // когда эти дефолты случайно попали в продакшн.
   deviceToken: process.env.DEVICE_TOKEN || 'change_me_please',
 
   // Секрет для подписи JWT-токенов авторизации. В проде — обязательно

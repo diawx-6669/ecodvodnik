@@ -131,12 +131,21 @@ describe('Alerts API', () => {
   it('should create alert when consumption exceeds goal', async () => {
     const db = readDb();
 
+    // Контроллер alertsController.checkAndCreateAlerts всегда сверяет цели
+    // и показания строго за ТЕКУЩИЙ календарный месяц (new Date() на сервере),
+    // а не за произвольный месяц из данных. Тест был захардкожен на
+    // "2026-08" — работал только пока реальная дата совпадала с августом
+    // 2026, и падал бы в любой другой месяц. Берём текущий месяц динамически.
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const day15 = `${currentMonth}-15T10:00:00Z`;
+    const day16 = `${currentMonth}-16T10:00:00Z`;
+
     // Set a goal
     db.goals.push({
       id: 'test-goal',
       userId: testUser.id,
       type: 'water',
-      monthYear: '2026-08',
+      monthYear: currentMonth,
       targetValue: 5000,
       unit: 'liters',
     });
@@ -148,14 +157,14 @@ describe('Alerts API', () => {
         type: 'water',
         value: 6000,
         userId: testUser.id,
-        timestamp: '2026-08-15T10:00:00Z',
+        timestamp: day15,
       },
       {
         id: 'r2',
         type: 'water',
         value: 500,
         userId: testUser.id,
-        timestamp: '2026-08-16T10:00:00Z',
+        timestamp: day16,
       }
     );
     writeDb(db);

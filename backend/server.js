@@ -4,6 +4,30 @@ const path = require('path');
 const config = require('./config/config');
 const errorHandler = require('./middleware/errorHandler');
 
+// Захардкоженные в config.js значения ('dev_insecure_secret_change_me',
+// 'DIAWX7', 'change_me_please') — это удобные значения ТОЛЬКО для локальной
+// разработки, чтобы `npm test`/`npm start` работали без .env. Если сервер
+// стартует в проде (NODE_ENV=production) с этими же значениями, значит
+// переменные окружения не заданы на хостинге — и, например, код
+// администратора совпадает с тем, что лежит в открытом виде в этом же
+// репозитории. Раньше это происходило абсолютно молча.
+if (config.isProduction) {
+  const insecureDefaults = [
+    ['JWT_SECRET', config.jwtSecret, 'dev_insecure_secret_change_me'],
+    ['ADMIN_CODE', config.adminCode, 'DIAWX7'],
+    ['DEVICE_TOKEN', config.deviceToken, 'change_me_please'],
+  ].filter(([, value, def]) => value === def);
+
+  if (insecureDefaults.length) {
+    console.error(
+      '\n⚠️  ВНИМАНИЕ: в production-режиме используются значения по умолчанию для: ' +
+      insecureDefaults.map(([name]) => name).join(', ') +
+      '. Это небезопасно — задайте эти переменные окружения на хостинге ' +
+      '(см. render.yaml).\n'
+    );
+  }
+}
+
 const authRoutes = require('./routes/auth');
 const readingsRoutes = require('./routes/readings');
 const analyticsRoutes = require('./routes/analytics');
