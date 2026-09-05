@@ -468,13 +468,25 @@
       </div>
 
       <div class="twin-body">
-        <div class="twin-scene-shell">
-          <div class="twin-scene-wrap" id="twin-scene-wrap">
-            <div class="twin-scene-empty">Нажмите «Сгенерировать модель»</div>
+        <div class="twin-scene-col">
+          <div class="twin-scene-shell">
+            <div class="twin-scene-wrap" id="twin-scene-wrap">
+              <div class="twin-scene-empty">Нажмите «Сгенерировать модель»</div>
+            </div>
+            <div class="twin-scene-toolbar" id="twin-scene-toolbar" hidden>
+              <button type="button" id="twin-view-reset-btn" class="twin-scene-btn" title="Сбросить вид">⟲ Вид</button>
+              <button type="button" id="twin-view-spin-btn" class="twin-scene-btn" title="Авто-вращение">▶ Вращать</button>
+            </div>
           </div>
-          <div class="twin-scene-toolbar" id="twin-scene-toolbar" hidden>
-            <button type="button" id="twin-view-reset-btn" class="twin-scene-btn" title="Сбросить вид">⟲ Вид</button>
-            <button type="button" id="twin-view-spin-btn" class="twin-scene-btn" title="Авто-вращение">▶ Вращать</button>
+
+          <!-- Раньше этот блок стоял в правой колонке ниже "Комнаты и приборы",
+               из-за чего правая колонка была намного длиннее левой, и под
+               3D-сценой оставалась большая пустая зона фона. Переносим список
+               приборов сюда — под сцену, чтобы обе колонки были примерно
+               одной высоты. -->
+          <div class="twin-devices">
+            <h3>Приборы в модели</h3>
+            <div class="twin-device-list" id="twin-device-list"></div>
           </div>
         </div>
 
@@ -484,11 +496,6 @@
             <p class="twin-rooms-hint">Сначала нажмите «+ Добавить прибор» в комнате (или оставьте форму заполненной — при генерации прибор подхватится автоматически). Затем «Сгенерировать модель». Кнопка «Найти модель» ищет характеристики в интернете. Если комнаты не заполнять — подставится типовой набор.</p>
             <div class="twin-rooms-list" id="twin-rooms-list"></div>
             <button type="button" id="twin-add-room-btn" class="fp-btn fp-btn-ghost">+ Добавить комнату</button>
-          </div>
-
-          <div class="twin-devices">
-            <h3>Приборы в модели</h3>
-            <div class="twin-device-list" id="twin-device-list"></div>
           </div>
 
           <div class="twin-compare">

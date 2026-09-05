@@ -60,6 +60,18 @@
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
   gap: 18px;
+  /* Раньше колонки растягивались на всю высоту строки грида (по умолчанию
+     align-items: stretch), а левая колонка (3D-сцена) по контенту гораздо
+     короче правой (несколько карточек подряд) — из-за растяжения под
+     сценой оставалась большая пустая область фона. align-items: start
+     убирает эту пустую зону: каждая колонка теперь ровно по своей высоте. */
+  align-items: start;
+}
+
+.twin-scene-col {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
 @media (max-width: 900px) {
@@ -359,6 +371,13 @@
   border: 1px solid var(--stroke);
   background: var(--surface-strong);
   color: var(--text);
+}
+
+.twin-devices {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-sm);
+  padding: 15px;
 }
 
 .twin-devices h3, .twin-compare h3, .twin-forecast h3 { margin-bottom: 8px; }

@@ -918,6 +918,89 @@ function twinComputeDevicePositions(devices, footprintSize) {
   return devices.map((_, i) => pinnedPositions.get(i) || fallback[i]);
 }
 
+// ---------- иконки-маркеры приборов в 3D (вместо кубиков) ----------
+
+// Подбираем эмодзи по ключевым словам в названии прибора — покрывает и
+// типовые наборы (household/school/business), и то, что пользователь впишет
+// сам вручную в панели "Комнаты и приборы".
+function twinDeviceEmoji(name) {
+  const n = (name || '').toLowerCase();
+  if (n.includes('холодил')) return '🧊';
+  if (n.includes('стират')) return '🌀';
+  if (n.includes('бойлер') || n.includes('водонагрев')) return '🔥';
+  if (n.includes('освещен') || n.includes('лампа') || n.includes('свет')) return '💡';
+  if (n.includes('телевиз') || n.includes(' tv') || n.startsWith('tv')) return '📺';
+  if (n.includes('кондицион')) return '❄️';
+  if (n.includes('микровол')) return '♨️';
+  if (n.includes('ноутбук') || n.includes('пк') || n.includes('компьютер')) return '💻';
+  if (n.includes('проектор')) return '📽️';
+  if (n.includes('сервер') || n.includes('сеть')) return '🖥️';
+  if (n.includes('отоплен') || n.includes('вентиляц')) return '🌡️';
+  if (n.includes('столов') || n.includes('кухон')) return '🍽️';
+  if (n.includes('витрин') || n.includes('вывеск')) return '🪧';
+  if (n.includes('оргтехник') || n.includes('принтер')) return '🖨️';
+  return '⚡';
+}
+
+const twinIconTextureCache = new Map();
+
+// Круглая табличка: заливка цветом прибора, эмодзи по центру, тонкое кольцо
+// (зелёное — если прибор уже заменён на энергоэффективный). Кешируем по
+// ключу цвет+иконка+статус, чтобы не перегенерировать канвас на каждый
+// одинаковый прибор в модели.
+function twinMakeDeviceIconTexture(dev) {
+  const emoji = twinDeviceEmoji(dev.name);
+  const key = `${dev.color}|${emoji}|${dev.efficient ? 1 : 0}`;
+  if (twinIconTextureCache.has(key)) return twinIconTextureCache.get(key);
+
+  const S = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = S; canvas.height = S;
+  const ctx = canvas.getContext('2d');
+  const cx = S / 2, cy = S / 2, r = S / 2 - 8;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(9, 20, 17, 0.92)';
+  ctx.fill();
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = dev.efficient ? '#35e08f' : dev.color;
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.font = `${Math.round(r * 1.15)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(emoji, cx, cy + 4);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.needsUpdate = true;
+  twinIconTextureCache.set(key, tex);
+  return tex;
+}
+
+const twinAuraTextureCache = new Map();
+
+// Мягкое радиальное свечение позади иконки — именно его прозрачность
+// "дышит" в цикле анимации, создавая ощущение работающего прибора.
+function twinMakeAuraTexture(color) {
+  if (twinAuraTextureCache.has(color)) return twinAuraTextureCache.get(color);
+  const S = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = S; canvas.height = S;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+  grad.addColorStop(0, color);
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, S, S);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.needsUpdate = true;
+  twinAuraTextureCache.set(color, tex);
+  return tex;
+}
+
 function twinBuildScene(areaM2) {
   const wrap = document.getElementById('twin-scene-wrap');
   wrap.innerHTML = '';
@@ -1054,40 +1137,20 @@ function twinBuildScene(areaM2) {
   grid.material.opacity = 0.12;
   scene.add(grid);
 
-  // приборы — цветные кубики со "световым пятном" на полу под ними.
-  // Раньше все приборы расставлялись по одному общему кругу на весь контур
-  // здания, из-за чего, например, холодильник и стиральная машина одной
-  // квартиры оказывались рядом друг с другом по кругу без всякой связи с тем,
-  // в какой они на самом деле комнате. Если приборы привязаны к комнатам
-  // (через панель "Комнаты и приборы"), делим контур на отдельные ячейки —
-  // по одной на комнату — и внутри каждой ячейки расставляем только приборы
-  // этой комнаты небольшим кластером.
+  // приборы — вместо однотипных кубиков рисуем "маркеры": пятно на полу,
+  // тонкая ножка и парящая круглая иконка-табличка с эмодзи прибора и его
+  // цветом (сфейсенная к камере, как метки на 3D-картах) — читается сразу,
+  // без подписи мелким текстом, и выглядит аккуратнее плоских кубов.
   const deviceGroup = new THREE.Group();
   const devicePositions = twinComputeDevicePositions(twinState.devices, footprintSize);
 
   twinState.devices.forEach((dev, i) => {
     const { x: px, z: pz } = devicePositions[i];
     const size = 0.22 + Math.min(0.28, dev.watts / 6000);
+    const markerHeight = 0.55 + size * 0.9;
 
-    const geo = new THREE.BoxGeometry(size, size, size);
-    const mat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(dev.color),
-      emissive: new THREE.Color(dev.color),
-      emissiveIntensity: dev.efficient ? 0.35 : 0.65,
-      roughness: 0.4,
-      metalness: 0.15,
-    });
-    const cube = new THREE.Mesh(geo, mat);
-    cube.position.set(px, size / 2 + 0.06, pz);
-    cube.castShadow = true;
-    // сохраняем базовую яркость свечения, чтобы в цикле анимации плавно
-    // "дышать" ею синусоидой — иначе приборы выглядят как статичная бижутерия,
-    // а не как работающая техника
-    cube.userData.baseEmissive = mat.emissiveIntensity;
-    cube.userData.pulsePhase = Math.random() * Math.PI * 2;
-    deviceGroup.add(cube);
-
-    const glowGeo = new THREE.CircleGeometry(size * 1.5, 20);
+    // пятно-подсветка на полу
+    const glowGeo = new THREE.CircleGeometry(size * 1.6, 24);
     glowGeo.rotateX(-Math.PI / 2);
     const glowMat = new THREE.MeshBasicMaterial({
       color: new THREE.Color(dev.color), transparent: true, opacity: 0.22,
@@ -1095,6 +1158,34 @@ function twinBuildScene(areaM2) {
     const glow = new THREE.Mesh(glowGeo, glowMat);
     glow.position.set(px, 0.015, pz);
     deviceGroup.add(glow);
+
+    // тонкая ножка от пола к иконке — держит маркер "на земле" визуально
+    const stemGeo = new THREE.CylinderGeometry(0.012, 0.012, markerHeight, 6);
+    const stemMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(dev.color), transparent: true, opacity: 0.45 });
+    const stem = new THREE.Mesh(stemGeo, stemMat);
+    stem.position.set(px, markerHeight / 2, pz);
+    deviceGroup.add(stem);
+
+    // мягкая аура позади иконки — именно её яркость "дышит" в цикле анимации
+    const auraTex = twinMakeAuraTexture(dev.color);
+    const auraMat = new THREE.SpriteMaterial({ map: auraTex, transparent: true, depthWrite: false, opacity: dev.efficient ? 0.35 : 0.55 });
+    const aura = new THREE.Sprite(auraMat);
+    aura.scale.set(size * 3.4, size * 3.4, 1);
+    aura.position.set(px, markerHeight, pz);
+    aura.userData.baseOpacity = auraMat.opacity;
+    aura.userData.pulsePhase = Math.random() * Math.PI * 2;
+    aura.userData.isAura = true;
+    deviceGroup.add(aura);
+
+    // сама иконка-табличка
+    const iconTex = twinMakeDeviceIconTexture(dev);
+    const iconMat = new THREE.SpriteMaterial({ map: iconTex, transparent: true, depthWrite: false });
+    const icon = new THREE.Sprite(iconMat);
+    const iconSize = size * 1.9;
+    icon.scale.set(iconSize, iconSize, 1);
+    icon.position.set(px, markerHeight, pz);
+    icon.renderOrder = 1;
+    deviceGroup.add(icon);
   });
   scene.add(deviceGroup);
 
@@ -1147,13 +1238,13 @@ function twinBuildScene(areaM2) {
     twinState.camera.position.y = Math.max(1.5, dist * Math.sin(twinState.rotX) + dist * 0.5);
     twinState.camera.lookAt(0, 0, 0);
 
-    // "Дыхание" индикаторов приборов — мягкая синусоида яркости свечения,
-    // у энергоёмких приборов чуть заметнее, чем у эффективных.
+    // "Дыхание" ауры за иконками приборов — мягкая синусоида прозрачности,
+    // создаёт ощущение работающей техники вместо статичных значков.
     const t = performance.now() / 1000;
     deviceGroup.children.forEach((child) => {
-      if (child.userData && child.userData.baseEmissive != null) {
-        const wave = 0.15 * Math.sin(t * 1.6 + child.userData.pulsePhase);
-        child.material.emissiveIntensity = Math.max(0.05, child.userData.baseEmissive + wave);
+      if (child.userData && child.userData.isAura) {
+        const wave = 0.18 * Math.sin(t * 1.6 + child.userData.pulsePhase);
+        child.material.opacity = Math.max(0.08, child.userData.baseOpacity + wave);
       }
     });
 
